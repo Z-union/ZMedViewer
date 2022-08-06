@@ -29,24 +29,24 @@ module.exports = {
       inherit: 'inherit',
 
       indigo: {
-        dark: '#0b1a42',
+        dark: '#00000000',
       },
       aqua: {
         pale: '#7bb2ce',
       },
 
       primary: {
-        light: '#5acce6',
-        main: '#0944b3',
-        dark: '#090c29',
-        active: '#348cfd',
+        light: '#ffffff',
+        main: '#5d5d5d', // ffffff
+        dark: '#333333',
+        active: '#ffffff',
       },
 
       secondary: {
-        light: '#3a3f99',
-        main: '#2b166b',
-        dark: '#041c4a',
-        active: '#1f1f27',
+        light: '#cacaca',
+        main: '#5d5d5d', // цвет пункта когда на нем указатель
+        dark: '#414141',
+        active: '#eaff04',
       },
 
       common: {
@@ -54,7 +54,7 @@ module.exports = {
         light: '#a19fad',
         main: '#fff',
         dark: '#726f7e',
-        active: '#2c3074',
+        active: '#fe0300',
       },
 
       customgreen: {

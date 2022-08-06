@@ -238,11 +238,11 @@ const ViewportActionBar = ({
     );
   };
 
-  const borderColor = useAltStyling ? '#365A6A' : '#1D205A';
+  const borderColor = useAltStyling ? '#365A6A' : '#00000000';
 
-  let backgroundColor = '#020424';
+  let backgroundColor = '#00000000';
   if (useAltStyling || isTracked) {
-    backgroundColor = '#031923'
+    backgroundColor = '#031923';
   }
 
   return (
@@ -370,7 +370,7 @@ function PatientInfo({
   isOpen,
   showPatientInfoRef,
 }) {
-  const { t } = useTranslation("PatientInfo")
+  const { t } = useTranslation('PatientInfo');
 
   while (patientAge.charAt(0) === '0') {
     patientAge = patientAge.substr(1);
@@ -397,7 +397,9 @@ function PatientInfo({
                 </span>
                 <div className="flex pb-4 mt-4 mb-4 border-b border-secondary-main">
                   <div className={classnames(classes.firstRow)}>
-                    <span className={classnames(classes.infoHeader)}>{t('Sex')}</span>
+                    <span className={classnames(classes.infoHeader)}>
+                      {t('Sex')}
+                    </span>
                     <span
                       className={classnames(classes.infoText)}
                       title={patientSex}
@@ -406,7 +408,9 @@ function PatientInfo({
                     </span>
                   </div>
                   <div className={classnames(classes.row)}>
-                    <span className={classnames(classes.infoHeader)}>{t('Age')}</span>
+                    <span className={classnames(classes.infoHeader)}>
+                      {t('Age')}
+                    </span>
                     <span
                       className={classnames(classes.infoText)}
                       title={patientAge}
@@ -415,7 +419,9 @@ function PatientInfo({
                     </span>
                   </div>
                   <div className={classnames(classes.row)}>
-                    <span className={classnames(classes.infoHeader)}>{t('MRN')}</span>
+                    <span className={classnames(classes.infoHeader)}>
+                      {t('MRN')}
+                    </span>
                     <span className={classnames(classes.infoText)} title={MRN}>
                       {MRN}
                     </span>

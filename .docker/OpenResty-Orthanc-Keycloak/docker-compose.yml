@@ -10,11 +10,9 @@ services:
   ohif_viewer:
     build:
       # Project root
-      # context: ./../../
-      context: ./../../../../
+      context: ./../../
       # Relative to context
-      dockerfile: ./platform/viewer/.recipes/OpenResty-Orthanc-Keycloak/dockerfile
-      # dockerfile: ./.recipes/OpenResty-Orthanc-Keycloak/dockerfile
+      dockerfile: ./.docker/OpenResty-Orthanc-Keycloak/dockerfile
     image: webapp:latest
     container_name: webapp
     volumes:
