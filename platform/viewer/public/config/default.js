@@ -15,6 +15,7 @@ window.config = {
         wadoUriRoot: 'http://3.65.70.66:8080/wado',
         qidoRoot: 'http://3.65.70.66:8080/dicom-web',
         wadoRoot: 'http://3.65.70.66:8080/dicom-web',
+        uploadUri: 'http://3.65.70.66:8080/instances',
         qidoSupportsIncludeField: true,
         supportsReject: true,
         imageRendering: 'wadors',

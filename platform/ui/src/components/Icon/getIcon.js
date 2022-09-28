@@ -37,6 +37,7 @@ import sortingActiveDown from './../../assets/icons/sorting-active-down.svg';
 import sortingActiveUp from './../../assets/icons/sorting-active-up.svg';
 import tracked from './../../assets/icons/tracked.svg';
 import unlink from './../../assets/icons/unlink.svg';
+import uploadFile from './../../assets/icons/upload-file.svg';
 
 /** Tools */
 import toolZoom from './../../assets/icons/tool-zoom.svg';
@@ -102,6 +103,7 @@ const ICONS = {
   sorting: sorting,
   tracked: tracked,
   unlink: unlink,
+  uploadFile: uploadFile,
 
   /** Tools */
   'tool-zoom': toolZoom,

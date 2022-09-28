@@ -1,4 +1,5 @@
 import { api } from 'dicomweb-client';
+import axios from 'axios';
 import {
   mapParams,
   search as qidoSearch,
@@ -37,6 +38,7 @@ const EXPLICIT_VR_LITTLE_ENDIAN = '1.2.840.10008.1.2.1';
  * @param {string} wadoUriRoot - Legacy? (potentially unused/replaced)
  * @param {string} qidoRoot - Base URL to use for QIDO requests
  * @param {string} wadoRoot - Base URL to use for WADO requests
+ * @param {string} uploadUri - Base URL for upload dicoms
  * @param {boolean} qidoSupportsIncludeField - Whether QIDO supports the "Include" option to request additional fields in response
  * @param {string} imageRengering - wadors | ? (unsure of where/how this is used)
  * @param {string} thumbnailRendering - wadors | ? (unsure of where/how this is used)
@@ -48,6 +50,7 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
   const {
     qidoRoot,
     wadoRoot,
+    uploadUri,
     enableStudyLazyLoad,
     supportsFuzzyMatching,
     supportsWildcard,
@@ -69,6 +72,16 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
     singlepart,
     headers: UserAuthenticationService.getAuthorizationHeader(),
     errorInterceptor: errorHandler.getHTTPErrorHandler(),
+  };
+
+  const __pFileReader = (file) => {
+    return new Promise((resolve, reject) => {
+      var fr = new FileReader();
+      fr.readAsArrayBuffer(file);
+      fr.onload = () => {
+        resolve(fr);
+      };
+    });
   };
 
   // TODO -> Two clients sucks, but its better than 1000.
@@ -148,6 +161,30 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
             null,
             queryParameters
           );
+        },
+        upload: async function(file) {
+          console.log(`I'm will upload:`);
+          console.log(file);
+          var headers = UserAuthenticationService.getAuthorizationHeader();
+          headers['Content-Type'] = 'application/octet-stream';
+          headers.Accept = 'application/json';
+          console.log("init reader");
+          return await __pFileReader(file).then(async (reader) => {
+            console.log("read file");
+            const stringBuffer = new Uint8Array(reader.result);
+            // var config = {
+            //   method: 'post',
+            //   url: uploadUri,
+            //   headers: headers,
+            //   data: stringBuffer,
+            // };
+
+            let response = await axios.post(uploadUri, stringBuffer, {
+              headers: headers,
+            });
+            console.log(response);
+            return response.data;
+          });
         },
       },
     },
