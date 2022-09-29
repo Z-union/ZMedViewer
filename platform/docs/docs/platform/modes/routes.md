@@ -58,9 +58,9 @@ function modeFactory() {
                   ],
                 },
                 {
-                  namespace: '@ohif/extension-dicom-sr.viewportModule.dicom-sr',
+                  namespace: '@ohif/extension-cornerstone-dicom-sr.viewportModule.dicom-sr',
                   displaySetsToDisplay: [
-                    '@ohif/extension-dicom-sr.sopClassHandlerModule.dicom-sr',
+                    '@ohif/extension-cornerstone-dicom-sr.sopClassHandlerModule.dicom-sr',
                   ],
                 },
               ],
@@ -149,8 +149,8 @@ async function defaultRouteInit({
   });
 
   DicomMetadataStore.subscribe('seriesAdded', ({ StudyInstanceUID }) => {
-    const studyMetadata = DicomMetadataStore.getStudy(StudyInstanceUID);
-    HangingProtocolService.run(studyMetadata);
+    const studyMetadata = // get study metadata and displaySets
+    HangingProtocolService.run({studies, displaySets, activeStudy});
   });
 
   return unsubscriptions;
@@ -204,9 +204,6 @@ init: async ({
       const instance = displaySet.images.find(
         image => image.SOPInstanceUID === tool.SOPInstanceUID
       );
-
-      const { SOPInstanceUID, url } = instance;
-      displaySet.initialImageIdIndex = displaySet.images.indexOf(instance);
     });
 
     MeasurementService.addMeasurement(/**...**/);
