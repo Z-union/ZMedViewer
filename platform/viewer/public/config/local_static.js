@@ -5,6 +5,9 @@ window.config = {
   modes: [],
   showStudyList: true,
   maxNumberOfWebWorkers: 3,
+  // below flag is for performance reasons, but it might not work for all servers
+  omitQuotationForMultipartRequest: true,
+  showLoadingIndicator: true,
   // filterQueryParam: false,
   dataSources: [
     {
@@ -13,9 +16,8 @@ window.config = {
       sourceName: 'dicomweb',
       configuration: {
         name: 'DCM4CHEE',
-        wadoUriRoot: 'http://localhost:5000/dicomweb',
-        qidoRoot: 'http://localhost:5000/dicomweb',
-        wadoRoot: 'http://localhost:5000/dicomweb',
+        qidoRoot: '/dicomweb',
+        wadoRoot: '/dicomweb',
         qidoSupportsIncludeField: false,
         supportsReject: false,
         imageRendering: 'wadors',

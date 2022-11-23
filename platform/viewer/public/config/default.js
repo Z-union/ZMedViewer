@@ -4,7 +4,10 @@ window.config = {
   extensions: [],
   modes: [],
   showStudyList: true,
-  maxNumberOfWebWorkers: 3,
+  maxNumberOfWebWorkers: 4,
+  // below flag is for performance reasons, but it might not work for all servers
+  omitQuotationForMultipartRequest: true,
+  showLoadingIndicator: true,
   maxNumRequests: {
     interaction: 100,
     thumbnail: 75,
@@ -17,18 +20,25 @@ window.config = {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
       sourceName: 'dicomweb',
       configuration: {
-        name: 'DCM4CHEE',
+        name: 'ORTHANC',
+        // old server
+        // wadoUriRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/wado',
+        // qidoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
+        // wadoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
+        // new server
         wadoUriRoot: 'http://3.65.70.66:8080/wado',
         qidoRoot: 'http://3.65.70.66:8080/dicom-web',
         wadoRoot: 'http://3.65.70.66:8080/dicom-web',
         uploadUri: 'http://3.65.70.66:8080/instances',
-        qidoSupportsIncludeField: true,
-        supportsReject: true,
+        qidoSupportsIncludeField: false,
+        supportsReject: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
         enableStudyLazyLoad: true,
-        supportsFuzzyMatching: true,
+        supportsFuzzyMatching: false,
         supportsWildcard: true,
+        staticWado: true,
+        singlepart: 'bulkdata,video,pdf',
       },
     },
     {

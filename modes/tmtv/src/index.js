@@ -91,8 +91,6 @@ function modeFactory({ modeConfiguration }) {
         });
       };
 
-      // Since we only have one viewport for the basic cs3d mode and it has
-      // only one hanging protocol, we can just use the first viewport
       const { unsubscribe } = ToolGroupService.subscribe(
         ToolGroupService.EVENTS.VIEWPORT_ADDED,
         () => {
@@ -140,6 +138,9 @@ function modeFactory({ modeConfiguration }) {
         SyncGroupService,
         MeasurementService,
         ToolBarService,
+        SegmentationService,
+        CornerstoneViewportService,
+        HangingProtocolService,
       } = servicesManager.services;
 
       unsubscriptions.forEach(unsubscribe => unsubscribe());
@@ -147,6 +148,9 @@ function modeFactory({ modeConfiguration }) {
       MeasurementService.clearMeasurements();
       ToolGroupService.destroy();
       SyncGroupService.destroy();
+      SegmentationService.destroy();
+      CornerstoneViewportService.destroy();
+      HangingProtocolService.reset();
     },
     validationTags: {
       study: [],
@@ -173,8 +177,8 @@ function modeFactory({ modeConfiguration }) {
           return {
             id: ohif.layout,
             props: {
-              leftPanels: [],
-              rightPanels: [tmtv.petSUV, tmtv.ROIThresholdPanel],
+              // leftPanels: [ohif.thumbnailList],
+              rightPanels: [tmtv.ROIThresholdPanel, tmtv.petSUV],
               viewports: [
                 {
                   namespace: cs3d.viewport,

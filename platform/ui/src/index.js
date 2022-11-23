@@ -54,6 +54,7 @@ export {
   Icon,
   IconButton,
   Input,
+  InputRange,
   InputDateRange,
   InputGroup,
   InputLabelWrapper,
@@ -61,12 +62,15 @@ export {
   InputText,
   Label,
   LayoutSelector,
+  LoadingIndicator,
+  LoadingIndicatorProgress,
   MeasurementTable,
   Modal,
   NavBar,
   Notification,
   Select,
   SegmentationTable,
+  SegmentationGroupTable,
   SidePanel,
   SplitButton,
   StudyBrowser,
@@ -104,7 +108,7 @@ export {
 } from './components';
 
 /** These are mostly used in the docs */
-export { getIcon, ICONS } from './components/Icon/getIcon';
+export { getIcon, ICONS, addIcon } from './components/Icon/getIcon';
 export { BackgroundColor } from './pages/Colors/BackgroundColor';
 export { ModalComponent } from './contextProviders/ModalComponent';
 export { Types };
