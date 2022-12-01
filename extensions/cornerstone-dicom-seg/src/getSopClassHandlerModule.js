@@ -263,7 +263,7 @@ function _getSegments(dataset) {
   const segments = {};
 
   dataset.SegmentSequence.forEach(segment => {
-    const cielab = segment.RecommendedDisplayCIELabValue;
+    const cielab = segment.RecommendedDisplayCIELabValue ?? [41661, 41167, 40792];
     const rgba = dcmjs.data.Colors.dicomlab2RGB(cielab).map(x =>
       Math.round(x * 255)
     );
