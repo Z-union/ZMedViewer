@@ -3,6 +3,10 @@ window.config = {
   // whiteLabelling: {},
   extensions: [],
   modes: [],
+  customizationService: {
+    // Shows a custom route -access via http://localhost:3000/custom
+    // helloPage: '@ohif/extension-default.customizationModule.helloPage',
+  },
   showStudyList: true,
   maxNumberOfWebWorkers: 4,
   // below flag is for performance reasons, but it might not work for all servers
@@ -26,10 +30,10 @@ window.config = {
         // qidoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
         // wadoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
         // new server
-        wadoUriRoot: 'http://3.65.70.66:8080/wado',
-        qidoRoot: 'http://3.65.70.66:8080/dicom-web',
-        wadoRoot: 'http://3.65.70.66:8080/dicom-web',
-        uploadUri: 'http://3.65.70.66:8080/instances',
+        wadoUriRoot: 'http://91.219.167.110:8080/wado',
+        qidoRoot: 'http://91.219.167.110:8080/dicom-web',
+        wadoRoot: 'http://91.219.167.110:8080/dicom-web',
+        uploadUri: 'http://91.219.167.110:8080/instances',
         qidoSupportsIncludeField: false,
         supportsReject: false,
         imageRendering: 'wadors',

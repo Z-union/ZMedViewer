@@ -45,6 +45,10 @@ const dicomSeg = {
   panel: '@ohif/extension-cornerstone-dicom-seg.panelModule.panelSegmentation',
 };
 
+const zmedAI = {
+  panel: 'zmed-ai-tools.panelModule.panelZMedAI',
+};
+
 const extensionDependencies = {
   // Can derive the versions at least process.env.from npm_package_version
   '@ohif/extension-default': '^3.0.0',
@@ -67,7 +71,13 @@ function modeFactory() {
      * Lifecycle hooks
      */
     onModeEnter: ({ servicesManager, extensionManager, commandsManager }) => {
-      const { ToolBarService, ToolGroupService } = servicesManager.services;
+      const {
+        MeasurementService,
+        ToolBarService,
+        ToolGroupService,
+      } = servicesManager.services;
+
+      MeasurementService.clearMeasurements();
 
       // Init Default and SR ToolGroups
       initToolGroups(extensionManager, ToolGroupService, commandsManager);
@@ -159,7 +169,7 @@ function modeFactory() {
             id: ohif.layout,
             props: {
               leftPanels: [tracked.thumbnailList],
-              rightPanels: [dicomSeg.panel, tracked.measurements],
+              rightPanels: [dicomSeg.panel, tracked.measurements, zmedAI.panel],
               // rightPanelDefaultClosed: true, // optional prop to start with collapse panels
               viewports: [
                 {

@@ -58,6 +58,7 @@ import notificationsWarning from './../../assets/icons/notifications-warning.svg
 import notificationsError from './../../assets/icons/notifications-error.svg';
 import notificationsSuccess from './../../assets/icons/notifications-success.svg';
 import uploadFile from './../../assets/icons/upload-file.svg';
+import zmedAI from './../../assets/icons/zmed-ai.svg';
 
 /** Tools */
 import toolZoom from './../../assets/icons/tool-zoom.svg';
@@ -161,7 +162,6 @@ const ICONS = {
   'notifications-error': notificationsError,
   'notifications-success': notificationsSuccess,
   'notifications-warning': notificationsWarning,
-  uploadFile: uploadFile,
 
   /** Tools */
   'tool-zoom': toolZoom,
@@ -209,6 +209,10 @@ const ICONS = {
   'old-trash': oldTrash,
   'old-play': oldPlay,
   'old-stop': oldStop,
+
+  /** ZMed AI */
+  uploadFile: uploadFile,
+  'zmed-ai': zmedAI,
 };
 
 function addIcon(iconName, iconSVG) {
