@@ -48,6 +48,9 @@ const dicomSeg = {
 const zmedAI = {
   panel: 'zmed-ai-tools.panelModule.panelZMedAI',
 };
+const zmedAIMammography = {
+  panel: 'zmed-mammography.panelModule.panelZMedAIMammography',
+};
 
 const extensionDependencies = {
   // Can derive the versions at least process.env.from npm_package_version
@@ -150,7 +153,7 @@ function modeFactory() {
       series: [],
     },
 
-    isValidMode: function({ modalities }) {
+    isValidMode: function ({ modalities }) {
       const modalities_list = modalities.split('\\');
 
       // Exclude non-image modalities
@@ -169,7 +172,12 @@ function modeFactory() {
             id: ohif.layout,
             props: {
               leftPanels: [tracked.thumbnailList],
-              rightPanels: [dicomSeg.panel, tracked.measurements, zmedAI.panel],
+              rightPanels: [
+                dicomSeg.panel,
+                tracked.measurements,
+                zmedAI.panel,
+                zmedAIMammography.panel,
+              ],
               // rightPanelDefaultClosed: true, // optional prop to start with collapse panels
               viewports: [
                 {
