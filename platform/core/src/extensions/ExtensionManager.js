@@ -23,6 +23,7 @@ export default class ExtensionManager {
     });
     this._extensionLifeCycleHooks = { onModeEnter: {}, onModeExit: {} };
     this.dataSourceMap = {};
+    this.dataSourceDefs = {};
     this.defaultDataSourceName = appConfig.defaultDataSourceName;
     this.activeDataSource = undefined;
   }
@@ -40,6 +41,9 @@ export default class ExtensionManager {
       _extensionLifeCycleHooks,
     } = this;
 
+    // The onModeEnter of the service must occur BEFORE the extension
+    // onModeEnter in order to reset the state to a standard state
+    // before the extension restores and cached data.
     for (const service of Object.values(_servicesManager.services)) {
       service?.onModeEnter?.();
     }
@@ -65,10 +69,6 @@ export default class ExtensionManager {
       _extensionLifeCycleHooks,
     } = this;
 
-    for (const service of Object.values(_servicesManager.services)) {
-      service?.onModeExit?.();
-    }
-
     registeredExtensionIds.forEach(extensionId => {
       const onModeExit = _extensionLifeCycleHooks.onModeExit[extensionId];
 
@@ -79,6 +79,16 @@ export default class ExtensionManager {
         });
       }
     });
+
+    // The service onModeExit calls must occur after the extension ones
+    // so that extension ones can store/restore data.
+    for (const service of Object.values(_servicesManager.services)) {
+      try {
+        service?.onModeExit?.();
+      } catch (e) {
+        console.warn('onModeExit caught', e);
+      }
+    }
   }
 
   /**
@@ -289,6 +299,9 @@ export default class ExtensionManager {
 
   _initDataSourcesModule(extensionModule, extensionId, dataSources = []) {
     const { UserAuthenticationService } = this._servicesManager.services;
+    dataSources.forEach(dataSource => {
+      this.dataSourceDefs[dataSource.sourceName] = dataSource;
+    });
 
     extensionModule.forEach(element => {
       const namespace = `${extensionId}.${MODULE_TYPES.DATA_SOURCE}.${element.name}`;

@@ -16,6 +16,7 @@ function OHIFCornerstonePdfViewport({ displaySets }) {
     const load = async () => {
       await pdfUrl;
       console.log('****************************************************');
+      console.log(displaySets);
       console.log(pdfUrl);
       setUrl(pdfUrl);
     };
@@ -25,13 +26,16 @@ function OHIFCornerstonePdfViewport({ displaySets }) {
 
   return (
     <div className="bg-primary-black w-full h-full">
-      <iframe
-        src="https://media.geeksforgeeks.org/wp-content/cdn-uploads/20210101201653/PDF.pdf"
+      {/* <iframe src={url} className="w-full h-full"></iframe> "text/plain" */}
+      <object
+        aria-label="PDF Viewer"
+        data={url}
+        type="application/pdf"
         className="w-full h-full"
-      ></iframe>
-      {/* <object data={url} type="application/pdf" className="w-full h-full"> */}
-      {/* <div>No online PDF viewer installed</div> */}
-      {/* </object> */}
+        crossOrigin
+      >
+        <div>No online PDF viewer installed</div>
+      </object>
     </div>
   );
 }

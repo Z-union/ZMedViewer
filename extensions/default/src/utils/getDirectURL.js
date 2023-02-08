@@ -53,11 +53,7 @@ const getDirectURL = (wadoRoot, params) => {
     return undefined;
   }
 
-  const {
-    StudyInstanceUID,
-    SeriesInstanceUID,
-    SOPInstanceUID,
-  } = instance;
+  const { StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID } = instance;
   const BulkDataURI =
     (value && value.BulkDataURI) ||
     `series/${SeriesInstanceUID}/instances/${SOPInstanceUID}${defaultPath}`;

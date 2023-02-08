@@ -26,6 +26,7 @@ import pubSubServiceInterface from '../_shared/pubSubServiceInterface';
  * @property {number} area -
  * @property {Array} points -
  * @property {MeasurementSource} source -
+ * @property {boolean} selected -
  */
 
 /* Measurement schema keys for object validation. */
@@ -56,6 +57,7 @@ const MEASUREMENT_SCHEMA_KEYS = [
   'shortestDiameter',
   'longestDiameter',
   'cachedStats',
+  'selected',
 ];
 
 const EVENTS = {
@@ -184,6 +186,21 @@ class MeasurementService {
     return measurement;
   }
 
+  setMeasurementSelected(measurementUID, selected) {
+    const measurement = this.getMeasurement(measurementUID);
+    if (!measurement) {
+      return;
+    }
+
+    measurement.selected = selected;
+
+    this._broadcastEvent(this.EVENTS.MEASUREMENT_UPDATED, {
+      source: measurement.source,
+      measurement,
+      notYetUpdatedAtSource: false,
+    });
+  }
+
   /**
    * Create a new source.
    *
@@ -218,8 +235,17 @@ class MeasurementService {
       version,
     };
 
-    source.annotationToMeasurement = (annotationType, annotation) => {
-      return this.annotationToMeasurement(source, annotationType, annotation);
+    source.annotationToMeasurement = (
+      annotationType,
+      annotation,
+      isUpdate = false
+    ) => {
+      return this.annotationToMeasurement(
+        source,
+        annotationType,
+        annotation,
+        isUpdate
+      );
     };
 
     source.remove = (measurementUID, eventDetails) => {
@@ -467,9 +493,15 @@ class MeasurementService {
    * @param {MeasurementSource} source The measurement source instance
    * @param {string} annotationType The source annotationType
    * @param {EventDetail} sourceAnnotationDetail for the annotation event
+   * @param {boolean} isUpdate is this an update or an add/completed instead?
    * @return {string} A measurement uid
    */
-  annotationToMeasurement(source, annotationType, sourceAnnotationDetail) {
+  annotationToMeasurement(
+    source,
+    annotationType,
+    sourceAnnotationDetail,
+    isUpdate = false
+  ) {
     if (!this._isValidSource(source)) {
       throw new Error('Invalid source.');
     }
@@ -524,19 +556,27 @@ class MeasurementService {
     };
 
     if (this.measurements[internalUID]) {
+      // TODO: Ultimately, each annotation should have a selected flag right from the soure.
+      // For now, it is just added in OHIF here and in setMeasurementSelected.
+      newMeasurement.selected = this.measurements[internalUID].selected;
       this.measurements[internalUID] = newMeasurement;
-      this._broadcastEvent(this.EVENTS.MEASUREMENT_UPDATED, {
-        source,
-        measurement: newMeasurement,
-        notYetUpdatedAtSource: false,
-      });
+      if (isUpdate) {
+        this._broadcastEvent(this.EVENTS.MEASUREMENT_UPDATED, {
+          source,
+          measurement: newMeasurement,
+          notYetUpdatedAtSource: false,
+        });
+      } else {
+        log.info('Measurement added.', newMeasurement);
+        this.measurements[internalUID] = newMeasurement;
+        this._broadcastEvent(this.EVENTS.MEASUREMENT_ADDED, {
+          source,
+          measurement: newMeasurement,
+        });
+      }
     } else {
-      log.info('Measurement added.', newMeasurement);
+      log.info('Measurement started.', newMeasurement);
       this.measurements[internalUID] = newMeasurement;
-      this._broadcastEvent(this.EVENTS.MEASUREMENT_ADDED, {
-        source,
-        measurement: newMeasurement,
-      });
     }
 
     return newMeasurement.uid;
@@ -570,6 +610,15 @@ class MeasurementService {
     this._broadcastEvent(this.EVENTS.MEASUREMENTS_CLEARED, { measurements });
   }
 
+  /**
+   * Called after the mode.onModeExit is called to reset the state.
+   * To store measurements for later use, store them in the mode.onModeExit
+   * and restore them in the mode onModeEnter.
+   */
+  onModeExit() {
+    this.clearMeasurements();
+  }
+
   jumpToMeasurement(viewportIndex, measurementUID) {
     const measurement = this.measurements[measurementUID];
 
@@ -579,16 +628,10 @@ class MeasurementService {
     }
     this._addJumpToMeasurement(viewportIndex, measurementUID);
 
-    const eventName = this.EVENTS.JUMP_TO_MEASUREMENT;
-
-    const hasListeners = Object.keys(this.listeners).length > 0;
-    const hasCallbacks = Array.isArray(this.listeners[eventName]);
-
-    if (hasListeners && hasCallbacks) {
-      this.listeners[eventName].forEach(listener => {
-        listener.callback({ viewportIndex, measurement });
-      });
-    }
+    this._broadcastEvent(this.EVENTS.JUMP_TO_MEASUREMENT, {
+      viewportIndex,
+      measurement,
+    });
   }
 
   getJumpToMeasurement(viewportIndex) {

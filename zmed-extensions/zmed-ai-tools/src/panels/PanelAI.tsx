@@ -9,14 +9,13 @@ export default function PanelAI({
     servicesManager,
     commandsManager,
   }) {
+    const isMounted = React.useRef(true)
     const {
         DisplaySetService,
         // ToolGroupService,
         // ToolBarService,
         // HangingProtocolService,
       } = servicesManager.services;
-
-    const [title, setTitle] = useState("111");
 
     enum AIState {
       undefined,
@@ -62,6 +61,9 @@ export default function PanelAI({
 
         axios(config)
         .then(function(response) {
+          if (!isMounted) {
+            return
+          }
           var interval;
           interval = setInterval(() => {
             clearInterval(interval)
@@ -102,6 +104,9 @@ export default function PanelAI({
 
         axios(config)
         .then(function(response) {
+          if (!isMounted) {
+            return
+          }
           console.log(response)
           const lastIndex = response.data.map( res => res.job_type == 'covid').lastIndexOf(true)
           if (lastIndex == -1) {
@@ -109,7 +114,7 @@ export default function PanelAI({
             return
           } //job_type == 'covid'
           let element = response.data[lastIndex]
-          if (element.task_status == "started") {
+          if (element.task_status == "queued" || element.task_status == "started") {
             setWasProcessing(true)
             setProcessingState(AIState.loading)
             var interval;
@@ -142,6 +147,9 @@ export default function PanelAI({
 
     useEffect(() => {
       _retrieveData()
+      return () => {
+        isMounted.current = false;
+      }
     }, []);
 
     function renderState(_state: AIState) {
