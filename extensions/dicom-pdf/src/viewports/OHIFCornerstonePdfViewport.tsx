@@ -1,8 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+  createRef,
+  useCallback,
+  useRef,
+} from 'react';
 import PropTypes from 'prop-types';
+import * as PDFJS from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
+PDFJS.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 function OHIFCornerstonePdfViewport({ displaySets }) {
   const [url, setUrl] = useState(null);
+  const [pdfRef, setPdfRef] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   if (displaySets && displaySets.length > 1) {
     throw new Error(
@@ -11,6 +22,29 @@ function OHIFCornerstonePdfViewport({ displaySets }) {
   }
 
   const { pdfUrl } = displaySets[0];
+  const canvasRef = useRef();
+
+  const renderPage = useCallback(
+    (pageNum, pdf = pdfRef) => {
+      pdf &&
+        pdf.getPage(pageNum).then(function(page) {
+          const viewport = page.getViewport({ scale: 1 });
+          const canvas = canvasRef.current;
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          const renderContext = {
+            canvasContext: canvas.getContext('2d'),
+            viewport: viewport,
+          };
+          page.render(renderContext);
+        });
+    },
+    [pdfRef]
+  );
+
+  useEffect(() => {
+    renderPage(currentPage, pdfRef);
+  }, [pdfRef, currentPage, renderPage]);
 
   useEffect(() => {
     const load = async () => {
@@ -18,24 +52,20 @@ function OHIFCornerstonePdfViewport({ displaySets }) {
       console.log('****************************************************');
       console.log(displaySets);
       console.log(pdfUrl);
-      setUrl(pdfUrl);
+      const loadedPdf = await PDFJS.getDocument(pdfUrl).promise;
+      setPdfRef(loadedPdf);
     };
 
     load();
-  }, [pdfUrl]);
+  }, [pdfUrl, displaySets]);
+
+  // const nextPage = () => pdfRef && currentPage < pdfRef.numPages && setCurrentPage(currentPage + 1);
+
+  // const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
   return (
-    <div className="bg-primary-black w-full h-full">
-      {/* <iframe src={url} className="w-full h-full"></iframe> "text/plain" */}
-      <object
-        aria-label="PDF Viewer"
-        data={url}
-        type="application/pdf"
-        className="w-full h-full"
-        crossOrigin
-      >
-        <div>No online PDF viewer installed</div>
-      </object>
+    <div className="bg-primary-black w-full h-full flex justify-center">
+      <canvas ref={canvasRef}></canvas>
     </div>
   );
 }
