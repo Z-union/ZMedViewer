@@ -66,9 +66,10 @@ window.config = {
     {
       // ~ REQUIRED
       // Authorization Server URL
-      authority: 'http://127.0.0.1:18080/auth/realms/ohif',
+      // authority: 'http://127.0.0.1:18080/auth/realms/ohif',
+      authority: 'http://127.0.0.1/auth/realms/ohif',
       client_id: 'ohif-viewer',
-      redirect_uri: '/callback', // `OHIFStandaloneViewer.js`
+      redirect_uri: 'http://127.0.0.1/callback', // `OHIFStandaloneViewer.js`
       // "Authorization Code Flow"
       // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
       response_type: 'code',
@@ -96,12 +97,11 @@ window.config = {
           className: 'text-purple-600 line-through',
           href: '/',
         },
-        React.createElement('img',
-          {
-            src: './logo.svg',
-            // className: 'w-8 h-8',
-          }
-        ))
+        React.createElement('img', {
+          src: './logo.svg',
+          // className: 'w-8 h-8',
+        })
+      );
     },
   },
   defaultDataSourceName: 'dicomweb',

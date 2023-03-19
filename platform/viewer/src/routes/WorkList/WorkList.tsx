@@ -152,7 +152,7 @@ function WorkList({
   const [studiesWithSeriesData, setStudiesWithSeriesData] = useState([]);
   const numOfStudies = studiesTotal;
 
-  const setFilterValues = (val) => {
+  const setFilterValues = val => {
     if (filterValues.pageNumber === val.pageNumber) {
       val.pageNumber = 1;
     }
@@ -160,7 +160,7 @@ function WorkList({
     setExpandedRows([]);
   };
 
-  const onPageNumberChange = (newPageNumber) => {
+  const onPageNumberChange = newPageNumber => {
     const oldPageNumber = filterValues.pageNumber;
     const rollingPageNumberMod = Math.floor(101 / filterValues.resultsPerPage);
     const rollingPageNumber = oldPageNumber % rollingPageNumberMod;
@@ -175,7 +175,7 @@ function WorkList({
     setFilterValues({ ...filterValues, pageNumber: newPageNumber });
   };
 
-  const onResultsPerPageChange = (newResultsPerPage) => {
+  const onResultsPerPageChange = newResultsPerPage => {
     setFilterValues({
       ...filterValues,
       pageNumber: 1,
@@ -198,7 +198,7 @@ function WorkList({
     }
 
     const queryString = {};
-    Object.keys(defaultFilterValues).forEach((key) => {
+    Object.keys(defaultFilterValues).forEach(key => {
       const defaultValue = defaultFilterValues[key];
       const currValue = debouncedFilterValues[key];
 
@@ -234,7 +234,7 @@ function WorkList({
 
   // Query for series information
   useEffect(() => {
-    const fetchSeries = async (studyInstanceUid) => {
+    const fetchSeries = async studyInstanceUid => {
       try {
         const series = await dataSource.query.series.search(studyInstanceUid);
         seriesInStudiesMap.set(studyInstanceUid, sortBySeriesDate(series));
@@ -270,7 +270,7 @@ function WorkList({
   const offsetAndTake = offset + resultsPerPage;
   const tableDataSource = sortedStudies.map((study, key) => {
     const rowKey = key + 1;
-    const isExpanded = expandedRows.some((k) => k === rowKey);
+    const isExpanded = expandedRows.some(k => k === rowKey);
     const {
       studyInstanceUid,
       accession,
@@ -408,8 +408,8 @@ function WorkList({
         </StudyListExpandedRow>
       ),
       onClickRow: () =>
-        setExpandedRows((s) =>
-          isExpanded ? s.filter((n) => rowKey !== n) : [...s, rowKey]
+        setExpandedRows(s =>
+          isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]
         ),
       isExpanded,
     };
@@ -438,14 +438,15 @@ function WorkList({
           title: t('UserPreferencesModal:User Preferences'),
           content: UserPreferences,
           contentProps: {
-            hotkeyDefaults:
-              hotkeysManager.getValidHotkeyDefinitions(hotkeyDefaults),
+            hotkeyDefaults: hotkeysManager.getValidHotkeyDefinitions(
+              hotkeyDefaults
+            ),
             hotkeyDefinitions,
             onCancel: hide,
             currentLanguage: currentLanguage(),
             availableLanguages,
             defaultLanguage,
-            onSubmit: (state) => {
+            onSubmit: state => {
               i18n.changeLanguage(state.language.value);
               hotkeysManager.setHotkeys(state.hotkeyDefinitions);
               hide();
@@ -469,9 +470,9 @@ function WorkList({
     });
   }
 
-  const onDrop = async (acceptedFiles) => {
+  const onDrop = async acceptedFiles => {
     console.log(acceptedFiles);
-    const uploadFile = async (file) => {
+    const uploadFile = async file => {
       try {
         const response = await dataSource.query.instances.upload(file);
         console.info(`file ${file} uploaded: ${response}`);
@@ -503,50 +504,74 @@ function WorkList({
     zIndex: 999,
   };
 
+  const [dropInitiated, setDropInitiated] = React.useState(false);
+
+  console.log('Drop should be here');
+
   return (
-    <div
-      className={classnames('bg-black h-full', {
-        'h-screen': !hasStudies,
-      })}
+    <Dropzone
+      ref={dropzoneRef}
+      onDrop={onDrop}
+      noClick={true}
+      isFocused={true}
+      multiple={false}
+      accept="*/dicom, .dcm, image/dcm, */dcm, .dicom, application/zip, application/x-zip-compressed, multipart/x-zip"
     >
-      <Header
-        isSticky
-        menuOptions={menuOptions}
-        isReturnEnabled={false}
-        WhiteLabeling={appConfig.whiteLabeling}
-      />
-      <StudyListFilter
-        numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}
-        filtersMeta={filtersMeta}
-        filterValues={{ ...filterValues, ...defaultSortValues }}
-        onChange={setFilterValues}
-        clearFilters={() => setFilterValues(defaultFilterValues)}
-        isFiltering={isFiltering(filterValues, defaultFilterValues)}
-      />
-      {hasStudies ? (
-        <>
-          <StudyListTable
-            tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
-            numOfStudies={numOfStudies}
+      {({ getRootProps, getInputProps, isDragActive }) => (
+        <div
+          {...getRootProps()}
+          className={classnames('bg-black h-full', {
+            'h-screen': !hasStudies,
+          })}
+        >
+          {isDragActive && <div style={focusedStyle}></div>}
+          <Header
+            primaryChildren={
+              <div>{getLoadButton(onDrop, 'Upload file', false)}</div>
+            }
+            isSticky
+            menuOptions={menuOptions}
+            isReturnEnabled={false}
+            WhiteLabeling={appConfig.whiteLabeling}
+          />
+          <StudyListFilter
+            numOfStudies={
+              pageNumber * resultsPerPage > 100 ? 101 : numOfStudies
+            }
             filtersMeta={filtersMeta}
+            filterValues={{ ...filterValues, ...defaultSortValues }}
+            onChange={setFilterValues}
+            clearFilters={() => setFilterValues(defaultFilterValues)}
+            isFiltering={isFiltering(filterValues, defaultFilterValues)}
           />
-          <StudyListPagination
-            onChangePage={onPageNumberChange}
-            onChangePerPage={onResultsPerPageChange}
-            currentPage={pageNumber}
-            perPage={resultsPerPage}
-          />
-        </>
-      ) : (
-        <div className="flex flex-col items-center justify-center pt-48">
-          {appConfig.showLoadingIndicator && isLoadingData ? (
-            <LoadingIndicatorProgress className={'w-full h-full bg-black'} />
+          {hasStudies ? (
+            <>
+              <StudyListTable
+                tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
+                numOfStudies={numOfStudies}
+                filtersMeta={filtersMeta}
+              />
+              <StudyListPagination
+                onChangePage={onPageNumberChange}
+                onChangePerPage={onResultsPerPageChange}
+                currentPage={pageNumber}
+                perPage={resultsPerPage}
+              />
+            </>
           ) : (
-            <EmptyStudies />
+            <div className="flex flex-col items-center justify-center pt-48">
+              {appConfig.showLoadingIndicator && isLoadingData ? (
+                <LoadingIndicatorProgress
+                  className={'w-full h-full bg-black'}
+                />
+              ) : (
+                <EmptyStudies />
+              )}
+            </div>
           )}
         </div>
       )}
-    </div>
+    </Dropzone>
   );
 }
 
@@ -609,7 +634,7 @@ function _getQueryFilterValues(query) {
 
   // Delete null/undefined keys
   Object.keys(queryFilterValues).forEach(
-    (key) => queryFilterValues[key] == null && delete queryFilterValues[key]
+    key => queryFilterValues[key] == null && delete queryFilterValues[key]
   );
 
   return queryFilterValues;

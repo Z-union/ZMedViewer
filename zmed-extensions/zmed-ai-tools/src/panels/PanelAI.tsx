@@ -134,6 +134,8 @@ export default function PanelAI({
           }
           setSeriesData(covidData)
           setProcessingState(AIState.finished)
+          console.log("------- isWasProcessed")
+          console.log(wasProcessing)
           if (wasProcessing) {
             window.location.reload()
           }
