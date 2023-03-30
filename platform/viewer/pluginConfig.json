@@ -39,6 +39,10 @@
     {
       "packageName": "zmed-mammography",
       "version": "0.0.1"
+    },
+    {
+      "packageName": "zmed-innopolis",
+      "version": "0.0.1"
     }
   ],
   "modes": [

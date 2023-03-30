@@ -59,6 +59,8 @@ import notificationsError from './../../assets/icons/notifications-error.svg';
 import notificationsSuccess from './../../assets/icons/notifications-success.svg';
 import uploadFile from './../../assets/icons/upload-file.svg';
 import zmedAI from './../../assets/icons/zmed-ai.svg';
+import zmedAICovid from './../../assets/icons/zmed-covid.svg';
+import zmedAIMM from './../../assets/icons/zmed-mm.svg';
 
 /** Tools */
 import toolZoom from './../../assets/icons/tool-zoom.svg';
@@ -213,6 +215,8 @@ const ICONS = {
   /** ZMed AI */
   uploadFile: uploadFile,
   'zmed-ai': zmedAI,
+  'zmed-covid': zmedAICovid,
+  'zmed-mm': zmedAIMM,
 };
 
 function addIcon(iconName, iconSVG) {

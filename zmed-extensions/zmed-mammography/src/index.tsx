@@ -47,9 +47,9 @@ export default {
     return [
       {
         name: 'panelZMedAIMammography',
-        iconName: 'zmed-ai',
-        iconLabel: 'ZMed AI Mammography Tools',
-        label: 'ZMed Mammography',
+        iconName: 'zmed-mm',
+        iconLabel: 'ZMamm',
+        label: 'ZMamm',
         component: wrappedPanel,
       },
     ];

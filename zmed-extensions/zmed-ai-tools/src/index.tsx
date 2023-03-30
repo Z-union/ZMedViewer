@@ -47,9 +47,9 @@ export default {
     return [
       {
         name: 'panelZMedAI',
-        iconName: 'zmed-ai',
-        iconLabel: 'ZMed AI Tools',
-        label: 'ZMed AI',
+        iconName: 'zmed-covid',
+        iconLabel: 'ZLungCT',
+        label: 'ZLungCT',
         component: wrappedPanel,
       },
     ];

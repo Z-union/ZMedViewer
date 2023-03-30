@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import PropTypes, { number } from 'prop-types';
-import { Button, Icon, LoadingIndicatorProgress } from '@ohif/ui';
+import { Button, Icon, LoadingIndicator, LoadingIndicatorProgress } from '@ohif/ui';
 import StudyItem from './StudyItem'
 import { useZMedAI } from '../context/ZMedAIContext';
 import axios from 'axios'
+import './PanelAI.css';
 
 export default function PanelAI({
     servicesManager,
@@ -22,6 +23,7 @@ export default function PanelAI({
       loading,
       unsupported,
       finished,
+      finishedWithApply, // данные можем показать, но чтобы обновить рабочий стол, нужно обновить экран
       error
     }
     const [processingState, setProcessingState] = useState(AIState.loading)
@@ -82,12 +84,10 @@ export default function PanelAI({
     const _retrieveData = async() => {
       const displaySets = DisplaySetService.getActiveDisplaySets()
                             .find(displaySet => displaySet && displaySet.Modality === 'CT');
-      if (displaySets.length == 0) {
+      if (displaySets == undefined || displaySets.length == 0) {
         setProcessingState(AIState.unsupported)
         return
       }
-      console.log("PANEL START")
-      console.log(displaySets)
       if (displaySets != undefined) {
         var data = JSON.stringify({
           "study_instance_uid": displaySets.StudyInstanceUID,
@@ -107,14 +107,13 @@ export default function PanelAI({
           if (!isMounted) {
             return
           }
-          console.log(response)
           const lastIndex = response.data.map( res => res.job_type == 'covid').lastIndexOf(true)
           if (lastIndex == -1) {
             setProcessingState(AIState.undefined)
             return
-          } //job_type == 'covid'
+          }
           let element = response.data[lastIndex]
-          if (element.task_status == "queued" || element.task_status == "started") {
+          if (element.task_status == "PENDING" || element.task_status == "started") {
             setWasProcessing(true)
             setProcessingState(AIState.loading)
             var interval;
@@ -123,21 +122,24 @@ export default function PanelAI({
               _retrieveData()
             }, 1000);
             return
-          }
-          if (element.task_status == "error") {
+          } else if (element.task_status == "finished") {
+            let covidData = {
+              "date": element.date_processed.$date != null ? new Date(element.date_processed.$date).toString() : "Date",
+              "volume": element.data.affected_rate ?? "rate"
+            }
+            setSeriesData(covidData)
+            console.log("------- isWasProcessed")
+            console.log(wasProcessing)
+            if (wasProcessing) { // если происходит загрузка, то true, иначе уже обработано исследование
+              setProcessingState(AIState.finishedWithApply)
+            } else {
+              setProcessingState(AIState.finished)
+            }
+          } else {
+            // (element.task_status == "error" ||
+            // element.task_status == "failed")
             setProcessingState(AIState.error)
             return
-          }
-          let covidData = {
-            "date": element.date_processed.$date != null ? new Date(element.date_processed.$date).toString() : "Date",
-            "volume": element.data.affected_rate ?? "rate"
-          }
-          setSeriesData(covidData)
-          setProcessingState(AIState.finished)
-          console.log("------- isWasProcessed")
-          console.log(wasProcessing)
-          if (wasProcessing) {
-            window.location.reload()
           }
         })
         .catch(function(reason) {
@@ -157,34 +159,49 @@ export default function PanelAI({
     function renderState(_state: AIState) {
       switch (_state) {
         case AIState.undefined:
+          // ["default","primary","primaryActive","secondary","white","black","inherit","light","translucent"].
           return <Button size="initial"
                         className="px-2 py-2 text-base text-white"
-                        color="primaryLight"
+                        color="primary"
                         variant="outlined"
-                        fullWidth='true'
+                        fullWidth={true}
+                        border="primaryActive"
                         onClick={() => {
                           _handleStudyClick()
                         }}>
                           Detect covid
                   </Button>;
         case AIState.loading:
-          return <div><Icon name="dotted-circle" className="w-4 mb-2 text-primary-light" /></div>;
+          return <div className="loading h-full w-full">
+                      <div className="infinite-loading-bar bg-primary-light"></div>
+                </div>
         case AIState.finished:
+        case AIState.finishedWithApply:
           return <div>
-                <StudyItem
-                        date={seriesData?.date ?? "Date"}
-                        description={seriesData?.volume ?? "rate"}
-              />
-                <Button size="initial"
-                            className="px-2 py-2 text-base text-white"
-                            color="primaryLight"
-                            variant="outlined"
-                            fullWidth='true'
+                  <StudyItem
+                    date={seriesData?.date ?? "Date"}
+                    description={seriesData?.volume ?? "rate"}
+                  />
+                  {_state == AIState.finishedWithApply &&
+                    <Button className="px-2 py-2 text-base text-white"
+                            variant="contained"
+                            fullWidth={true}
                             onClick={() => {
-                              _handleStudyClick()
+                              window.location.reload()
                             }}>
-                              Detect covid
-                      </Button>
+                              Apply data
+                    </Button>
+                  }
+                  <Button size="initial"
+                          className="px-2 py-2 text-base text-white"
+                          color="light"
+                          variant="outlined"
+                          fullWidth={true}
+                          onClick={() => {
+                            _handleStudyClick()
+                          }}>
+                            Again detect covid
+                  </Button>
             </div>
         case AIState.error:
           return <div className="w-1 mb-2 text-primary-light">error</div>
@@ -201,21 +218,7 @@ export default function PanelAI({
               { renderState(processingState) }
             </div>
           </div>
-            {/* <div>{value.context.displayName}</div> */}
-            {/* <div>{title}</div> */}
         </React.Fragment>
-        // <StudyItem
-        //       date={date}
-        //       description={description}
-        //       numInstances={numInstances}
-        //       modalities={modalities}
-        //       trackedSeries={getTrackedSeries(displaySets)}
-        //       isActive={isExpanded}
-        //       onClick={() => {
-        //         onClickStudy(studyInstanceUid);
-        //       }}
-        //       data-cy="thumbnail-list"
-        //     />
     )
   }
 

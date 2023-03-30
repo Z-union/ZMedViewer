@@ -37,6 +37,7 @@ COPY .docker /usr/src/app/.docker
 COPY .webpack /usr/src/app/.webpack
 COPY extensions /usr/src/app/extensions
 COPY platform /usr/src/app/platform
+COPY zmed-extensions /usr/src/app/zmed-extensions
 COPY .browserslistrc /usr/src/app/.browserslistrc
 COPY aliases.config.js /usr/src/app/aliases.config.js
 COPY babel.config.js /usr/src/app/babel.config.js
@@ -50,7 +51,7 @@ RUN yarn config set workspaces-experimental true
 RUN yarn install
 # RUN yarn run build
 # RUN yarn run build:web
-ENV APP_CONFIG=config/docker_openresty-orthanc-keycloak.js
+ENV APP_CONFIG=config/default.js
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 ENV QUICK_BUILD true
 RUN yarn run build

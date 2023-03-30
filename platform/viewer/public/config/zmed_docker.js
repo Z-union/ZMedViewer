@@ -41,8 +41,8 @@ window.config = {
         enableStudyLazyLoad: true,
         supportsFuzzyMatching: false,
         supportsWildcard: true,
-        staticWado: true,
-        singlepart: 'bulkdata,video,pdf',
+        // staticWado: true,
+        // singlepart: 'bulkdata,video,pdf',
       },
     },
     {
@@ -66,11 +66,11 @@ window.config = {
     {
       // ~ REQUIRED
       // Authorization Server URL
-      authority: 'http://127.0.0.1:18080/auth/realms/ohif',
+      authority: 'http://91.219.167.110/auth/realms/ohif',
       // authority: 'http://127.0.0.1/auth/realms/ohif',
       client_id: 'ohif-viewer',
 
-      redirect_uri: '/callback', //'http://127.0.0.1/callback', // `OHIFStandaloneViewer.js`
+      redirect_uri: 'http://91.219.167.110/callback', // `OHIFStandaloneViewer.js`
       // "Authorization Code Flow"
       // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
       response_type: 'code',

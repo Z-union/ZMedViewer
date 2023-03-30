@@ -51,6 +51,9 @@ const zmedAI = {
 const zmedAIMammography = {
   panel: 'zmed-mammography.panelModule.panelZMedAIMammography',
 };
+const zmedAIInnopolis = {
+  panel: 'zmed-innopolis.panelModule.panelZMedAIInnopolist',
+};
 
 const extensionDependencies = {
   // Can derive the versions at least process.env.from npm_package_version
@@ -173,6 +176,7 @@ function modeFactory() {
                 tracked.measurements,
                 zmedAI.panel,
                 zmedAIMammography.panel,
+                zmedAIInnopolis.panel,
               ],
               // rightPanelDefaultClosed: true, // optional prop to start with collapse panels
               viewports: [

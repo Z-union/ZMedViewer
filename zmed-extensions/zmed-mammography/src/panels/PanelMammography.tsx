@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import PropTypes, { number } from 'prop-types';
-import { Button, Icon, LoadingIndicatorProgress } from '@ohif/ui';
+import { Button, Icon } from '@ohif/ui';
 import StudyItem from './StudyItem'
 import { useZMedAIMammography } from '../context/ZMedAIContextMammography';
 import axios from 'axios'
+import './PanelMammography.css';
 
 export default function PanelAIMammography({
     servicesManager,
@@ -30,9 +31,6 @@ export default function PanelAIMammography({
       right: ""
     })
     var timer = null || number
-    // const [displayName, setDisplayName] = useZMedAI()
-
-    // function checkStatus()
 
     function _handleStudyClick() {
       setProcessingState(AIState.loading)
@@ -46,7 +44,6 @@ export default function PanelAIMammography({
       }
 
       if (displaySets != undefined) {
-        console.log("send process mam")
         var data = JSON.stringify({
           "study_instance_uid": displaySets.StudyInstanceUID,
         });
@@ -69,9 +66,7 @@ export default function PanelAIMammography({
             clearInterval(interval)
             _retrieveData()
           }, 1000);
-          // response.data.task_id
           console.log(response)
-          // setProcessingState(AIState.finished)
         })
         .catch(function(reason) {
           console.error(reason)
@@ -82,7 +77,8 @@ export default function PanelAIMammography({
     const _retrieveData = async() => {
       const displaySets = DisplaySetService.getActiveDisplaySets()
                             .find(displaySet => displaySet && displaySet.Modality === 'MG');
-      if (displaySets.length == 0) {
+      console.log(displaySets)
+      if (displaySets == undefined || displaySets.length == 0) {
         setProcessingState(AIState.unsupported)
         return
       }
@@ -113,7 +109,7 @@ export default function PanelAIMammography({
             return
           } //job_type == 'covid'
           let element = response.data[lastIndex]
-          if (element.task_status == "queued" || element.task_status == "started") {
+          if (element.task_status == "PENDING" || element.task_status == "started") {
             setProcessingState(AIState.loading)
             var interval;
             interval = setInterval(() => {
@@ -121,18 +117,17 @@ export default function PanelAIMammography({
               _retrieveData()
             }, 1000);
             return
-          }
-          if (element.task_status == "error") {
+          } else if (element.task_status == "finished") {
+            let data = {
+              "left": element.data.left_breast,
+              "right": element.data.right_breast
+            }
+            setSeriesData(data)
+            setProcessingState(AIState.finished)
+          } else {
             setProcessingState(AIState.error)
             return
           }
-          console.log(element)
-          let data = {
-            "left": element.data.left_breast,
-            "right": element.data.right_breast
-          }
-          setSeriesData(data)
-          setProcessingState(AIState.finished)
         })
         .catch(function(reason) {
           setProcessingState(AIState.error)
@@ -153,16 +148,18 @@ export default function PanelAIMammography({
         case AIState.undefined:
           return <Button size="initial"
                         className="px-2 py-2 text-base text-white"
-                        color="primaryLight"
+                        color="primary"
                         variant="outlined"
-                        fullWidth='true'
+                        fullWidth={true}
                         onClick={() => {
                           _handleStudyClick()
                         }}>
                           Process
                   </Button>;
         case AIState.loading:
-          return <div><Icon name="dotted-circle" className="w-4 mb-2 text-primary-light" /></div>;
+          return <div className="loading h-full w-full">
+                      <div className="infinite-loading-bar bg-primary-light"></div>
+                </div>
         case AIState.finished:
           return <div>
                 <StudyItem

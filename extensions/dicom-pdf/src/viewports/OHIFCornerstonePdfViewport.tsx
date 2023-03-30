@@ -8,6 +8,8 @@ import React, {
 import PropTypes from 'prop-types';
 import * as PDFJS from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
+import ViewportActionBar from './ViewportActionbar';
+
 PDFJS.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 function OHIFCornerstonePdfViewport({ displaySets }) {
@@ -59,13 +61,21 @@ function OHIFCornerstonePdfViewport({ displaySets }) {
     load();
   }, [pdfUrl, displaySets]);
 
-  // const nextPage = () => pdfRef && currentPage < pdfRef.numPages && setCurrentPage(currentPage + 1);
+  const nextPage = () =>
+    pdfRef && currentPage < pdfRef.numPages && setCurrentPage(currentPage + 1);
 
-  // const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
+  const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
 
   return (
-    <div className="bg-primary-black w-full h-full flex justify-center">
-      <canvas ref={canvasRef}></canvas>
+    <div>
+      <ViewportActionBar
+        onArrowsClick={direction =>
+          direction == 'left' ? prevPage() : nextPage()
+        }
+      />
+      <div className="bg-primary-black w-full h-full flex justify-center">
+        <canvas ref={canvasRef}></canvas>
+      </div>
     </div>
   );
 }
