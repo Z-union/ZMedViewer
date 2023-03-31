@@ -8,7 +8,7 @@ import React, {
 import PropTypes from 'prop-types';
 import * as PDFJS from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
-import ViewportActionBar from './ViewportActionbar';
+import ViewportActionBar from './ViewportActionBar';
 
 PDFJS.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
