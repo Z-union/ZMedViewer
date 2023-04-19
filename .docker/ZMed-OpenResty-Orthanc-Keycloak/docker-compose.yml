@@ -55,6 +55,9 @@ services:
       - ./volumes/keycloak-themes/ohif:/opt/jboss/keycloak/themes/ohif
       # Previous Realm Config
       - ./config/ohif-keycloak-realm.json:/tmp/ohif-keycloak-realm.json
+      # ssl
+      - ./certs/app.zmed.z-union.ru/app.zmed.z-union.ru.crt:/etc/x509/https/tls.crt
+      - ./certs/app.zmed.z-union.ru/app.zmed.z-union.ru.key:/etc/x509/https/tls.key
     environment:
       # Database
       DB_VENDOR: postgres
