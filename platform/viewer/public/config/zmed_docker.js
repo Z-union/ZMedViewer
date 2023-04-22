@@ -30,10 +30,10 @@ window.config = {
         // qidoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
         // wadoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
         // new server
-        wadoUriRoot: 'http://91.219.167.110:8080/wado',
-        qidoRoot: 'http://91.219.167.110:8080/dicom-web',
-        wadoRoot: 'http://91.219.167.110:8080/dicom-web',
-        uploadUri: 'http://91.219.167.110:8080/instances',
+        wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
+        qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        uploadUri: 'https://app.zmed.z-union.ru/pacs/instances',
         qidoSupportsIncludeField: false,
         supportsReject: false,
         imageRendering: 'wadors',
@@ -66,11 +66,11 @@ window.config = {
     {
       // ~ REQUIRED
       // Authorization Server URL
-      authority: 'http://91.219.167.110/auth/realms/ohif',
+      authority: 'https://app.zmed.z-union.ru/auth/realms/ohif',
       // authority: 'http://127.0.0.1/auth/realms/ohif',
       client_id: 'ohif-viewer',
 
-      redirect_uri: 'http://91.219.167.110/callback', // `OHIFStandaloneViewer.js`
+      redirect_uri: 'https://app.zmed.z-union.ru/callback', // `OHIFStandaloneViewer.js`
       // "Authorization Code Flow"
       // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
       response_type: 'code',

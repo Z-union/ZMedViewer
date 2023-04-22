@@ -21,7 +21,8 @@
 
 # Stage 1: Build the application
 # docker build -t ohif/viewer:latest .
-FROM node:16.15.0-slim as json-copier
+#FROM node:16.15.0-slim as json-copier
+FROM node:lts-slim as json-copier
 
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
@@ -65,10 +66,12 @@ RUN yarn run build
 # Stage 2: Bundle the built application into a Docker container
 # which runs openresty (nginx) using Alpine Linux
 # LINK: https://hub.docker.com/r/openresty/openresty
-FROM openresty/openresty:1.15.8.1rc1-0-alpine-fat
+
+#FROM openresty/openresty:1.19.9.1-4-alpine-fat
+FROM openresty/openresty:alpine-fat
 
 RUN mkdir /var/log/nginx
-RUN apk add --no-cache openssl
+#RUN apk add --no-cache openssl
 RUN apk add --no-cache openssl-dev
 RUN apk add --no-cache git
 RUN apk add --no-cache gcc
@@ -80,8 +83,8 @@ RUN luarocks install lua-resty-jwt
 RUN luarocks install lua-resty-session
 RUN luarocks install lua-resty-http
 # !!!
-RUN luarocks install lua-resty-openidc
-RUN luarocks install luacrypto
+#RUN luarocks install lua-resty-openidc
+#RUN luarocks install luacrypto
 
 # Copy build output to image
 # COPY --from=builder /usr/src/app/build /var/www/html

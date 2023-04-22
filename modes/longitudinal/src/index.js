@@ -174,9 +174,9 @@ function modeFactory() {
               rightPanels: [
                 dicomSeg.panel,
                 tracked.measurements,
-                zmedAI.panel,
-                zmedAIMammography.panel,
-                zmedAIInnopolis.panel,
+                //zmedAI.panel,
+               // zmedAIMammography.panel,
+                //zmedAIInnopolis.panel,
               ],
               // rightPanelDefaultClosed: true, // optional prop to start with collapse panels
               viewports: [

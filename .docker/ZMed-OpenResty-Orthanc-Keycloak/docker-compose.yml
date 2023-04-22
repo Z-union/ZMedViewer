@@ -74,7 +74,8 @@ services:
       # KEYCLOAK_IMPORT: /tmp/ohif-keycloak-realm.json
       # KEYCLOAK_WELCOME_THEME: <theme-name>
       # KEYCLOAK_DEFAULT_THEME: <theme-name>
-      KEYCLOAK_HOSTNAME: https://app.zmed.z-union.ru/auth
+      #KEYCLOAK_HOSTNAME: https://app.zmed.z-union.ru/auth
+      KC_HOSTNAME_URL: https://app.zmed.z-union.ru/auth
       # KEYCLOAK_LOGLEVEL: DEBUG
       PROXY_ADDRESS_FORWARDING: 'true'
     ports:
