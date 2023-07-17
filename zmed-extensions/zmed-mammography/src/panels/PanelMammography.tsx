@@ -49,7 +49,7 @@ export default function PanelAIMammography({
         });
         var config = {
           method: 'post',
-          url: 'http://91.219.167.110:5057/mammography/',
+          url: 'http://52.29.40.199:5057/mammography/',
           headers: {
             'Content-Type': 'application/json'
           },
@@ -90,7 +90,7 @@ export default function PanelAIMammography({
         });
         var config = {
           method: 'post',
-          url: 'http://91.219.167.110:5057/study/',
+          url: 'http://52.29.40.199:5057/study/',
           headers: {
             'Content-Type': 'application/json'
           },

@@ -108,12 +108,10 @@ async function search(
   seriesInstanceUid,
   queryParameters
 ) {
-  let searchResult = await dicomWebClient.searchForStudies({
+  return await dicomWebClient.searchForStudies({
     studyInstanceUid: undefined,
     queryParams: queryParameters,
   });
-
-  return searchResult;
 }
 
 /**
@@ -172,6 +170,8 @@ function mapParams(params, options = {}) {
     PatientName: withWildcard(params.patientName),
     //PatientID: withWildcard(params.patientId),
     '00100020': withWildcard(params.patientId), // Temporarily to make the tests pass with dicomweb-server.. Apparently it's broken?
+    // '00200010':
+    // '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502',
     AccessionNumber: withWildcard(params.accessionNumber),
     StudyDescription: withWildcard(params.studyDescription),
     ModalitiesInStudy: params.modalitiesInStudy,
@@ -203,7 +203,7 @@ function mapParams(params, options = {}) {
   if (params.studyInstanceUid) {
     let studyUids = params.studyInstanceUid;
     studyUids = Array.isArray(studyUids) ? studyUids.join() : studyUids;
-    studyUids = studyUids.replace(/[^0-9.]+/g, '\\');
+    studyUids = studyUids.replace(/[^0-9.]+/g, ',');
     parameters.StudyInstanceUID = studyUids;
   }
 

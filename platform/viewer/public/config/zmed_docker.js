@@ -41,6 +41,8 @@ window.config = {
         enableStudyLazyLoad: true,
         supportsFuzzyMatching: false,
         supportsWildcard: true,
+        pacsUri: 'https://app.zmed.z-union.ru/pacs',
+        personalAccountUri: 'https://app.zmed.z-union.ru/personal',
         // staticWado: true,
         // singlepart: 'bulkdata,video,pdf',
       },

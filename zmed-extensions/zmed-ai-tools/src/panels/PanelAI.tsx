@@ -54,7 +54,7 @@ export default function PanelAI({
         });
         var config = {
           method: 'post',
-          url: 'http://91.219.167.110:5057/covid/',
+          url: 'http://52.29.40.199:5057/covid/',
           headers: {
             'Content-Type': 'application/json'
           },
@@ -95,7 +95,7 @@ export default function PanelAI({
         });
         var config = {
           method: 'post',
-          url: 'http://91.219.167.110:5057/series/',
+          url: 'http://52.29.40.199:5057/series/',
           headers: {
             'Content-Type': 'application/json'
           },

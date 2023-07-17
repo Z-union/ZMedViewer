@@ -475,6 +475,7 @@ function WorkList({
     const uploadFile = async file => {
       try {
         const response = await dataSource.query.instances.upload(file);
+        console.log(response);
         console.info(`file ${file} uploaded: ${response}`);
       } catch (ex) {
         // TODO: UI Notification Service
