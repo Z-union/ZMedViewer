@@ -30,10 +30,10 @@ window.config = {
         // qidoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
         // wadoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
         // new server
-        wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
-        qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
-        wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
-        uploadUri: 'https://app.zmed.z-union.ru/pacs/instances',
+        wadoUriRoot: '/pacs/wado',
+        qidoRoot: '/pacs/dicom-web',
+        wadoRoot: '/pacs/dicom-web',
+        uploadUri: '/pacs/instances',
         qidoSupportsIncludeField: false,
         supportsReject: false,
         imageRendering: 'wadors',
@@ -41,8 +41,8 @@ window.config = {
         enableStudyLazyLoad: true,
         supportsFuzzyMatching: false,
         supportsWildcard: true,
-        pacsUri: 'https://app.zmed.z-union.ru/pacs',
-        personalAccountUri: 'https://app.zmed.z-union.ru/personal',
+        pacsUri: '/pacs/',
+        personalAccountUri: '/personal',
         // staticWado: true,
         // singlepart: 'bulkdata,video,pdf',
       },
@@ -68,7 +68,7 @@ window.config = {
     {
       // ~ REQUIRED
       // Authorization Server URL
-      authority: 'https://app.zmed.z-union.ru/auth/realms/ohif',
+      authority: '/auth/realms/ohif',
       // authority: 'http://127.0.0.1/auth/realms/ohif',
       client_id: 'ohif-viewer',
 
