@@ -5,6 +5,7 @@ import StudyItem from './StudyItem'
 import { useZMedAI } from '../context/ZMedAIContext';
 import axios from 'axios'
 import './PanelAI.css';
+import configuration from './../config';
 
 export default function PanelAI({
     servicesManager,
@@ -54,7 +55,7 @@ export default function PanelAI({
         });
         var config = {
           method: 'post',
-          url: 'http://52.29.40.199:5057/covid/',
+          url: configuration.baseURL + 'covid/',
           headers: {
             'Content-Type': 'application/json'
           },
@@ -95,7 +96,7 @@ export default function PanelAI({
         });
         var config = {
           method: 'post',
-          url: 'http://52.29.40.199:5057/series/',
+          url: configuration.baseURL + 'series/',
           headers: {
             'Content-Type': 'application/json'
           },

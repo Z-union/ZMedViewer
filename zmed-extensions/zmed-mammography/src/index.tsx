@@ -3,6 +3,7 @@ import React from 'react';
 
 import PanelMammography from './panels/PanelMammography'
 import { ZMedAIContextMammography, ZMedAIContextProviderMammography } from './context/ZMedAIContextMammography'
+import config from './config'
 
 /**
  * You can remove any of the following modules if you don't need them.
@@ -24,7 +25,11 @@ export default {
     servicesManager,
     commandsManager,
     configuration = {},
-  }) => {},
+    appConfig,
+  }) => {
+    config.baseURL = appConfig.zmedtools.mammoURL
+    console.log('**************** MAMMOGR '+ config.baseURL)
+  },
   /**
    * PanelModule should provide a list of panels that will be available in OHIF
    * for Modes to consume and render. Each panel is defined by a {name,

@@ -4,6 +4,7 @@ import React from 'react';
 
 import PanelAI from './panels/PanelAI';
 import { ZMedAIContext, ZMedAIContextProvider } from './context/ZMedAIContext';
+import config from './config'
 
 /**
  * You can remove any of the following modules if you don't need them.
@@ -25,7 +26,10 @@ export default {
     servicesManager,
     commandsManager,
     configuration = {},
-  }) => {},
+    appConfig,
+  }) => {
+    config.baseURL = appConfig.zmedtools.innpolisURL
+  },
   /**
    * PanelModule should provide a list of panels that will be available in OHIF
    * for Modes to consume and render. Each panel is defined by a {name,

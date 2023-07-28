@@ -11,6 +11,7 @@ import StudyItem from './StudyItem';
 import { useZMedAI } from '../context/ZMedAIContext';
 import axios from 'axios';
 import './PanelAI.css';
+import configuration from './../config';
 
 export default function PanelAI({ servicesManager, commandsManager }) {
   const isMounted = React.useRef(true);
@@ -59,7 +60,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
       });
       const config = {
         method: 'post',
-        url: 'http://52.29.40.199:5057/innopolis/',
+        url: configuration.baseURL + 'innopolis/',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -106,7 +107,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
       });
       const config = {
         method: 'post',
-        url: 'http://52.29.40.199:5057/series/',
+        url: configuration.baseURL + 'series/',
         headers: {
           'Content-Type': 'application/json',
         },

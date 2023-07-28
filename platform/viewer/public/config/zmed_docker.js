@@ -63,6 +63,12 @@ window.config = {
     },
   ],
 
+  zmedtools: {
+    covidURL: 'https://app.zmed.z-union.ru/zmedtools/',
+    mammoURL: 'https://app.zmed.z-union.ru/zmedtools/',
+    innpolisURL: 'https://app.zmed.z-union.ru/zmedtools/',
+  },
+
   // This is an array, but we'll only use the first entry for now
   oidc: [
     {

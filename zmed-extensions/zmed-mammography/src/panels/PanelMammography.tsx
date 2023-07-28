@@ -5,6 +5,7 @@ import StudyItem from './StudyItem'
 import { useZMedAIMammography } from '../context/ZMedAIContextMammography';
 import axios from 'axios'
 import './PanelMammography.css';
+import configuration from './../config';
 
 export default function PanelAIMammography({
     servicesManager,
@@ -49,7 +50,7 @@ export default function PanelAIMammography({
         });
         var config = {
           method: 'post',
-          url: 'http://52.29.40.199:5057/mammography/',
+          url: configuration.baseURL + 'mammography/',
           headers: {
             'Content-Type': 'application/json'
           },
@@ -90,7 +91,7 @@ export default function PanelAIMammography({
         });
         var config = {
           method: 'post',
-          url: 'http://52.29.40.199:5057/study/',
+          url: configuration.baseURL + '/study/',
           headers: {
             'Content-Type': 'application/json'
           },
