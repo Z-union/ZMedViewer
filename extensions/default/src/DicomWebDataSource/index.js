@@ -133,39 +133,61 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
 
           headers['Content-Type'] = 'application/json';
 
-          var config = {
-            method: 'get',
-            url: uploaderConfig.personalAccountUri + '/me/studies/',
-            headers: headers,
-          };
-
           var results = [];
-          let response = await axios(config);
-          if (response.status == 200) {
-            const studies = response.data.map(el => {
-              return el.study_id;
-            });
-            if (studies.length > 0) {
-              origParams.studyInstanceUid = studies;
-              const { studyInstanceUid, seriesInstanceUid, ...mappedParams } =
-                mapParams(origParams, {
-                  supportsFuzzyMatching,
-                  supportsWildcard,
-                }) || {};
-              console.log(mappedParams);
-              // mappedParams.StudyID =
-              // '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502';
-              // const params1 = {
-              //   '0020000D':
-              //     '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502,1.2.826.0.1.3680043.8.498.10911534585509741287443105667543481197',
-              // };
-              results = await qidoSearch(
-                qidoDicomWebClient,
-                undefined,
-                undefined,
-                mappedParams
-              );
+
+          if (origParams.me) {
+            var config = {
+              method: 'get',
+              url: uploaderConfig.personalAccountUri + '/me/studies/',
+              headers: headers,
+            };
+
+            let response = await axios(config);
+            if (response.status == 200) {
+              const studies = response.data.map(el => {
+                return el.study_id;
+              });
+              if (studies.length > 0) {
+                origParams.studyInstanceUid = studies;
+                const { studyInstanceUid, seriesInstanceUid, ...mappedParams } =
+                  mapParams(origParams, {
+                    supportsFuzzyMatching,
+                    supportsWildcard,
+                  }) || {};
+                console.log(mappedParams);
+                // mappedParams.StudyID =
+                // '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502';
+                // const params1 = {
+                //   '0020000D':
+                //     '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502,1.2.826.0.1.3680043.8.498.10911534585509741287443105667543481197',
+                // };
+                results = await qidoSearch(
+                  qidoDicomWebClient,
+                  undefined,
+                  undefined,
+                  mappedParams
+                );
+              }
             }
+          } else {
+            const { studyInstanceUid, seriesInstanceUid, ...mappedParams } =
+              mapParams(origParams, {
+                supportsFuzzyMatching,
+                supportsWildcard,
+              }) || {};
+            console.log(mappedParams);
+            // mappedParams.StudyID =
+            // '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502';
+            // const params1 = {
+            //   '0020000D':
+            //     '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502,1.2.826.0.1.3680043.8.498.10911534585509741287443105667543481197',
+            // };
+            results = await qidoSearch(
+              qidoDicomWebClient,
+              undefined,
+              undefined,
+              mappedParams
+            );
           }
 
           // origParams.studyInstanceUid = [
