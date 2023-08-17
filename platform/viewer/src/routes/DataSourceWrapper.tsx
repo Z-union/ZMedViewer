@@ -70,7 +70,7 @@ function DataSourceWrapper(props) {
   useEffect(() => {
     const queryFilterValues = _getQueryFilterValues(
       location.search,
-      STUDIES_LIMIT
+      STUDIES_LIMIT,
     );
 
     // 204: no content
@@ -169,6 +169,7 @@ function _getQueryFilterValues(query, queryLimit) {
     // Offset...
     offset:
       Math.floor((pageNumber * resultsPerPage) / queryLimit) * (queryLimit - 1),
+    me: true,
   };
 
   // patientName: good
