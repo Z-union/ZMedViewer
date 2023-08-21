@@ -12,7 +12,12 @@ import ViewportActionBar from './ViewportActionBar';
 
 PDFJS.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
-function OHIFCornerstonePdfViewport({ displaySets }) {
+function OHIFCornerstonePdfViewport(props) {
+  const {displaySets, servicesManager} = props;
+  const {
+    UserAuthenticationService,
+  } = servicesManager.services;
+
   const [url, setUrl] = useState(null);
   const [pdfRef, setPdfRef] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,7 +59,8 @@ function OHIFCornerstonePdfViewport({ displaySets }) {
       console.log('****************************************************');
       console.log(displaySets);
       console.log(pdfUrl);
-      const loadedPdf = await PDFJS.getDocument(pdfUrl).promise;
+      // UserAuthenticationService.getAuthorizationHeader()
+      const loadedPdf = await PDFJS.getDocument({url: pdfUrl, httpHeaders: UserAuthenticationService.getAuthorizationHeader(), withCredentials: true}).promise;
       setPdfRef(loadedPdf);
     };
 
