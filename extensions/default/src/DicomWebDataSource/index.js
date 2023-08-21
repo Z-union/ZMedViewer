@@ -503,7 +503,6 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
               };
               // Todo: this needs to be from wado dicom web client
               return qidoDicomWebClient.retrieveBulkData(options).then(val => {
-                const ret = (val && val[0]) || undefined;
                 // There are DICOM PDF cases where the first ArrayBuffer in the array is
                 // the bulk data and DICOM video cases where the second ArrayBuffer is
                 // the bulk data. Here we play it safe and do a find.
