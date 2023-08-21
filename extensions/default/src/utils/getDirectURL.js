@@ -30,7 +30,8 @@ const getDirectURL = (wadoRoot, params) => {
   } = params;
   const value = instance[tag];
   if (!value) return undefined;
-
+  console.log("+++++ getDirectURL");
+  console.log(value);
   if (value.DirectRetrieveURL) return value.DirectRetrieveURL;
   if (value.InlineBinary) {
     const blob = utils.b64toBlob(value.InlineBinary, defaultType);
@@ -57,6 +58,8 @@ const getDirectURL = (wadoRoot, params) => {
   const BulkDataURI =
     (value && value.BulkDataURI) ||
     `series/${SeriesInstanceUID}/instances/${SOPInstanceUID}${defaultPath}`;
+  console.log("BULK");
+  console.log(BulkDataURI);
   const hasQuery = BulkDataURI.indexOf('?') != -1;
   const hasAccept = BulkDataURI.indexOf('accept=') != -1;
   const acceptUri =

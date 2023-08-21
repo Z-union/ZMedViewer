@@ -56,6 +56,7 @@ RUN yarn install --frozen-lockfile --verbose
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 ENV QUICK_BUILD true
 ENV APP_CONFIG=config/zmed_docker.js
+ENV PUBLIC_URL=https://app.zmed.z-union.ru/
 # ENV GENERATE_SOURCEMAP=false
 # ENV REACT_APP_CONFIG=config/default.js
 

@@ -306,7 +306,10 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
        *    or is already retrieved, or a promise to a URL for such use if a BulkDataURI
        */
       directURL: params => {
-        return getDirectURL(wadoRoot, params);
+	let res = getDirectURL(wadoRoot, params);
+	console.log("retrieve url from WebDataSource");
+        console.log(res);
+        return res;
       },
       series: {
         metadata: async ({

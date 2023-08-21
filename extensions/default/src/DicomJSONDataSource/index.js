@@ -148,7 +148,10 @@ function createDicomJSONApi(dicomJsonConfig) {
        *    or is already retrieved, or a promise to a URL for such use if a BulkDataURI
        */
       directURL: params => {
-        return getDirectURL(wadoRoot, params);
+        let res = getDirectURL(wadoRoot, params);
+	console.log("retrieve url from JSONDataSource");
+	console.log(res);
+	return res;
       },
       series: {
         metadata: ({
