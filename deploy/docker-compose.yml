@@ -78,7 +78,7 @@ services:
       KC_HOSTNAME_URL: https://app.zmed.z-union.ru/auth
       PROXY_ADDRESS_FORWARDING: 'true'
     depends_on:
-      - postgres
+      - zmed_postgres
     restart: unless-stopped
 
   # LINK: https://hub.docker.com/_/postgres/
