@@ -53,7 +53,7 @@ window.config = {
         supportsFuzzyMatching: false,
         supportsWildcard: true,
         staticWado: false,
-        singlepart: 'bulkdata,video,pdf',
+        singlepart: 'bulkdata,video',
         bulkDataURI: {
           enabled: true,
           relativeResolution: 'studies',
