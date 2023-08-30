@@ -54,9 +54,9 @@ window.config = {
         supportsWildcard: true,
         staticWado: false,
         singlepart: 'bulkdata,video',
+        dicomUploadEnabled: true,
         bulkDataURI: {
           enabled: true,
-          relativeResolution: 'studies',
         },
         omitQuotationForMultipartRequest: true,
       },
