@@ -6,6 +6,8 @@ window.config = {
   customizationService: {
     // Shows a custom route -access via http://localhost:3000/custom
     // helloPage: '@ohif/extension-default.customizationModule.helloPage',
+    dicomUploadComponent:
+      '@ohif/extension-cornerstone.customizationModule.cornerstoneDicomUploadComponent',
   },
   showStudyList: true,
   // some windows systems have issues with more than 3 web workers
