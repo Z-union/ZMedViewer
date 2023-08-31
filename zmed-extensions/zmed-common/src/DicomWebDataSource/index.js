@@ -290,12 +290,13 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
           return await wadoDicomWebClient.storeInstances(options)
             .then(function (response) {
               console.log("@@@@@@@@@@@@@ upload array to me");
+              console.log(typeof response);
               console.log(response);
               const headers = getAuthrorizationHeader();
 
               headers['Content-Type'] = 'application/json';
               const json = JSON.stringify({
-                study_id: studyInfo.data.MainDicomTags.StudyInstanceUID,
+                study_id: response["00081199"].Value[0]["00081155"].Value,
               });
               return axios.post(
                 dicomWebConfig.personalAccountUri + '/study/',
