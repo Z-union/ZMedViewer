@@ -141,7 +141,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
             head['Content-Type'] = 'application/json';
             var config = {
               method: 'get',
-              url: uploaderConfig.personalAccountUri + '/me/studies/',
+              url: dicomWebConfig.personalAccountUri + '/me/studies/',
               headers: head,
             };
 
@@ -324,7 +324,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
                 study_id: studyInfo.data.MainDicomTags.StudyInstanceUID,
               });
               return axios.post(
-                uploaderConfig.personalAccountUri + '/study/',
+                dicomWebConfig.personalAccountUri + '/study/',
                 json,
                 { headers }
               );
