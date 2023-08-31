@@ -1,4 +1,5 @@
 import { api } from 'dicomweb-client';
+import axios from 'axios';
 import {
   DicomMetadataStore,
   IWebApiDataSource,
@@ -311,6 +312,13 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
           };
 
           await wadoDicomWebClient.storeInstances(options);
+
+          // return wadoDicomWebClient.storeInstances(options)
+          // .then(function (response) {
+
+          // });
+
+
         }
       },
     },
