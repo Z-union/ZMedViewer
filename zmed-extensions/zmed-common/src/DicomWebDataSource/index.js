@@ -299,7 +299,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
 
               headers['Content-Type'] = 'application/json';
               const json = JSON.stringify({
-                study_id: dicomJSON["00081199"].Value[0]["00081155"].Value,
+                study_id: dicomJSON["00081199"].Value[0]["00081155"].Value[0],
               });
               return axios.post(
                 dicomWebConfig.personalAccountUri + '/study/',
