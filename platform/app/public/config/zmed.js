@@ -6,6 +6,7 @@ window.config = {
   customizationService: {
     // Shows a custom route -access via http://localhost:3000/custom
     // helloPage: '@ohif/extension-default.customizationModule.helloPage',
+    worksheet: `zmed-common.customizationModule.worksheet`,
     dicomUploadComponent:
       '@ohif/extension-cornerstone.customizationModule.cornerstoneDicomUploadComponent',
   },
@@ -25,7 +26,7 @@ window.config = {
     prefetch: 25,
   },
   // filterQueryParam: false,
-  defaultDataSourceName: 'dicomweb',
+  defaultDataSourceName: 'zmed-dicomweb',
   /* Dynamic config allows user to pass "configUrl" query string this allows to load config without recompiling application. The regex will ensure valid configuration source */
   // dangerouslyUseDynamicConfig: {
   //   enabled: true,
@@ -38,14 +39,20 @@ window.config = {
   // },
   dataSources: [
     {
-      namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
-      sourceName: 'dicomweb',
+      namespace: 'zmed-common.dataSourcesModule.zmed-dicomweb',
+      sourceName: 'zmed-dicomweb',
       configuration: {
         friendlyName: 'Orthanc Server',
         name: 'Orthanc',
+        // wadoUriRoot: 'http://52.29.40.199:8042/wado',
+        // qidoRoot: 'http://52.29.40.199:8042/dicom-web',
+        // wadoRoot: 'http://52.29.40.199:8042/dicom-web',
         wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
         qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
         wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        // wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
+        // qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        // wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
@@ -63,6 +70,32 @@ window.config = {
         omitQuotationForMultipartRequest: true,
       },
     },
+    // {
+    //   namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
+    //   sourceName: 'zmed-dicomweb',
+    //   configuration: {
+    //     friendlyName: 'Orthanc Server',
+    //     name: 'Orthanc',
+    //     wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
+    //     qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+    //     wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+    //     qidoSupportsIncludeField: false,
+    //     imageRendering: 'wadors',
+    //     thumbnailRendering: 'wadors',
+    //     omitQuotationForMultipartRequest: true,
+    //     supportsReject: false,
+    //     enableStudyLazyLoad: true,
+    //     supportsFuzzyMatching: false,
+    //     supportsWildcard: true,
+    //     staticWado: false,
+    //     singlepart: 'bulkdata,video',
+    //     dicomUploadEnabled: true,
+    //     bulkDataURI: {
+    //       enabled: true,
+    //     },
+    //     omitQuotationForMultipartRequest: true,
+    //   },
+    // },
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomjson',
       sourceName: 'dicomjson',
