@@ -282,6 +282,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
     store: {
       dicom: async (dataset, request) => {
         wadoDicomWebClient.headers = getAuthrorizationHeader();
+        wadoDicomWebClient.headers['Content-Type'] = 'application/json';
         if (dataset instanceof ArrayBuffer) {
           const options = {
             datasets: [dataset],
@@ -297,9 +298,11 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
               console.log(dicomJSON["00081199"]);
               const headers = getAuthrorizationHeader();
 
+              let instanceUid = dicomJSON["00081190"].Value[0].substring(this.href.lastIndexOf('/') + 1)
+
               headers['Content-Type'] = 'application/json';
               const json = JSON.stringify({
-                study_id: dicomJSON["00081199"].Value[0]["00081155"].Value[0],
+                study_id: instanceUid,
               });
               return axios.post(
                 dicomWebConfig.personalAccountUri + '/study/',
