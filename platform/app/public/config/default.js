@@ -4,10 +4,13 @@ window.config = {
   extensions: [],
   modes: [],
   customizationService: {
+    worksheet: `zmed-common.customizationModule.worksheet`,
+    dicomUploadComponent:
+      '@ohif/extension-cornerstone.customizationModule.cornerstoneDicomUploadComponent',
     // Shows a custom route -access via http://localhost:3000/custom
     // helloPage: '@ohif/extension-default.customizationModule.helloPage',
   },
-  showStudyList: true,
+  showStudyList: false,
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
   // below flag is for performance reasons, but it might not work for all servers
@@ -23,7 +26,7 @@ window.config = {
     prefetch: 25,
   },
   // filterQueryParam: false,
-  defaultDataSourceName: 'dicomweb',
+  defaultDataSourceName: 'zmed-dicomweb',
   /* Dynamic config allows user to pass "configUrl" query string this allows to load config without recompiling application. The regex will ensure valid configuration source */
   // dangerouslyUseDynamicConfig: {
   //   enabled: true,
@@ -35,6 +38,38 @@ window.config = {
   //   regex: /.*/,
   // },
   dataSources: [
+    {
+      namespace: 'zmed-common.dataSourcesModule.zmed-dicomweb',
+      sourceName: 'zmed-dicomweb',
+      configuration: {
+        friendlyName: 'Orthanc Server',
+        name: 'Orthanc',
+        // wadoUriRoot: 'http://52.29.40.199:8042/wado',
+        // qidoRoot: 'http://52.29.40.199:8042/dicom-web',
+        // wadoRoot: 'http://52.29.40.199:8042/dicom-web',
+        wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
+        qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        // wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
+        // qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        // wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        qidoSupportsIncludeField: false,
+        imageRendering: 'wadors',
+        thumbnailRendering: 'wadors',
+        omitQuotationForMultipartRequest: true,
+        supportsReject: false,
+        enableStudyLazyLoad: true,
+        supportsFuzzyMatching: false,
+        supportsWildcard: true,
+        staticWado: false,
+        singlepart: 'bulkdata,video',
+        dicomUploadEnabled: true,
+        bulkDataURI: {
+          enabled: true,
+        },
+        omitQuotationForMultipartRequest: true,
+      },
+    },
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
       sourceName: 'dicomweb',
@@ -100,6 +135,21 @@ window.config = {
     // Could use services manager here to bring up a dialog/modal if needed.
     console.warn('test, navigate to https://ohif.org/');
   },
+  oidc: [
+    {
+      // ~ REQUIRED
+      // Authorization Server URL
+      authority: '/auth/realms/ohif',
+      client_id: 'ohif-viewer',
+      redirect_uri: 'https://app.zmed.z-union.ru/callback', // `OHIFStandaloneViewer.js`
+      // "Authorization Code Flow"
+      // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
+      response_type: 'code',
+      scope: 'openid', // email profile openid
+      // ~ OPTIONAL
+      post_logout_redirect_uri: '/logout-redirect.html',
+    },
+  ],
   // whiteLabeling: {
   //   /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */
   //   createLogoComponentFn: function (React) {

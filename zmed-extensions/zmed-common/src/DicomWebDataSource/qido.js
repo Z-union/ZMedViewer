@@ -210,6 +210,10 @@ function mapParams(params, options = {}) {
     parameters.StudyInstanceUID = studyUids;
   }
 
+  if (params.me) {
+    parameters.me = true;
+  }
+
   // Clean query params of undefined values.
   const final = {};
   Object.keys(parameters).forEach(key => {

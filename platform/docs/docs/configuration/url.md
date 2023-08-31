@@ -9,7 +9,7 @@ You can modify the URL at any state of the app to get the desired result. Here
 are different part of the APP that you can modify:
 
 
-## WorkList
+##
 
 The WorkList can be modified by adding the following query parameters:
 
