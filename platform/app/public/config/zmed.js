@@ -67,7 +67,7 @@ window.config = {
         bulkDataURI: {
           enabled: true,
         },
-        omitQuotationForMultipartRequest: true,
+        personalAccountUri: '/personal',
       },
     },
     // {

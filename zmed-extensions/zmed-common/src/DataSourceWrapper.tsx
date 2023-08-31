@@ -262,6 +262,7 @@ function _getQueryFilterValues(query, queryLimit) {
     offset:
       Math.floor((pageNumber * resultsPerPage) / queryLimit) * (queryLimit - 1),
     config: query.get('configUrl'),
+    me: true
   };
 
   // patientName: good

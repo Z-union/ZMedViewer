@@ -128,7 +128,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
       studies: {
         mapParams: mapParams.bind(),
         search: async function (origParams) {
-          const headers = UserAuthenticationService.getAuthorizationHeader();
+          const headers = getAuthrorizationHeader();
 
           // headers['Content-Type'] = 'application/json';
 
@@ -311,14 +311,24 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
             request,
           };
 
-          await wadoDicomWebClient.storeInstances(options);
+          // await wadoDicomWebClient.storeInstances(options);
 
-          // return wadoDicomWebClient.storeInstances(options)
-          // .then(function (response) {
+          return wadoDicomWebClient.storeInstances(options)
+            .then(function (response) {
+              console.log("@@@@@@@@@@@@@ upload to me");
+              console.log(response);
+              const headers = getAuthrorizationHeader();
 
-          // });
-
-
+              headers['Content-Type'] = 'application/json';
+              const json = JSON.stringify({
+                study_id: studyInfo.data.MainDicomTags.StudyInstanceUID,
+              });
+              return axios.post(
+                uploaderConfig.personalAccountUri + '/study/',
+                json,
+                { headers }
+              );
+            });
         }
       },
     },
