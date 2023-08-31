@@ -292,11 +292,14 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
               console.log("@@@@@@@@@@@@@ upload array to me");
               console.log(typeof response);
               console.log(response);
+              let dicomJSON = JSON.parse(response);
+              console.log(dicomJSON);
+              console.log(dicomJSON["00081199"]);
               const headers = getAuthrorizationHeader();
 
               headers['Content-Type'] = 'application/json';
               const json = JSON.stringify({
-                study_id: response["00081199"].Value[0]["00081155"].Value,
+                study_id: dicomJSON["00081199"].Value[0]["00081155"].Value,
               });
               return axios.post(
                 dicomWebConfig.personalAccountUri + '/study/',
