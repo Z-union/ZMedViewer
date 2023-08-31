@@ -287,7 +287,22 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
             datasets: [dataset],
             request,
           };
-          await wadoDicomWebClient.storeInstances(options);
+          return await wadoDicomWebClient.storeInstances(options)
+            .then(function (response) {
+              console.log("@@@@@@@@@@@@@ upload array to me");
+              console.log(response);
+              const headers = getAuthrorizationHeader();
+
+              headers['Content-Type'] = 'application/json';
+              const json = JSON.stringify({
+                study_id: studyInfo.data.MainDicomTags.StudyInstanceUID,
+              });
+              return axios.post(
+                dicomWebConfig.personalAccountUri + '/study/',
+                json,
+                { headers }
+              );
+            });
         } else {
           const meta = {
             FileMetaInformationVersion:
