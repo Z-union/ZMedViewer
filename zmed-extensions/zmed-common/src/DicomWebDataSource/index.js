@@ -282,7 +282,6 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
     store: {
       dicom: async (dataset, request) => {
         wadoDicomWebClient.headers = getAuthrorizationHeader();
-        wadoDicomWebClient.headers['Content-Type'] = 'application/json';
         if (dataset instanceof ArrayBuffer) {
           const options = {
             datasets: [dataset],
