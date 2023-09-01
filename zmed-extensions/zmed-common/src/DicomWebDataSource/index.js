@@ -297,7 +297,8 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
               console.log(dicomJSON["00081199"]);
               const headers = getAuthrorizationHeader();
 
-              let instanceUid = dicomJSON["00081190"].Value[0].substring(this.href.lastIndexOf('/') + 1)
+              let instanceUrl = dicomJSON["00081190"].Value[0]
+              let instanceUid = instanceUrl.substring(instanceUrl.lastIndexOf('/') + 1);
 
               headers['Content-Type'] = 'application/json';
               const json = JSON.stringify({
