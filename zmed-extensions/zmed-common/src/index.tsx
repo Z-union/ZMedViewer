@@ -1,6 +1,11 @@
 import { id } from './id';
 import getCustomizationModule from './getCustomizationModule';
 import getDataSourcesModule from './getDataSourcesModule';
+import { Types } from '@ohif/core';
+import PanelAI from './panels/PanelAI';
+import config from './config'
+
+import React from 'react';
 
 /**
  * You can remove any of the following modules if you don't need them.
@@ -22,7 +27,10 @@ export default {
     servicesManager,
     commandsManager,
     configuration = {},
-  }) => {},
+    appConfig,
+  }) => {
+    config.innopolisBaseURL = appConfig.zmedtools.innpolisURL
+  },
   /**
    * PanelModule should provide a list of panels that will be available in OHIF
    * for Modes to consume and render. Each panel is defined by a {name,
@@ -33,7 +41,25 @@ export default {
     servicesManager,
     commandsManager,
     extensionManager,
-  }) => {},
+  }): Types.Panel[] => {
+    const wrappedPanel = () => {
+      return (
+        <PanelAI
+          commandsManager={commandsManager}
+          servicesManager={servicesManager}
+        />
+      );
+    };
+    return [
+      {
+        name: 'panelZMedAIInnopolist',
+        iconName: 'tab-segmentation',
+        iconLabel: 'ZFlu',
+        label: 'ZFlu',
+        component: wrappedPanel,
+      },
+    ];
+  },
   /**
    * ViewportModule should provide a list of viewports that will be available in OHIF
    * for Modes to consume and use in the viewports. Each viewport is defined by

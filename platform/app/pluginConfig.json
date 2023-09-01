@@ -59,9 +59,6 @@
   ],
   "modes": [
     {
-      "packageName": "@ohif/mode-longitudinal"
-    },
-    {
       "packageName": "@ohif/mode-tmtv"
     },
     {
@@ -76,6 +73,10 @@
       "packageName": "@ohif/mode-basic-dev-mode",
       "default": false,
       "version": "3.0.0"
+    },
+    {
+      "packageName": "zmed-mode-longitudinal",
+      "version": "0.0.1"
     }
   ],
   "public": [
