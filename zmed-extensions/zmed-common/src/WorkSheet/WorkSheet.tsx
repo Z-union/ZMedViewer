@@ -23,10 +23,11 @@ import {
   TooltipClipboard,
   Header,
   useModal,
-  AboutModal,
   UserPreferences,
   LoadingIndicatorProgress,
 } from '@ohif/ui';
+
+import AboutModal from '../components/AboutModal' ;
 
 import i18n from '@ohif/i18n';
 
@@ -414,7 +415,7 @@ function WorkSheet({
       onClick: () =>
         show({
           content: AboutModal,
-          title: 'About OHIF Viewer',
+          title: 'About ZMed Viewer',
           contentProps: { versionNumber, commitHash },
         }),
     },

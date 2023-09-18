@@ -29,6 +29,7 @@ RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 
 ENV APP_CONFIG=config/zmed.js
+ENV HTML_TEMPLATE=zmed-index.html
 ENV PUBLIC_URL=https://app.zmed.z-union.ru/
 
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
