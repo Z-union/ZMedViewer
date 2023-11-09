@@ -12,6 +12,8 @@ import axios from 'axios';
 import './PanelAI.css';
 import configuration from './../config';
 
+let Modalities = ['DX', 'CR']
+
 export default function PanelAI({ servicesManager, commandsManager }) {
   const isMounted = React.useRef(true);
   const {
@@ -44,7 +46,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
     setWasProcessing(processing);
     setProcessingState(AIState.loading);
     const displaySets = DisplaySetService.getActiveDisplaySets().find(
-      displaySet => displaySet && displaySet.Modality === 'DX'
+      displaySet => displaySet && Modalities.includes(displaySet.Modality)
     );
     console.log(displaySets.SeriesInstanceUID);
     console.log(displaySets.StudyInstanceUID);
@@ -90,9 +92,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
     console.log("-------------------")
     console.log(DisplaySetService.getActiveDisplaySets())
     const displaySets = DisplaySetService.getActiveDisplaySets().find(
-      displaySet => displaySet &&
-      // displaySet.SOPClassUID
-      displaySet.Modality === 'DX'
+      displaySet => displaySet && Modalities.includes(displaySet.Modality)
     );
     if (displaySets == undefined || displaySets.length == 0) {
       setProcessingState(AIState.unsupported);
