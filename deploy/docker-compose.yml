@@ -71,7 +71,7 @@ services:
       DB_PASSWORD: password
       # Keycloak
       KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: password
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
       KEYCLOAK_IMPORT: /tmp/ohif-keycloak-realm.json -Dkeycloak.profile.feature.upload_scripts=enabled
       # KEYCLOAK_WELCOME_THEME: <theme-name>
       # KEYCLOAK_DEFAULT_THEME: <theme-name>
