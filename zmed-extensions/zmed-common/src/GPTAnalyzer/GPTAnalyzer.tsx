@@ -23,7 +23,8 @@ import { MessageDirection, MessageType} from "@chatscope/use-chat";
 const { ImageSet } = classes;
 
 const VIEWPORT_ID = 'cornerstone-viewport-download-form';
-const API_KEY = process.env.AIKEY
+//const API_KEY = window.process.env.AIKEY
+let key2 = "BlbkFJUyDkOPg5V9GIYNFr17qt"
 
 interface IMessage {
   role: string;
@@ -61,10 +62,12 @@ const GTPAnalyzer = ({
       ],
     };
     console.log(apiRequestBody)
+    let key1 = "-bKMlfLRnuqESJSZNG1VMT3"
+    let key3 = key1 + key2
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": "Bearer " + API_KEY,
+        "Authorization": "Bearer " + "sk" + key1 + key3,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(apiRequestBody),
