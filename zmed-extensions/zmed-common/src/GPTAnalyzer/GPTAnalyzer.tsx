@@ -23,7 +23,7 @@ import { MessageDirection, MessageType} from "@chatscope/use-chat";
 const { ImageSet } = classes;
 
 const VIEWPORT_ID = 'cornerstone-viewport-download-form';
-const API_KEY = "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"
+const API_KEY = process.env.AIKEY
 
 interface IMessage {
   role: string;
