@@ -67,7 +67,7 @@ const GTPAnalyzer = ({
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": "Bearer " + "sk" + key1 + key3,
+        "Authorization": "Bearer " + "sk" +  + key3,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(apiRequestBody),
