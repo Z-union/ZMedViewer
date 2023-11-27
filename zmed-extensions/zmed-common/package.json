@@ -43,7 +43,9 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.20.13",
-    "axios": "^0.26.1"
+    "axios": "^0.26.1",
+    "@chatscope/chat-ui-kit-react": "^1.10.1",
+    "@chatscope/use-chat": "^3.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.21.4",

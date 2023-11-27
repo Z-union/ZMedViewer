@@ -600,6 +600,21 @@ const toolbarButtons = [
           ],
           'Dicom Tag Browser'
         ),
+        _createActionButton('GPTAnalyzer', 'list-bullets', 'ZMed Analyzer', [
+          {
+            commandName: 'openGPTAnalyzer',
+            commandOptions: {},
+            context: 'DEFAULT',
+          },
+        ]),
+
+        // id: any;
+        // icon: any;
+        // label: any;
+        // type: any;
+        // commands: any;
+        // tooltip: any;
+        // uiType: any;
       ],
     },
   },
