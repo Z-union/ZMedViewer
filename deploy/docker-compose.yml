@@ -16,7 +16,7 @@ services:
     image: zmed_webapp:latest
     container_name: zmed_webapp
     environment:
-      - AIKEY=${AIKEY}
+      - REACT_APP_AIKEY=${AIKEY}
     volumes:
       # Nginx config
       - ./config/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
