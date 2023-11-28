@@ -5,6 +5,7 @@ import { Types } from '@ohif/core';
 import PanelAI from './panels/PanelAI';
 import config from './config'
 import getCommandsModule from './commandsModule';
+import React from 'react';
 
 /**
  * You can remove any of the following modules if you don't need them.
