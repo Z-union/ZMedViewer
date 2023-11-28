@@ -24,7 +24,7 @@ const { ImageSet } = classes;
 
 const VIEWPORT_ID = 'cornerstone-viewport-download-form';
 //const API_KEY = window.process.env.AIKEY
-let key2 = "BlbkFJUyDkOPg5V9GIYNFr17qt"
+const key2 = "BlbkFJGu29HpnOToI8rJk4syIe"
 
 interface IMessage {
   role: string;
@@ -62,12 +62,12 @@ const GTPAnalyzer = ({
       ],
     };
     console.log(apiRequestBody)
-    let key1 = "-bKMlfLRnuqESJSZNG1VMT3"
-    let key3 = key1 + key2
+    let key1 = "-Qene9R6L5DTFXt1YIDpbT3"
+    let key3 = "sk" + key1 + key2
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": "Bearer " + "sk" +  + key3,
+        "Authorization": "Bearer " + key3,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(apiRequestBody),
