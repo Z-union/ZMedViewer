@@ -1,6 +1,7 @@
 import { id } from './id';
 import getCustomizationModule from './getCustomizationModule';
 import getDataSourcesModule from './getDataSourcesModule';
+import getLayoutTemplateModule from './getLayoutTemplateModule.js';
 import { Types } from '@ohif/core';
 import PanelAI from './panels/PanelAI';
 import config from './config'
@@ -90,11 +91,7 @@ export default {
    * a Header, left and right sidebars, and a viewport section in the middle
    * of the viewer.
    */
-  getLayoutTemplateModule: ({
-    servicesManager,
-    commandsManager,
-    extensionManager,
-  }) => {},
+  getLayoutTemplateModule,
   /**
    * SopClassHandlerModule should provide a list of sop class handlers that will be
    * available in OHIF for Modes to consume and use to create displaySets from Series.

@@ -8,7 +8,7 @@ import initToolGroups from './initToolGroups.js';
 const NON_IMAGE_MODALITIES = ['SM', 'ECG', 'SR', 'SEG', 'RTSTRUCT'];
 
 const ohif = {
-  layout: '@ohif/extension-default.layoutTemplateModule.viewerLayout',
+  layout: 'zmed-common.layoutTemplateModule.viewerLayout',
   sopClassHandler: '@ohif/extension-default.sopClassHandlerModule.stack',
   thumbnailList: '@ohif/extension-default.panelModule.seriesList',
 };
@@ -65,6 +65,7 @@ const extensionDependencies = {
   '@ohif/extension-cornerstone-dicom-rt': '^3.0.0',
   '@ohif/extension-dicom-pdf': '^3.0.1',
   '@ohif/extension-dicom-video': '^3.0.1',
+  'zmed-common': '^0.0.1',
 };
 
 function modeFactory({ modeConfiguration }) {
