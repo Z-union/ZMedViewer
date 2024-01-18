@@ -1,4 +1,5 @@
 import { api } from 'dicomweb-client';
+import axios from 'axios';
 import {
   DicomMetadataStore,
   IWebApiDataSource,
@@ -42,6 +43,7 @@ const metadataProvider = classes.MetadataProvider;
  * @param {string} wadoUriRoot - Legacy? (potentially unused/replaced)
  * @param {string} qidoRoot - Base URL to use for QIDO requests
  * @param {string} wadoRoot - Base URL to use for WADO requests
+ * @param {string} uploadUri - Base URL for upload dicoms
  * @param {boolean} qidoSupportsIncludeField - Whether QIDO supports the "Include" option to request additional fields in response
  * @param {string} imageRengering - wadors | ? (unsure of where/how this is used)
  * @param {string} thumbnailRendering - wadors | ? (unsure of where/how this is used)
@@ -53,12 +55,15 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
   const {
     qidoRoot,
     wadoRoot,
+    uploadUri,
     enableStudyLazyLoad,
     supportsFuzzyMatching,
     supportsWildcard,
     supportsReject,
     staticWado,
     singlepart,
+    pacsUri,
+    personalAccountUri,
   } = dicomWebConfig;
 
   const qidoConfig = {
@@ -75,6 +80,21 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
     singlepart,
     headers: UserAuthenticationService.getAuthorizationHeader(),
     errorInterceptor: errorHandler.getHTTPErrorHandler(),
+  };
+
+  const uploaderConfig = {
+    pacsUri,
+    personalAccountUri,
+  };
+
+  const __pFileReader = file => {
+    return new Promise((resolve, reject) => {
+      var fr = new FileReader();
+      fr.readAsArrayBuffer(file);
+      fr.onload = () => {
+        resolve(fr);
+      };
+    });
   };
 
   // TODO -> Two clients sucks, but its better than 1000.
@@ -99,6 +119,7 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
         StudyInstanceUIDs && Array.isArray(StudyInstanceUIDs)
           ? StudyInstanceUIDs
           : [StudyInstanceUIDs];
+
       return StudyInstanceUIDsAsArray;
     },
     query: {
@@ -110,18 +131,82 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
             qidoDicomWebClient.headers = headers;
           }
 
-          const { studyInstanceUid, seriesInstanceUid, ...mappedParams } =
-            mapParams(origParams, {
-              supportsFuzzyMatching,
-              supportsWildcard,
-            }) || {};
+          headers['Content-Type'] = 'application/json';
 
-          const results = await qidoSearch(
-            qidoDicomWebClient,
-            undefined,
-            undefined,
-            mappedParams
-          );
+          var results = [];
+
+          if (origParams.me) {
+            var config = {
+              method: 'get',
+              url: uploaderConfig.personalAccountUri + '/me/studies/',
+              headers: headers,
+            };
+
+            let response = await axios(config);
+            if (response.status == 200) {
+              const studies = response.data.map(el => {
+                return el.study_id;
+              });
+              if (studies.length > 0) {
+                origParams.studyInstanceUid = studies;
+                const { studyInstanceUid, seriesInstanceUid, ...mappedParams } =
+                  mapParams(origParams, {
+                    supportsFuzzyMatching,
+                    supportsWildcard,
+                  }) || {};
+                console.log(mappedParams);
+                // mappedParams.StudyID =
+                // '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502';
+                // const params1 = {
+                //   '0020000D':
+                //     '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502,1.2.826.0.1.3680043.8.498.10911534585509741287443105667543481197',
+                // };
+                results = await qidoSearch(
+                  qidoDicomWebClient,
+                  undefined,
+                  undefined,
+                  mappedParams
+                );
+              }
+            }
+          } else {
+            const { studyInstanceUid, seriesInstanceUid, ...mappedParams } =
+              mapParams(origParams, {
+                supportsFuzzyMatching,
+                supportsWildcard,
+              }) || {};
+            console.log(mappedParams);
+            // mappedParams.StudyID =
+            // '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502';
+            // const params1 = {
+            //   '0020000D':
+            //     '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502,1.2.826.0.1.3680043.8.498.10911534585509741287443105667543481197',
+            // };
+            results = await qidoSearch(
+              qidoDicomWebClient,
+              undefined,
+              undefined,
+              mappedParams
+            );
+          }
+
+          // origParams.studyInstanceUid = [
+          // '1.2.826.0.1.3680043.8.498.49898876747080416258699581185755842502',
+          // '1.2.826.0.1.3680043.8.498.10911534585509741287443105667543481197',
+          // ];
+
+          // return qidoDicomWebClient
+          //   .searchForStudies({
+          //     studyInstanceUid: undefined,
+          //     queryParams: params1,
+          //   })
+          //   .then(result => {
+          //     console.log('searchResult');
+          //     console.log(result);
+          //     return processResults(results);
+          //   });
+          // console.log('searchResult');
+          // console.log(results);
 
           return processResults(results);
         },
@@ -159,6 +244,53 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
             queryParameters
           );
         },
+        upload: async function (file) {
+          console.log(`I'm will upload:`);
+          console.log(file);
+          var headers = UserAuthenticationService.getAuthorizationHeader();
+          headers['Content-Type'] = 'application/octet-stream';
+          headers.Accept = 'application/json';
+          console.log('init reader');
+          return await __pFileReader(file).then(async reader => {
+            console.log('read file');
+            const stringBuffer = new Uint8Array(reader.result);
+            // var config = {
+            //   method: 'post',
+            //   url: uploadUri,
+            //   headers: headers,
+            //   data: stringBuffer,
+            // };
+            console.log('!!!!!!!!!!!!!!!! UploadFile');
+            let response = await axios.post(uploadUri, stringBuffer, {
+              headers: headers,
+            });
+            console.log(response);
+            if (response.status == 200) {
+              const headers = UserAuthenticationService.getAuthorizationHeader();
+
+              headers['Content-Type'] = 'application/json';
+              const studyInfo = await axios.get(
+                uploaderConfig.pacsUri +
+                '/studies/' +
+                response.data.ParentStudy,
+                {
+                  headers,
+                }
+              );
+              console.log(studyInfo);
+              const json = JSON.stringify({
+                study_id: studyInfo.data.MainDicomTags.StudyInstanceUID,
+              });
+              const meResponse = await axios.post(
+                uploaderConfig.personalAccountUri + '/study/',
+                json,
+                { headers }
+              );
+              console.log(meResponse);
+            }
+            return response.data;
+          });
+        },
       },
     },
     retrieve: {
@@ -174,7 +306,10 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
        *    or is already retrieved, or a promise to a URL for such use if a BulkDataURI
        */
       directURL: params => {
-        return getDirectURL(wadoRoot, params);
+        let res = getDirectURL({ wadoRoot, singlepart }, params);
+        console.log("retrieve url from WebDataSource");
+        console.log(res);
+        return res;
       },
       series: {
         metadata: async ({
@@ -368,7 +503,13 @@ function createDicomWebApi(dicomWebConfig, UserAuthenticationService) {
               };
               // Todo: this needs to be from wado dicom web client
               return qidoDicomWebClient.retrieveBulkData(options).then(val => {
-                const ret = (val && val[0]) || undefined;
+                // There are DICOM PDF cases where the first ArrayBuffer in the array is
+                // the bulk data and DICOM video cases where the second ArrayBuffer is
+                // the bulk data. Here we play it safe and do a find.
+                const ret =
+                  (val instanceof Array &&
+                    val.find(arrayBuffer => arrayBuffer?.byteLength)) ||
+                  undefined;
                 value.Value = ret;
                 return ret;
               });

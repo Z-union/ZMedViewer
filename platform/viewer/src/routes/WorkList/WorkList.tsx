@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import classnames from 'classnames';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
@@ -11,9 +11,11 @@ import filtersMeta from './filtersMeta.js';
 import { useAppConfig } from '@state';
 import { useDebounce, useQuery } from '@hooks';
 import { utils, hotkeys } from '@ohif/core';
+import Dropzone from 'react-dropzone';
 
 import {
   Icon,
+  IconButton,
   StudyListExpandedRow,
   Button,
   EmptyStudies,
@@ -36,6 +38,41 @@ const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
 const seriesInStudiesMap = new Map();
 
+const getLoadButton = (onDrop, text, isDir) => {
+  return (
+    <Dropzone
+      onDrop={onDrop}
+      noDrag
+      accept="*/dicom, .dcm, image/dcm, */dcm, .dicom, application/zip, application/x-zip-compressed, multipart/x-zip"
+    >
+      {({ getRootProps, getInputProps }) => (
+        <div {...getRootProps()}>
+          <Button
+            rounded="full"
+            size="medium"
+            variant="outlined" // mb outlined contained
+            disabled={false}
+            endIcon={<Icon name="uploadFile" />} // launch-arrow | launch-info
+            className={classnames('font-bold', 'ml-2')}
+            onClick={() => {}}
+          >
+            {text}
+            {isDir ? (
+              <input
+                {...getInputProps()}
+                webkitdirectory="true"
+                mozdirectory="true"
+              />
+            ) : (
+              <input {...getInputProps()} />
+            )}
+          </Button>
+        </div>
+      )}
+    </Dropzone>
+  );
+};
+
 /**
  * TODO:
  * - debounce `setFilterValues` (150ms?)
@@ -48,6 +85,7 @@ function WorkList({
   hotkeysManager,
   dataPath,
 }) {
+  const dropzoneRef = useRef();
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const { show, hide } = useModal();
   const { t } = useTranslation();
@@ -62,6 +100,9 @@ function WorkList({
     ...defaultFilterValues,
     ...queryFilterValues,
   });
+  const [countUploadingFiles, setCountUploadinFiles] = useState(0);
+  const [countUploadedFiles, setCountUploadedFiles] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const debouncedFilterValues = useDebounce(filterValues, 200);
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
@@ -429,50 +470,109 @@ function WorkList({
     });
   }
 
+  const onDrop = async acceptedFiles => {
+    console.log(acceptedFiles);
+    const uploadFile = async file => {
+      try {
+        const response = await dataSource.query.instances.upload(file);
+        console.log(response);
+        console.info(`file ${file} uploaded: ${response}`);
+      } catch (ex) {
+        // TODO: UI Notification Service
+        console.warn(ex);
+      }
+    };
+
+    for (let i = 0; i < acceptedFiles.length; i++) {
+      await uploadFile(acceptedFiles[i]);
+    }
+    navigate({
+      pathname: '/',
+      search: undefined,
+    });
+    // const studies = await filesToStudies(acceptedFiles, dataSource)
+    // Todo: navigate to work list and let user select a mode
+    // navigate(`/viewer/dicomlocal?StudyInstanceUIDs=${studies[0]}`)
+  };
+
+  const focusedStyle = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    backgroundColor: '#FFFFFF33',
+    width: '100vw',
+    height: '100vh',
+    zIndex: 999,
+  };
+
+  const [dropInitiated, setDropInitiated] = React.useState(false);
+
+  console.log('Drop should be here');
+
   return (
-    <div
-      className={classnames('bg-black h-full', {
-        'h-screen': !hasStudies,
-      })}
+    <Dropzone
+      ref={dropzoneRef}
+      onDrop={onDrop}
+      noClick={true}
+      isFocused={true}
+      multiple={false}
+      accept="*/dicom, .dcm, image/dcm, */dcm, .dicom, application/zip, application/x-zip-compressed, multipart/x-zip"
     >
-      <Header
-        isSticky
-        menuOptions={menuOptions}
-        isReturnEnabled={false}
-        WhiteLabeling={appConfig.whiteLabeling}
-      />
-      <StudyListFilter
-        numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}
-        filtersMeta={filtersMeta}
-        filterValues={{ ...filterValues, ...defaultSortValues }}
-        onChange={setFilterValues}
-        clearFilters={() => setFilterValues(defaultFilterValues)}
-        isFiltering={isFiltering(filterValues, defaultFilterValues)}
-      />
-      {hasStudies ? (
-        <>
-          <StudyListTable
-            tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
-            numOfStudies={numOfStudies}
+      {({ getRootProps, getInputProps, isDragActive }) => (
+        <div
+          {...getRootProps()}
+          className={classnames('bg-black h-full', {
+            'h-screen': !hasStudies,
+          })}
+        >
+          {isDragActive && <div style={focusedStyle}></div>}
+          <Header
+            primaryChildren={
+              <div>{getLoadButton(onDrop, 'Upload file', false)}</div>
+            }
+            isSticky
+            menuOptions={menuOptions}
+            isReturnEnabled={false}
+            WhiteLabeling={appConfig.whiteLabeling}
+          />
+          <StudyListFilter
+            numOfStudies={
+              pageNumber * resultsPerPage > 100 ? 101 : numOfStudies
+            }
             filtersMeta={filtersMeta}
+            filterValues={{ ...filterValues, ...defaultSortValues }}
+            onChange={setFilterValues}
+            clearFilters={() => setFilterValues(defaultFilterValues)}
+            isFiltering={isFiltering(filterValues, defaultFilterValues)}
           />
-          <StudyListPagination
-            onChangePage={onPageNumberChange}
-            onChangePerPage={onResultsPerPageChange}
-            currentPage={pageNumber}
-            perPage={resultsPerPage}
-          />
-        </>
-      ) : (
-        <div className="flex flex-col items-center justify-center pt-48">
-          {appConfig.showLoadingIndicator && isLoadingData ? (
-            <LoadingIndicatorProgress className={'w-full h-full bg-black'} />
+          {hasStudies ? (
+            <>
+              <StudyListTable
+                tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
+                numOfStudies={numOfStudies}
+                filtersMeta={filtersMeta}
+              />
+              <StudyListPagination
+                onChangePage={onPageNumberChange}
+                onChangePerPage={onResultsPerPageChange}
+                currentPage={pageNumber}
+                perPage={resultsPerPage}
+              />
+            </>
           ) : (
-            <EmptyStudies />
+            <div className="flex flex-col items-center justify-center pt-48">
+              {appConfig.showLoadingIndicator && isLoadingData ? (
+                <LoadingIndicatorProgress
+                  className={'w-full h-full bg-black'}
+                />
+              ) : (
+                <EmptyStudies />
+              )}
+            </div>
           )}
         </div>
       )}
-    </div>
+    </Dropzone>
   );
 }
 

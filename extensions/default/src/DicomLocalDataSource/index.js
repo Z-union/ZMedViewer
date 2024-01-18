@@ -44,7 +44,7 @@ function createDicomLocalApi(dicomLocalConfig) {
     },
     query: {
       studies: {
-        mapParams: () => {},
+        mapParams: () => { },
         search: params => {
           const studyUIDs = DicomMetadataStore.getStudyInstanceUIDs();
 

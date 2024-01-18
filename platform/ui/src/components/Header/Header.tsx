@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { NavBar, Svg, Icon, IconButton, Dropdown } from '../';
 
-function Header({ children, menuOptions, isReturnEnabled, onClickReturnButton, isSticky, WhiteLabeling }) {
+function Header({ children, primaryChildren, menuOptions, isReturnEnabled, onClickReturnButton, isSticky, WhiteLabeling }) {
   const { t } = useTranslation('Header');
 
   // TODO: this should be passed in as a prop instead and the react-router-dom
@@ -17,7 +17,7 @@ function Header({ children, menuOptions, isReturnEnabled, onClickReturnButton, i
 
   const CustomLogo = (React) => {
     return WhiteLabeling.createLogoComponentFn(React)
-  }
+  };
 
   return (
     <NavBar className='justify-between border-b-4 border-black' isSticky={isSticky}>
@@ -36,7 +36,8 @@ function Header({ children, menuOptions, isReturnEnabled, onClickReturnButton, i
         <div className="flex items-center">{children}</div>
         <div className="flex items-center">
           <span className="mr-3 text-lg text-common-light">
-            {t('INVESTIGATIONAL USE ONLY')}
+            {primaryChildren}
+            {/* {t('INVESTIGATIONAL USE ONLY')} */}
           </span>
           <Dropdown id="options" showDropdownIcon={false} list={menuOptions}>
             <IconButton
@@ -73,6 +74,7 @@ Header.propTypes = {
     })
   ),
   children: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
+  primaryChildren: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
   isReturnEnabled: PropTypes.bool,
   isSticky: PropTypes.bool,
   onClickReturnButton: PropTypes.func,

@@ -55,9 +55,9 @@ const ViewportActionBar = ({
     return () => clickOutsideListener.remove();
   }, [clickOutsideListener, showPatientInfo]);
 
-  const borderColor = useAltStyling ? '#365A6A' : '#1D205A';
+  const borderColor = useAltStyling ? '#365A6A' : '#00000000';
 
-  let backgroundColor = '#020424';
+  let backgroundColor = '#00000000';
   if (useAltStyling) {
     backgroundColor = '#031923';
   }

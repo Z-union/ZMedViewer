@@ -19,18 +19,19 @@ import {
  * @returns an absolute URL to the resource, if the absolute URL can be retrieved as singlepart,
  *    or is already retrieved, or a promise to a URL for such use if a BulkDataURI
  */
-const getDirectURL = (wadoRoot, params) => {
+const getDirectURL = (config, params) => {
+  const { wadoRoot, singlepart } = config;
   const {
     instance,
     tag = 'PixelData',
     defaultPath = '/pixeldata',
     defaultType = 'video/mp4',
-    singlepart = null,
     singlepart: fetchPart = 'video',
   } = params;
   const value = instance[tag];
   if (!value) return undefined;
-
+  console.log("+++++ getDirectURL");
+  console.log(value);
   if (value.DirectRetrieveURL) return value.DirectRetrieveURL;
   if (value.InlineBinary) {
     const blob = utils.b64toBlob(value.InlineBinary, defaultType);
@@ -53,20 +54,24 @@ const getDirectURL = (wadoRoot, params) => {
     return undefined;
   }
 
-  const {
-    StudyInstanceUID,
-    SeriesInstanceUID,
-    SOPInstanceUID,
-  } = instance;
+  const { StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID } = instance;
   const BulkDataURI =
     (value && value.BulkDataURI) ||
     `series/${SeriesInstanceUID}/instances/${SOPInstanceUID}${defaultPath}`;
+  console.log("BULK");
+  console.log(BulkDataURI);
   const hasQuery = BulkDataURI.indexOf('?') != -1;
   const hasAccept = BulkDataURI.indexOf('accept=') != -1;
   const acceptUri =
     BulkDataURI +
     (hasAccept ? '' : (hasQuery ? '&' : '?') + `accept=${defaultType}`);
-  if (BulkDataURI.indexOf('http') === 0) return acceptUri;
+  if (BulkDataURI.indexOf('http') === 0) {
+    if (tag === 'PixelData' || tag === 'EncapsulatedDocument') {
+      return `${wadoRoot}/studies/${StudyInstanceUID}/series/${SeriesInstanceUID}/instances/${SOPInstanceUID}/rendered`;
+    } else {
+      return acceptUri;
+    }
+  }
   if (BulkDataURI.indexOf('/') === 0) {
     return wadoRoot + acceptUri;
   }

@@ -45,6 +45,16 @@ const dicomSeg = {
   panel: '@ohif/extension-cornerstone-dicom-seg.panelModule.panelSegmentation',
 };
 
+const zmedAI = {
+  panel: 'zmed-ai-tools.panelModule.panelZMedAI',
+};
+const zmedAIMammography = {
+  panel: 'zmed-mammography.panelModule.panelZMedAIMammography',
+};
+const zmedAIInnopolis = {
+  panel: 'zmed-innopolis.panelModule.panelZMedAIInnopolist',
+};
+
 const extensionDependencies = {
   // Can derive the versions at least process.env.from npm_package_version
   '@ohif/extension-default': '^3.0.0',
@@ -142,7 +152,7 @@ function modeFactory() {
       series: [],
     },
 
-    isValidMode: function({ modalities }) {
+    isValidMode: function ({ modalities }) {
       const modalities_list = modalities.split('\\');
 
       // Exclude non-image modalities
@@ -161,7 +171,13 @@ function modeFactory() {
             id: ohif.layout,
             props: {
               leftPanels: [tracked.thumbnailList],
-              rightPanels: [dicomSeg.panel, tracked.measurements],
+              rightPanels: [
+                dicomSeg.panel,
+                tracked.measurements,
+                zmedAI.panel,
+                zmedAIMammography.panel,
+                zmedAIInnopolis.panel,
+              ],
               // rightPanelDefaultClosed: true, // optional prop to start with collapse panels
               viewports: [
                 {

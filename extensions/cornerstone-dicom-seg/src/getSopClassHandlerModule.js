@@ -187,6 +187,8 @@ function _getPixelData(dataset, segments) {
   let frameSize = Math.ceil((dataset.Rows * dataset.Columns) / 8);
   let nextOffset = 0;
 
+  console.log("!!!!!!!!!!!!!!!!!!!")
+  console.log(segments)
   Object.keys(segments).forEach(segmentKey => {
     const segment = segments[segmentKey];
     segment.numberOfFrames = segment.functionalGroups.length;
@@ -199,6 +201,7 @@ function _getPixelData(dataset, segments) {
     );
 
     segment.pixelData = dcmjs.data.BitArray.unpack(packedSegment);
+    console.log(segmentKey)
     segment.geometry = geometryFromFunctionalGroups(
       dataset,
       segment.functionalGroups
@@ -213,6 +216,12 @@ function geometryFromFunctionalGroups(dataset, perFrame) {
     dataset.SharedFunctionalGroupsSequence.PixelMeasuresSequence;
   let planeOrientation =
     dataset.SharedFunctionalGroupsSequence.PlaneOrientationSequence;
+  console.log("-------")
+  console.log(perFrame)
+  console.log(perFrame[0])
+  // if (perFrame[0] == undefined) {
+  //   return null
+  // }
   let planePosition = perFrame[0].PlanePositionSequence; // TODO: assume sorted frames!
 
   const geometry = {};
@@ -263,7 +272,7 @@ function _getSegments(dataset) {
   const segments = {};
 
   dataset.SegmentSequence.forEach(segment => {
-    const cielab = segment.RecommendedDisplayCIELabValue;
+    const cielab = segment.RecommendedDisplayCIELabValue ?? [41661, 41167, 40792];
     const rgba = dcmjs.data.Colors.dicomlab2RGB(cielab).map(x =>
       Math.round(x * 255)
     );

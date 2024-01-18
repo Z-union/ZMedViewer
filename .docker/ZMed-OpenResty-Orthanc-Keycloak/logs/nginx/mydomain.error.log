@@ -1,0 +1,208 @@
+2023/03/19 17:52:52 [error] 9#9: *3 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.23.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost"
+2023/03/19 17:53:00 [error] 8#8: *8 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.23.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2023/03/19 17:53:07 [error] 8#8: *8 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.23.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2023/03/19 17:53:24 [error] 8#8: *8 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.23.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2023/03/19 17:54:30 [error] 8#8: *14 lua entry thread aborted: runtime error: /usr/local/openresty/luajit/share/lua/5.1/resty/session.lua:15: module 'string.buffer' not found:
+	no field package.preload['string.buffer']
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file './string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/luajit-2.1.0-beta3/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file './string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file './string.so'
+	no file '/usr/local/lib/lua/5.1/string.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+stack traceback:
+coroutine 0:
+	[C]: in function 'require'
+	access_by_lua(nginx.conf:105):18: in main chunk, client: 172.23.0.1, server: 127.0.0.1, request: "GET /pacs-admin/admin HTTP/1.1", host: "127.0.0.1"
+2023/03/19 17:54:30 [error] 8#8: *13 open() "/var/www/html/favicon.ico" failed (2: No such file or directory), client: 172.23.0.1, server: 127.0.0.1, request: "GET /favicon.ico HTTP/1.1", host: "127.0.0.1", referrer: "http://127.0.0.1/pacs-admin/admin"
+2023/03/19 17:54:34 [error] 8#8: *13 lua entry thread aborted: runtime error: /usr/local/openresty/luajit/share/lua/5.1/resty/session.lua:15: module 'string.buffer' not found:
+	no field package.preload['string.buffer']
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file './string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/luajit-2.1.0-beta3/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file './string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file './string.so'
+	no file '/usr/local/lib/lua/5.1/string.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+stack traceback:
+coroutine 0:
+	[C]: in function 'require'
+	access_by_lua(nginx.conf:105):18: in main chunk, client: 172.23.0.1, server: 127.0.0.1, request: "GET /pacs-admin/ HTTP/1.1", host: "127.0.0.1"
+2023/03/19 17:54:58 [error] 8#8: *17 lua entry thread aborted: runtime error: /usr/local/openresty/luajit/share/lua/5.1/resty/session.lua:15: module 'string.buffer' not found:
+	no field package.preload['string.buffer']
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file './string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/luajit-2.1.0-beta3/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file './string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file './string.so'
+	no file '/usr/local/lib/lua/5.1/string.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+stack traceback:
+coroutine 0:
+	[C]: in function 'require'
+	access_by_lua(nginx.conf:105):18: in main chunk, client: 172.23.0.1, server: 127.0.0.1, request: "GET /pacs-admin/admin HTTP/1.1", host: "localhost"
+2023/03/19 17:55:10 [error] 8#8: *16 lua entry thread aborted: runtime error: /usr/local/openresty/luajit/share/lua/5.1/resty/session.lua:15: module 'string.buffer' not found:
+	no field package.preload['string.buffer']
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer.ljbc'
+	no file '/usr/local/openresty/lualib/string/buffer/init.ljbc'
+	no file '/usr/local/openresty/site/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer/init.lua'
+	no file '/usr/local/openresty/lualib/string/buffer.lua'
+	no file '/usr/local/openresty/lualib/string/buffer/init.lua'
+	no file './string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/luajit-2.1.0-beta3/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer.lua'
+	no file '/usr/local/openresty/luajit/share/lua/5.1/string/buffer/init.lua'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string/buffer.so'
+	no file '/usr/local/openresty/lualib/string/buffer.so'
+	no file './string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string/buffer.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file '/usr/local/openresty/site/lualib/string.so'
+	no file '/usr/local/openresty/lualib/string.so'
+	no file './string.so'
+	no file '/usr/local/lib/lua/5.1/string.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+	no file '/usr/local/openresty/luajit/lib/lua/5.1/string.so'
+stack traceback:
+coroutine 0:
+	[C]: in function 'require'
+	access_by_lua(nginx.conf:105):18: in main chunk, client: 172.23.0.1, server: 127.0.0.1, request: "GET /pacs-admin/ HTTP/1.1", host: "localhost"
+2023/03/19 18:11:08 [error] 9#9: *2 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.25.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost"
+2023/03/19 18:34:48 [error] 7#7: *8 open() "/var/www/html/callback" failed (2: No such file or directory), client: 172.27.0.1, server: 127.0.0.1, request: "GET /callback?state=ff918cf76a374e40893233754633f147&session_state=01593cb6-e28e-4d04-98ad-a7d0b6326af1&code=278a890a-50f6-44c2-a6cb-4bae7c12c42a.01593cb6-e28e-4d04-98ad-a7d0b6326af1.53d51818-e1bf-4fc2-aa20-5541f2646f12 HTTP/1.1", host: "localhost", referrer: "http://127.0.0.1:18080/"
+2023/03/19 18:34:59 [error] 7#7: *8 open() "/var/www/html/callback" failed (2: No such file or directory), client: 172.27.0.1, server: 127.0.0.1, request: "GET /callback?state=02ea9ebc8f424eb1a7e18e89fa35db23&session_state=01593cb6-e28e-4d04-98ad-a7d0b6326af1&code=379d7c34-fff7-467f-8136-c5f6f09ae930.01593cb6-e28e-4d04-98ad-a7d0b6326af1.53d51818-e1bf-4fc2-aa20-5541f2646f12 HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2023/03/19 18:34:59 [error] 8#8: *10 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.27.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost"
+2023/03/19 18:38:42 [error] 7#7: *14 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.27.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost"
+2023/03/19 18:38:42 [error] 7#7: *15 open() "/var/www/html/callback" failed (2: No such file or directory), client: 172.27.0.1, server: 127.0.0.1, request: "GET /callback?state=ed5cab25d1a148c0aa5a8098c9432935&session_state=01593cb6-e28e-4d04-98ad-a7d0b6326af1&code=c7d7e598-bbf7-4e9c-abeb-eeef244f7440.01593cb6-e28e-4d04-98ad-a7d0b6326af1.53d51818-e1bf-4fc2-aa20-5541f2646f12 HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2023/03/19 18:39:56 [error] 8#8: *22 open() "/var/www/html/callback" failed (2: No such file or directory), client: 172.27.0.1, server: 127.0.0.1, request: "GET /callback?state=34c697e75fcf4bf4bcb902f7afefe093&session_state=01593cb6-e28e-4d04-98ad-a7d0b6326af1&code=bd6887f2-edac-4390-b424-eeacc817bc07.01593cb6-e28e-4d04-98ad-a7d0b6326af1.53d51818-e1bf-4fc2-aa20-5541f2646f12 HTTP/1.1", host: "localhost", referrer: "http://localhost/"
+2023/03/19 18:44:44 [error] 7#7: *24 open() "/var/www/html/callback" failed (2: No such file or directory), client: 172.27.0.1, server: 127.0.0.1, request: "GET /callback?state=ed5cab25d1a148c0aa5a8098c9432935&session_state=01593cb6-e28e-4d04-98ad-a7d0b6326af1&code=c7d7e598-bbf7-4e9c-abeb-eeef244f7440.01593cb6-e28e-4d04-98ad-a7d0b6326af1.53d51818-e1bf-4fc2-aa20-5541f2646f12 HTTP/1.1", host: "127.0.0.1"
+2023/03/19 18:54:11 [error] 9#9: *3 open() "/var/www/html/callback" failed (2: No such file or directory), client: 172.28.0.1, server: 127.0.0.1, request: "GET /callback?state=e1600ad7a2c24117bf549369b42b20b6&session_state=1baf6c85-9c8b-4d1e-b236-985b1ec6354f&code=a4442c6b-1dc2-4c30-ab9e-2312eac191e4.1baf6c85-9c8b-4d1e-b236-985b1ec6354f.53d51818-e1bf-4fc2-aa20-5541f2646f12 HTTP/1.1", host: "localhost", referrer: "http://127.0.0.1:18080/"
+2023/03/19 18:57:50 [error] 8#8: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 172.28.0.1, server: 127.0.0.1, request: "GET /auth/realms/ohif HTTP/1.1", upstream: "http://172.28.0.3:8080/auth/realms/ohif", host: "127.0.0.1"
+2023/03/19 18:57:55 [error] 8#8: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 172.28.0.1, server: 127.0.0.1, request: "GET /auth/realms HTTP/1.1", upstream: "http://172.28.0.3:8080/auth/realms", host: "127.0.0.1"
+2023/03/19 18:57:59 [error] 8#8: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 172.28.0.1, server: 127.0.0.1, request: "GET /auth/ HTTP/1.1", upstream: "http://172.28.0.3:8080/auth/", host: "127.0.0.1"
+2023/03/19 19:26:15 [error] 9#9: *2 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.29.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost"
+2023/03/19 19:26:44 [error] 9#9: *3 open() "/var/www/html/calculate-suv.esm.js.map" failed (2: No such file or directory), client: 172.29.0.1, server: 127.0.0.1, request: "GET /calculate-suv.esm.js.map HTTP/1.1", host: "localhost"
+2023/03/19 19:26:53 [error] 8#8: *11 open() "/var/www/html/callback" failed (2: No such file or directory), client: 172.29.0.1, server: 127.0.0.1, request: "GET /callback?state=d6819849357b41d0a28045509f9a4e5e&session_state=0ed87cff-583f-455f-9d11-15286264bd9d&code=e3f66b37-4e79-4e1c-bc1e-69fdbb8fae0d.0ed87cff-583f-455f-9d11-15286264bd9d.53d51818-e1bf-4fc2-aa20-5541f2646f12 HTTP/1.1", host: "127.0.0.1", referrer: "http://127.0.0.1/auth/realms/ohif/protocol/openid-connect/auth?client_id=ohif-viewer&redirect_uri=http%3A%2F%2F127.0.0.1%2Fcallback&response_type=code&scope=openid&state=d6819849357b41d0a28045509f9a4e5e&code_challenge=rmZBFzsDnfev-SRpbmXEbwzKfMGAdbru_Mx_loAcii8&code_challenge_method=S256&response_mode=query"
