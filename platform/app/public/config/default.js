@@ -7,10 +7,13 @@ window.config = {
     worksheet: `zmed-common.customizationModule.worksheet`,
     dicomUploadComponent:
       '@ohif/extension-cornerstone.customizationModule.cornerstoneDicomUploadComponent',
+    authWrapper: 'zmed-auth-extension.customizationModule.authWrapper',
+    loginPage: `zmed-auth-extension.customizationModule.loginPage`,
     // Shows a custom route -access via http://localhost:3000/custom
-    // helloPage: '@ohif/extension-default.customizationModule.helloPage',
+    //helloPage: '@ohif/extension-default.customizationModule.helloPage',
   },
   showStudyList: false,
+  isAuthRequired: true, //for dev - false
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
   // below flag is for performance reasons, but it might not work for all servers
@@ -26,7 +29,7 @@ window.config = {
     prefetch: 25,
   },
   // filterQueryParam: false,
-  defaultDataSourceName: 'zmed-dicomweb',
+  defaultDataSourceName: 'dicomweb',
   /* Dynamic config allows user to pass "configUrl" query string this allows to load config without recompiling application. The regex will ensure valid configuration source */
   // dangerouslyUseDynamicConfig: {
   //   enabled: true,
@@ -82,9 +85,14 @@ window.config = {
         // wadoRoot: 'https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs',
 
         // new server
-        wadoUriRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
-        qidoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
-        wadoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+        // wadoUriRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+        // qidoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+        // wadoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+
+        wadoUriRoot: 'http://52.29.40.199:8042/wado',
+        qidoRoot: 'http://52.29.40.199:8042/dicom-web',
+        wadoRoot: 'http://52.29.40.199:8042/dicom-web',
+
         qidoSupportsIncludeField: false,
         supportsReject: false,
         imageRendering: 'wadors',
@@ -94,6 +102,7 @@ window.config = {
         supportsWildcard: true,
         staticWado: true,
         singlepart: 'bulkdata,video',
+        dicomUploadEnabled: true,
         // whether the data source should use retrieveBulkData to grab metadata,
         // and in case of relative path, what would it be relative to, options
         // are in the series level or study level (some servers like series some study)
@@ -135,40 +144,44 @@ window.config = {
     // Could use services manager here to bring up a dialog/modal if needed.
     console.warn('test, navigate to https://ohif.org/');
   },
-  oidc: [
-    {
-      // ~ REQUIRED
-      // Authorization Server URL
-      authority: '/auth/realms/ohif',
-      client_id: 'ohif-viewer',
-      redirect_uri: 'https://app.zmed.z-union.ru/callback', // `OHIFStandaloneViewer.js`
-      // "Authorization Code Flow"
-      // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
-      response_type: 'code',
-      scope: 'openid', // email profile openid
-      // ~ OPTIONAL
-      post_logout_redirect_uri: '/logout-redirect.html',
-    },
-  ],
-  // whiteLabeling: {
-  //   /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */
-  //   createLogoComponentFn: function (React) {
-  //     return React.createElement(
-  //       'a',
-  //       {
-  //         target: '_self',
-  //         rel: 'noopener noreferrer',
-  //         className: 'text-purple-600 line-through',
-  //         href: '/',
-  //       },
-  //       React.createElement('img',
-  //         {
-  //           src: './assets/customLogo.svg',
-  //           className: 'w-8 h-8',
-  //         }
-  //       ))
+  zmedtools: {
+    covidURL: 'https://app.zmed.z-union.ru/zmedtools/',
+    mammoURL: 'https://app.zmed.z-union.ru/zmedtools/',
+    innpolisURL: 'https://app.zmed.z-union.ru/zmedtools/',
+  },
+  // oidc: [
+  //   {
+  //     // ~ REQUIRED
+  //     // Authorization Server URL
+  //     authority: '/auth/realms/ohif',
+  //     client_id: 'ohif-viewer',
+  //     redirect_uri: 'https://app.zmed.z-union.ru/callback', // `OHIFStandaloneViewer.js`
+  //     // "Authorization Code Flow"
+  //     // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
+  //     response_type: 'code',
+  //     scope: 'openid', // email profile openid
+  //     // ~ OPTIONAL
+  //     post_logout_redirect_uri: '/logout-redirect.html',
   //   },
-  // },
+  // ],
+  whiteLabeling: {
+    /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */
+    createLogoComponentFn: function(React) {
+      return React.createElement(
+        'a',
+        {
+          target: '_self',
+          rel: 'noopener noreferrer',
+          className: 'text-purple-600 line-through',
+          href: '/',
+        },
+        React.createElement('img', {
+          src: './zmed-logo.svg',
+          // className: 'w-8 h-8',
+        })
+      );
+    },
+  },
   hotkeys: [
     {
       commandName: 'incrementActiveViewport',
