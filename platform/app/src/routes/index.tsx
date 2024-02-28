@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from '@ohif/ui';
 
@@ -86,7 +86,7 @@ const createRoutes = ({
   hotkeysManager,
   routerBasename,
   showStudyList,
-  isAuthRequired,
+  //isAuthRequired,
 }) => {
   const routes =
     buildModeRoutes({
@@ -111,13 +111,13 @@ const createRoutes = ({
     'customRoutes'
   );
 
-  const authRoutes = customizationService.getGlobalCustomization('authRoutes');
+  //const authRoutes = customizationService.getGlobalCustomization('authRoutes');
 
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
     ...(customRoutes?.routes || []),
-    ...(isAuthRequired ? authRoutes?.routes || [] : []),
+    //...(isAuthRequired ? authRoutes?.routes || [] : []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
   ];

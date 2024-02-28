@@ -10,6 +10,7 @@ const LoginPage = ({
   userManager,
   clientSecret,
   clientId,
+  getTokensUrl,
 }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>('');
@@ -17,15 +18,15 @@ const LoginPage = ({
   const [unathorizedError, setUnathorizedError] = useState<boolean>(false);
   const [unknownError, setUnknownError] = useState<boolean>(false);
 
-  const handleEmailChange = (event) => {
+  const handleEmailChange = event => {
     setEmail(event.target.value);
   };
 
-  const handlePasswordChange = (event) => {
+  const handlePasswordChange = event => {
     setPassword(event.target.value);
   };
 
-  const login = async (e) => {
+  const login = async e => {
     e.preventDefault();
     const data = new URLSearchParams();
     data.append('grant_type', 'password');
@@ -35,16 +36,12 @@ const LoginPage = ({
     data.append('password', password);
 
     axios
-      .post(
-        'http://localhost:8080/realms/test-realm/protocol/openid-connect/token',
-        data,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      )
-      .then((response) => {
+      .post(getTokensUrl, data, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+      .then(response => {
         localStorage.setItem('access_token', response.data.access_token);
         const user = new User(response.data);
         userManager.storeUser(user);
@@ -53,7 +50,7 @@ const LoginPage = ({
       .then(() => {
         navigate(routerBasename);
       })
-      .catch((error) => {
+      .catch(error => {
         const status = error.response.status;
         switch (status) {
           case 401:
@@ -65,7 +62,7 @@ const LoginPage = ({
   };
 
   return (
-    <div className="text-white flex flex-row">
+    <div className="text-white flex flex-row h-screen">
       <div className="flex-auto flex items-center justify-center flex-col px-16 basis-5/12">
         <div className="px-20">
           <div className="flex items-start w-56 h-18 mb-3">
@@ -107,7 +104,7 @@ const LoginPage = ({
                 <Button
                   className="bg-black"
                   endIcon={<Icon name="arrow-right-small" />}
-                  onClick={(e) => login(e)}
+                  onClick={e => login(e)}
                 >
                   Войти
                 </Button>
@@ -116,13 +113,7 @@ const LoginPage = ({
           </div>
         </div>
       </div>
-      <div className="basis-7/12">
-        <img
-          className="h-screen object-fill"
-          // src={zmedLoginBg}
-          alt="login-bg.png"
-        />
-      </div>
+      <div className="basis-7/12"></div>
     </div>
   );
 };

@@ -27,6 +27,7 @@ import {
 import { AppConfigProvider } from '@state';
 import createRoutes from './routes';
 import appInit from './appInit.js';
+import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
@@ -61,8 +62,9 @@ function App({ config, defaultExtensions, defaultModes }) {
     routerBasename,
     modes,
     dataSources,
+    oidc,
     showStudyList,
-    isAuthRequired,
+    //    isAuthRequired,
   } = appConfigState;
 
   const {
@@ -91,6 +93,8 @@ function App({ config, defaultExtensions, defaultModes }) {
   const CombinedProviders = ({ children }) =>
     Compose({ components: providers, children });
 
+  let authRoutes = null;
+
   // Should there be a generic call to init on the extension manager?
   customizationService.init(extensionManager);
 
@@ -104,25 +108,38 @@ function App({ config, defaultExtensions, defaultModes }) {
     hotkeysManager,
     routerBasename,
     showStudyList,
-    isAuthRequired,
+    //isAuthRequired,
   });
+
+  if (oidc) {
+    authRoutes = (
+      <OpenIdConnectRoutes
+        oidc={oidc}
+        routerBasename={routerBasename}
+        userAuthenticationService={userAuthenticationService}
+      />
+    );
+  }
 
   // const { component: AuthWrapper } = customizationService.get('authWrapper') ?? {};
 
-  let AuthWrapper = null;
+  // let AuthWrapper = null;
 
-  if (isAuthRequired) {
-    const authWrapperConfig = customizationService.get('authWrapper');
-    AuthWrapper = authWrapperConfig.component;
-  }
+  // if (isAuthRequired) {
+  //   const authWrapperConfig = customizationService.get('authWrapper');
+  //   AuthWrapper = authWrapperConfig.component;
+  // }
 
   return (
     <CombinedProviders>
       <BrowserRouter basename={routerBasename}>
-        {/* <AuthWrapper userAuthenticationService={userAuthenticationService} /> */}
-        {AuthWrapper && (
-          <AuthWrapper userAuthenticationService={userAuthenticationService} />
-        )}
+        {/* {AuthWrapper && (
+          <AuthWrapper
+            userAuthenticationService={userAuthenticationService}
+            oidc={extensionManager._appConfig.oidc}
+          />
+        )} */}
+        {authRoutes}
         {appRoutes}
       </BrowserRouter>
     </CombinedProviders>

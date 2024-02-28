@@ -1,7 +1,6 @@
 import DataSourceWrapper from './DataSourceWrapper';
 import LoginPage from './LoginPage/LoginPage';
 import authWrapper from './authWrapper';
-import { oidc } from './oidc/oidc-settings';
 
 export default function getCustomizationModule({
   servicesManager,
@@ -17,7 +16,7 @@ export default function getCustomizationModule({
             path: '/login',
             children: DataSourceWrapper,
             private: true,
-            props: { children: LoginPage, servicesManager, extensionManager, oidc},
+            props: { children: LoginPage, servicesManager, extensionManager},
           },
         ],
       },

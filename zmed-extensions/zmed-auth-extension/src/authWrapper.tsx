@@ -2,10 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import axios from 'axios';
 import { User } from 'oidc-client';
 import { initUserManager } from './oidc/initUserManager';
-import { oidc } from './oidc/oidc-settings';
 
-const authWrapper = ({ userAuthenticationService }) => {
+const authWrapper = ({ userAuthenticationService, oidc }) => {
   const userManager = initUserManager(oidc);
+  const getTokensUrl = oidc[0].get_tokens;
 
   const getAuthorizationHeader = () => {
     const user = userAuthenticationService.getUser();
@@ -58,21 +58,17 @@ const authWrapper = ({ userAuthenticationService }) => {
       data.append('client_secret', oidc[0].client_secret);
 
       axios
-        .post(
-          'http://localhost:8080/realms/test-realm/protocol/openid-connect/token',
-          data,
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-          }
-        )
-        .then((response) => {
+        .post(getTokensUrl, data, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        })
+        .then(response => {
           localStorage.setItem('access_token', response.data.access_token);
           const user = new User(response.data);
           userManager.storeUser(user);
         })
-        .catch((error) => {
+        .catch(error => {
           userManager.storeUser(null);
           userAuthenticationService.setUser(null);
           localStorage.removeItem('access_token');
@@ -81,10 +77,8 @@ const authWrapper = ({ userAuthenticationService }) => {
         });
     }
 
-    //updateTokens();
-
     if (!timerIdRef.current) {
-      timerIdRef.current = setInterval(updateTokens, 3000);
+      timerIdRef.current = setInterval(updateTokens, 5000);
     }
 
     return () => {

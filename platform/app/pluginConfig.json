@@ -55,11 +55,11 @@
     {
       "packageName": "zmed-common",
       "version": "0.0.1"
-    },
-    {
-      "packageName": "zmed-auth-extension",
-      "version": "0.0.1"
     }
+    // {
+    //   "packageName": "zmed-auth-extension",
+    //   "version": "0.0.1"
+    // }
   ],
   "modes": [
     {

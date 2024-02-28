@@ -31,6 +31,7 @@
     "dev:static": "cross-env NODE_ENV=development APP_CONFIG=config/local_static.js webpack serve --config .webpack/webpack.pwa.js",
     "dev:viewer": "yarn run dev",
     "start": "yarn run dev",
+    "start:dev": "cross-env NODE_ENV=development APP_CONFIG=config/zmed_dev.js webpack serve --config .webpack/webpack.pwa.js",
     "test:e2e": "cypress open",
     "test:e2e:ci": "percy exec -- cypress run --config video=false --record --browser chrome --spec 'cypress/integration/visual-regression/**/*'",
     "test:e2e:local": "cypress run --config video=false --browser chrome --spec 'cypress/integration/common/**/*,cypress/integration/pwa/**/*'",

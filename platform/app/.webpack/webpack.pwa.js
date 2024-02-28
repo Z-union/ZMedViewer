@@ -73,12 +73,8 @@ module.exports = (env, argv) => {
         path.resolve(__dirname, 'zmed-extensions/base-mode/node_modules'),
         // path.resolve(
         //   __dirname,
-        //   'd:\1WORKcustom-extensionszmed-auth-extension\node_modules'
+        //   'zmed-extensions/zmed-auth-extension/node_modules'
         // ),
-        path.resolve(
-          __dirname,
-          'zmed-extensions/zmed-auth-extension/node_modules'
-        ),
       ],
     },
     plugins: [
