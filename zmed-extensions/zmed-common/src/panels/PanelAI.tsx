@@ -14,7 +14,7 @@ import configuration from './../config';
 
 let Modalities = ['DX', 'CR']
 
-export default function PanelAI({ servicesManager, commandsManager }) {
+export default function PanelAI({ servicesManager, commandsManager, extensionManager, }) {
   const isMounted = React.useRef(true);
   const {
     DisplaySetService,
@@ -173,12 +173,44 @@ export default function PanelAI({ servicesManager, commandsManager }) {
     }
   };
 
+  function getStudyInstanceUID() {
+    const url = window.location.href;
+    const [baseUrl, queryParamsString] = url.split('?');
+
+    if (queryParamsString) {
+      const queryParams = queryParamsString.split('&');
+      for (const param of queryParams) {
+        const [key, value] = param.split('=');
+        if (key === 'StudyInstanceUIDs') {
+          return value;
+        }
+      }
+    }
+  }
+
+  function getSeriesData() {
+    const StudyInstanceUID = getStudyInstanceUID();
+    const datasource = extensionManager.getActiveDataSource()[0];
+    datasource.retrieve.series.metadata({
+      StudyInstanceUID,
+    });
+  }
+
   useEffect(() => {
     _retrieveData();
     return () => {
       isMounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      processingState == AIState.finishedWithApply ||
+      processingState == AIState.finished
+    ) {
+      getSeriesData();
+    }
+  }, [processingState]);
 
   function renderState(_state: AIState) {
     switch (_state) {
@@ -215,7 +247,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
                 value={item.value.toString() ?? "Undefined"}
             />
             ))}
-            {_state == AIState.finishedWithApply && (
+            {/* {_state == AIState.finishedWithApply && (
               <Button
                 className="px-2 py-2 text-base text-white"
                 variant="contained"
@@ -226,7 +258,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
               >
                 Apply data
               </Button>
-            )}
+            )} */}
             <Button
               size="initial"
               className="px-2 py-2 text-base text-white"
