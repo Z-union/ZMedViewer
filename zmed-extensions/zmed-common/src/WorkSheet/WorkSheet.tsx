@@ -69,6 +69,8 @@ function WorkSheet({
   const debouncedFilterValues = useDebounce(filterValues, 200);
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
 
+  sessionStorage.setItem('pageNumber', pageNumber);
+
   /*
    * The default sort value keep the filters synchronized with runtime conditional sorting
    * Only applied if no other sorting is specified and there are less than 101 studies
@@ -596,7 +598,7 @@ function _getQueryFilterValues(params) {
     accession: params.get('accession'),
     sortBy: params.get('sortby'),
     sortDirection: params.get('sortdirection'),
-    pageNumber: _tryParseInt(params.get('pagenumber'), undefined),
+    pageNumber: _tryParseInt(params.get('pageNumber'), undefined),
     resultsPerPage: _tryParseInt(params.get('resultsperpage'), undefined),
     datasources: params.get('datasources'),
     configUrl: params.get('configurl'),

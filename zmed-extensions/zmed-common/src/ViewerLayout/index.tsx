@@ -54,6 +54,7 @@ function ViewerLayout({
     // Todo: Handle parameters in a better way.
     const query = new URLSearchParams(window.location.search);
     const configUrl = query.get('configUrl');
+    const pageNumber = sessionStorage.getItem('pageNumber');
 
     const dataSourceName = pathname.substring(dataSourceIdx + 1);
     const existingDataSource = extensionManager.getDataSources(dataSourceName);
@@ -65,6 +66,10 @@ function ViewerLayout({
 
     if (configUrl) {
       searchQuery.append('configUrl', configUrl);
+    }
+
+    if (pageNumber) {
+      searchQuery.append('pageNumber', pageNumber);
     }
 
     navigate({
