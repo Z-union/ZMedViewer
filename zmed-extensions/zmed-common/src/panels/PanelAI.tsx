@@ -233,18 +233,6 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
                 value={item.value.toString() ?? "Undefined"}
             />
             ))}
-            {_state == AIState.finishedWithApply && (
-              <Button
-                className="px-2 py-2 text-base text-white"
-                variant="contained"
-                fullWidth={true}
-                onClick={() => {
-                  window.location.reload();
-                }}
-              >
-                Apply data
-              </Button>
-            )}
             <Button
               size="initial"
               className="px-2 py-2 text-base text-white"
