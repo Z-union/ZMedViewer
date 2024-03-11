@@ -14,7 +14,7 @@ import configuration from './../config';
 
 let Modalities = ['DX', 'CR']
 
-export default function PanelAI({ servicesManager, commandsManager }) {
+export default function PanelAI({ servicesManager, commandsManager, extensionManager }) {
   const isMounted = React.useRef(true);
   const {
     DisplaySetService,
@@ -173,12 +173,30 @@ export default function PanelAI({ servicesManager, commandsManager }) {
     }
   };
 
+  function getSeriesData() {
+    const StudyInstanceUID =
+      DisplaySetService.activeDisplaySets[0].StudyInstanceUID;
+    const datasource = extensionManager.getActiveDataSource()[0];
+    datasource.retrieve.series.metadata({
+      StudyInstanceUID,
+    });
+  }
+
   useEffect(() => {
     _retrieveData();
     return () => {
       isMounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      processingState == AIState.finishedWithApply ||
+      processingState == AIState.finished
+    ) {
+      getSeriesData();
+    }
+  }, [processingState]);
 
   function renderState(_state: AIState) {
     switch (_state) {

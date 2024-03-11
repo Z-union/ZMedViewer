@@ -47,6 +47,7 @@ export default {
         <PanelAI
           commandsManager={commandsManager}
           servicesManager={servicesManager}
+          extensionManager={extensionManager}
         />
       );
     };
