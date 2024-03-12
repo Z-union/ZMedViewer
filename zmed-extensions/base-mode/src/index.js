@@ -8,7 +8,7 @@ import initToolGroups from './initToolGroups.js';
 const NON_IMAGE_MODALITIES = ['SM', 'ECG', 'SR', 'SEG', 'RTSTRUCT'];
 
 const ohif = {
-  layout: '@ohif/extension-default.layoutTemplateModule.viewerLayout',
+  layout: 'zmed-common.layoutTemplateModule.viewerLayout',
   sopClassHandler: '@ohif/extension-default.sopClassHandlerModule.stack',
   thumbnailList: '@ohif/extension-default.panelModule.seriesList',
 };
