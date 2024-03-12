@@ -86,6 +86,7 @@ const createRoutes = ({
   hotkeysManager,
   routerBasename,
   showStudyList,
+  isAuthRequired,
 }) => {
   const routes =
     buildModeRoutes({
@@ -109,10 +110,14 @@ const createRoutes = ({
   const customRoutes = customizationService.getGlobalCustomization(
     'customRoutes'
   );
+
+  const authRoutes = customizationService.getGlobalCustomization('authRoutes');
+
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
     ...(customRoutes?.routes || []),
+    ...(isAuthRequired ? authRoutes?.routes || [] : []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,
   ];
