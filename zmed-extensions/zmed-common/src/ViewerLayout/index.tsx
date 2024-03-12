@@ -55,7 +55,7 @@ function ViewerLayout({
     const query = new URLSearchParams(window.location.search);
     const configUrl = query.get('configUrl');
     const pageNumber = sessionStorage.getItem('pageNumber');
-    
+
     const dataSourceName = pathname.substring(dataSourceIdx + 1);
     const existingDataSource = extensionManager.getDataSources(dataSourceName);
 
@@ -98,7 +98,7 @@ function ViewerLayout({
       onClick: () =>
         show({
           content: AboutModal,
-          title: 'About OHIF Viewer',
+          title: 'About ZMed Viewer',
           contentProps: { versionNumber, commitHash },
         }),
     },
