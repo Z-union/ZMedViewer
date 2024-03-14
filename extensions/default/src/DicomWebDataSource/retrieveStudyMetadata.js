@@ -39,9 +39,9 @@ export function retrieveStudyMetadata(
   }
 
   // Already waiting on result? Return cached promise
-  if (StudyMetaDataPromises.has(StudyInstanceUID)) {
-    return StudyMetaDataPromises.get(StudyInstanceUID);
-  }
+  // if (StudyMetaDataPromises.has(StudyInstanceUID)) {
+  //   return StudyMetaDataPromises.get(StudyInstanceUID);
+  // }
 
   // Create a promise to handle the data retrieval
   const promise = new Promise((resolve, reject) => {
@@ -58,7 +58,7 @@ export function retrieveStudyMetadata(
   });
 
   // Store the promise in cache
-  StudyMetaDataPromises.set(StudyInstanceUID, promise);
+  //StudyMetaDataPromises.set(StudyInstanceUID, promise);
 
   return promise;
 }
