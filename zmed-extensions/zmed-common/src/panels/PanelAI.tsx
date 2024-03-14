@@ -32,6 +32,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
     error,
   }
   const [processingState, setProcessingState] = useState(AIState.loading);
+  const [buttonClicked, setButtonClicked] = useState(false);
   const [seriesData, setSeriesData] = useState([{
     title: '',
     value: '',
@@ -42,6 +43,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   // function checkStatus()
 
   function _handleStudyClick() {
+    setButtonClicked(true);
     let processing = true
     setWasProcessing(processing);
     setProcessingState(AIState.loading);
@@ -179,6 +181,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
     const datasource = extensionManager.getActiveDataSource()[0];
     datasource.retrieve.series.metadata({
       StudyInstanceUID,
+      getMetadataFromServer: true,
     });
   }
 
@@ -191,12 +194,15 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
 
   useEffect(() => {
     if (
-      processingState == AIState.finishedWithApply ||
-      processingState == AIState.finished
+      processingState === AIState.finishedWithApply ||
+      processingState === AIState.finished
     ) {
-      getSeriesData();
+      if (buttonClicked) {
+        getSeriesData();
+        setButtonClicked(false);
+      }
     }
-  }, [processingState]);
+  }, [processingState, buttonClicked]);
 
   function renderState(_state: AIState) {
     switch (_state) {
