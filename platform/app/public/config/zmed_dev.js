@@ -7,13 +7,13 @@ window.config = {
     worksheet: `zmed-common.customizationModule.worksheet`,
     dicomUploadComponent:
       '@ohif/extension-cornerstone.customizationModule.cornerstoneDicomUploadComponent',
-    //authWrapper: 'zmed-auth-extension.customizationModule.authWrapper',
-    //loginPage: `zmed-auth-extension.customizationModule.loginPage`,
+    authWrapper: 'zmed-auth-extension.customizationModule.authWrapper',
+    loginPage: `zmed-auth-extension.customizationModule.loginPage`,
     // Shows a custom route -access via http://localhost:3000/custom
     //helloPage: '@ohif/extension-default.customizationModule.helloPage',
   },
   showStudyList: false,
-  //isAuthRequired: true, //for dev - false
+  isAuthRequired: true, //for dev - false
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
   // below flag is for performance reasons, but it might not work for all servers
@@ -149,15 +149,15 @@ window.config = {
     mammoURL: 'https://app.zmed.z-union.ru/zmedtools/',
     innpolisURL: 'https://app.zmed.z-union.ru/zmedtools/',
   },
-  // oidc: [
-  //   {
-  //     authority: 'http://localhost:8080/realms/test-realm',
-  //     client_id: 'test-client',
-  //     client_secret: 'y4dm3dgowxydoEORp5qKSZrs7lXoedYR',
-  //     get_tokens:
-  //       'http://localhost:8080/realms/test-realm/protocol/openid-connect/token',
-  //   },
-  // ],
+  oidc: [
+    {
+      authority: 'http://localhost:3080/realms/test-realm',
+      client_id: 'test-client',
+      client_secret: 'CaT1uXFdiyBaVGp0G3KXbSkRv3M0vUTJ',
+      get_tokens:
+        'http://localhost:3080/realms/test-realm/protocol/openid-connect/token',
+    },
+  ],
   whiteLabeling: {
     /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */
     createLogoComponentFn: function(React) {

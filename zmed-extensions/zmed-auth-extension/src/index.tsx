@@ -1,12 +1,5 @@
 import { id } from './id';
 import getCustomizationModule from './getCustomizationModule';
-import getDataSourcesModule from './getDataSourcesModule';
-import getLayoutTemplateModule from './getLayoutTemplateModule';
-import { Types } from '@ohif/core';
-import PanelAI from './panels/PanelAI';
-import config from './config'
-import getCommandsModule from './commandsModule';
-import React from 'react';
 
 /**
  * You can remove any of the following modules if you don't need them.
@@ -28,10 +21,7 @@ export default {
     servicesManager,
     commandsManager,
     configuration = {},
-    appConfig,
-  }) => {
-    config.innopolisBaseURL = appConfig.zmedtools.innpolisURL
-  },
+  }) => {},
   /**
    * PanelModule should provide a list of panels that will be available in OHIF
    * for Modes to consume and render. Each panel is defined by a {name,
@@ -42,26 +32,7 @@ export default {
     servicesManager,
     commandsManager,
     extensionManager,
-  }): Types.Panel[] => {
-    const wrappedPanel = () => {
-      return (
-        <PanelAI
-          commandsManager={commandsManager}
-          servicesManager={servicesManager}
-          extensionManager={extensionManager}
-        />
-      );
-    };
-    return [
-      {
-        name: 'panelZMedAIInnopolist',
-        iconName: 'tab-segmentation',
-        iconLabel: 'ZFlu',
-        label: 'ZFlu',
-        component: wrappedPanel,
-      },
-    ];
-  },
+  }) => {},
   /**
    * ViewportModule should provide a list of viewports that will be available in OHIF
    * for Modes to consume and use in the viewports. Each viewport is defined by
@@ -92,7 +63,11 @@ export default {
    * a Header, left and right sidebars, and a viewport section in the middle
    * of the viewer.
    */
-  getLayoutTemplateModule,
+  getLayoutTemplateModule: ({
+    servicesManager,
+    commandsManager,
+    extensionManager,
+  }) => {},
   /**
    * SopClassHandlerModule should provide a list of sop class handlers that will be
    * available in OHIF for Modes to consume and use to create displaySets from Series.
@@ -123,7 +98,11 @@ export default {
    * object of functions, definitions is an object of available commands, their
    * options, and defaultContext is the default context for the command to run against.
    */
-  getCommandsModule,
+  getCommandsModule: ({
+    servicesManager,
+    commandsManager,
+    extensionManager,
+  }) => {},
   /**
    * ContextModule should provide a list of context that will be available in OHIF
    * and will be provided to the Modes. A context is a state that is shared OHIF.
@@ -140,22 +119,11 @@ export default {
    * DataSources can be used to map the external data formats to the OHIF's
    * native format. DataSources are defined by an object of { name, type, createDataSource }.
    */
-  getDataSourcesModule,
+  getDataSourcesModule: ({
+    servicesManager,
+    commandsManager,
+    extensionManager,
+  }) => {},
 
-  getCustomizationModule
-
-  // getCustomizationModule: ({
-  //   servicesManager,
-  //   extensionManager,
-  // }) => {
-  // return [
-    // {
-    //   name: 'zmedGPT',
-    //   value: {
-    //     id: 'ZMed-ChatGPT',
-    //     component: ChatGPT,
-    //   },
-    // },
-  // ];
-  // }
+  getCustomizationModule,
 };
