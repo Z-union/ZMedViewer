@@ -210,8 +210,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
           filters,
           sortCriteria,
           sortFunction,
-          madeInClient = false,
-          getMetadataFromServer = false,
+          madeInClient = false
         } = {}) => {
           if (!StudyInstanceUID) {
             throw new Error(
@@ -225,8 +224,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
               filters,
               sortCriteria,
               sortFunction,
-              madeInClient,
-              getMetadataFromServer
+              madeInClient
             );
           }
 
@@ -354,8 +352,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
       filters,
       sortCriteria,
       sortFunction,
-      madeInClient = false,
-      getMetadataFromServer = false
+      madeInClient = false
     ) => {
       const enableStudyLazyLoad = true;
       wadoDicomWebClient.headers = generateWadoHeader();
@@ -369,8 +366,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
         enableStudyLazyLoad,
         filters,
         sortCriteria,
-        sortFunction,
-        getMetadataFromServer
+        sortFunction
       );
 
       /**

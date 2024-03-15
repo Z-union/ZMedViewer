@@ -21,8 +21,7 @@ export function retrieveStudyMetadata(
   enableStudyLazyLoad,
   filters,
   sortCriteria,
-  sortFunction,
-  getMetadataFromServer
+  sortFunction
 ) {
   // @TODO: Whenever a study metadata request has failed, its related promise will be rejected once and for all
   // and further requests for that metadata will always fail. On failure, we probably need to remove the
@@ -40,7 +39,7 @@ export function retrieveStudyMetadata(
   }
 
   // Already waiting on result? Return cached promise
-  if (!getMetadataFromServer && StudyMetaDataPromises.has(StudyInstanceUID)) {
+  if (StudyMetaDataPromises.has(StudyInstanceUID)) {
     return StudyMetaDataPromises.get(StudyInstanceUID);
   }
 
