@@ -14,7 +14,7 @@ import configuration from './../config';
 
 let Modalities = ['DX', 'CR']
 
-export default function PanelAI({ servicesManager, commandsManager }) {
+export default function PanelAI({ servicesManager, commandsManager, extensionManager }) {
   const isMounted = React.useRef(true);
   const {
     DisplaySetService,
@@ -32,6 +32,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
     error,
   }
   const [processingState, setProcessingState] = useState(AIState.loading);
+  const [buttonClicked, setButtonClicked] = useState(false);
   const [seriesData, setSeriesData] = useState([{
     title: '',
     value: '',
@@ -42,6 +43,7 @@ export default function PanelAI({ servicesManager, commandsManager }) {
   // function checkStatus()
 
   function _handleStudyClick() {
+    setButtonClicked(true);
     let processing = true
     setWasProcessing(processing);
     setProcessingState(AIState.loading);
@@ -173,12 +175,34 @@ export default function PanelAI({ servicesManager, commandsManager }) {
     }
   };
 
+  function getSeriesData() {
+    const StudyInstanceUID =
+      DisplaySetService.activeDisplaySets[0].StudyInstanceUID;
+    const datasource = extensionManager.getActiveDataSource()[0];
+    datasource.retrieve.series.metadata({
+      StudyInstanceUID,
+      getMetadataFromServer: true,
+    });
+  }
+
   useEffect(() => {
     _retrieveData();
     return () => {
       isMounted.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      processingState === AIState.finishedWithApply ||
+      processingState === AIState.finished
+    ) {
+      if (buttonClicked) {
+        getSeriesData();
+        setButtonClicked(false);
+      }
+    }
+  }, [processingState, buttonClicked]);
 
   function renderState(_state: AIState) {
     switch (_state) {
@@ -215,18 +239,6 @@ export default function PanelAI({ servicesManager, commandsManager }) {
                 value={item.value.toString() ?? "Undefined"}
             />
             ))}
-            {_state == AIState.finishedWithApply && (
-              <Button
-                className="px-2 py-2 text-base text-white"
-                variant="contained"
-                fullWidth={true}
-                onClick={() => {
-                  window.location.reload();
-                }}
-              >
-                Apply data
-              </Button>
-            )}
             <Button
               size="initial"
               className="px-2 py-2 text-base text-white"
