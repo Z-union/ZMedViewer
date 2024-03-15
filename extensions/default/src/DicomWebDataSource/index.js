@@ -210,7 +210,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
           filters,
           sortCriteria,
           sortFunction,
-          madeInClient = false
+          madeInClient = false,
         } = {}) => {
           if (!StudyInstanceUID) {
             throw new Error(
