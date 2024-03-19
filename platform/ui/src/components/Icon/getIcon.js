@@ -47,6 +47,9 @@ import statusAlert from './../../assets/icons/status-alert.svg';
 import statusLocked from './../../assets/icons/status-locked.svg';
 import statusTracked from './../../assets/icons/status-tracked.svg';
 import statusUntracked from './../../assets/icons/status-untracked.svg';
+import statusSuccess from './../../assets/icons/status-success.svg';
+import statusWarning from './../../assets/icons/status-warning.svg';
+import statusError from './../../assets/icons/status-error.svg';
 import tracked from './../../assets/icons/tracked.svg';
 import unlink from './../../assets/icons/unlink.svg';
 import checkboxChecked from './../../assets/icons/checkbox-checked.svg';
@@ -186,6 +189,9 @@ const ICONS = {
   'status-locked': statusLocked,
   'status-tracked': statusTracked,
   'status-untracked': statusUntracked,
+  'status-success': statusSuccess,
+  'status-warning': statusWarning,
+  'status-error': statusError,
   sorting: sorting,
   tracked: tracked,
   unlink: unlink,

@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React, { useCallback, useEffect, useState } from 'react';
+import axios from 'axios';
 import PropTypes from 'prop-types';
 import { ExtensionManager, MODULE_TYPES } from '@ohif/core';
 //
@@ -7,6 +8,7 @@ import { ExtensionManager, MODULE_TYPES } from '@ohif/core';
 import { useParams, useLocation } from 'react-router';
 import { useNavigate } from 'react-router-dom';
 import useSearchParams from './hooks/useSearchParams';
+import configuration, { StudyStatus } from './config';
 
 /**
  * Determines if two React Router location objects are the same.
@@ -149,15 +151,74 @@ function DataSourceWrapper(props) {
       STUDIES_LIMIT
     );
 
+    // Дополняет array1 полями $date_processed и $data из array2
+    function addParamsFromTo(array1, array2) {
+      const dataMap = new Map();
+
+      for (const item of array2) {
+        const { study_instance_uid, ...rest } = item;
+        if (
+          !dataMap[study_instance_uid] ||
+          new Date(item.date_processed.$date) >
+            new Date(dataMap[study_instance_uid].date_processed.$date)
+        ) {
+          dataMap[study_instance_uid] = { ...rest };
+        }
+      }
+
+      for (const item of array1) {
+        const { studyInstanceUid } = item;
+        if (dataMap[studyInstanceUid]) {
+          item.date_processed = dataMap[studyInstanceUid].date_processed;
+          item.data = dataMap[studyInstanceUid].data;
+        }
+      }
+
+      return array1;
+    }
+
     // 204: no content
     async function getData() {
       setIsLoading(true);
 
       const studies = await dataSource.query.studies.search(queryFilterValues);
 
+      const config = {
+        method: 'post',
+        url: configuration.innopolisBaseURL + 'database/',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      };
+
+      const response = await axios(config);
+      const seriesFromAI = response.data;
+
+      const studiesWithDataAI = addParamsFromTo(studies, seriesFromAI);
+
+      studiesWithDataAI.forEach(study => {
+        const { date_processed, data } = study;
+        if (!data || !date_processed) {
+          return;
+        }
+        const probabilities = [];
+
+        for (let diase in data) {
+          probabilities.push(data[diase].probability);
+        }
+
+        if (probabilities.reduce((acc, item) => acc + item, 0) === 0) {
+          study.status = StudyStatus.success;
+        } else if (probabilities.filter(item => item >= 0.6).length > 0) {
+          study.status = StudyStatus.error;
+        } else {
+          study.status = StudyStatus.warning;
+        }
+      });
+
       setData({
-        studies: studies || [],
-        total: studies.length,
+        studies: studiesWithDataAI || [],
+        total: studiesWithDataAI.length,
         resultsPerPage: queryFilterValues.resultsPerPage,
         pageNumber: queryFilterValues.pageNumber,
         location,
