@@ -7,6 +7,7 @@ import {
   LoadingIndicator,
   LoadingIndicatorProgress,
 } from '@ohif/ui';
+import { useTranslation } from 'react-i18next';
 import StudyItem from './StudyItem';
 import axios from 'axios';
 import './PanelAI.css';
@@ -15,6 +16,7 @@ import configuration from './../config';
 let Modalities = ['DX', 'CR']
 
 export default function PanelAI({ servicesManager, commandsManager, extensionManager }) {
+  const { t } = useTranslation('Buttons');
   const isMounted = React.useRef(true);
   const {
     DisplaySetService,
@@ -34,9 +36,9 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   const [processingState, setProcessingState] = useState(AIState.loading);
   const [buttonClicked, setButtonClicked] = useState(false);
   const [seriesData, setSeriesData] = useState([{
-    title: '',
-    value: '',
-  }]);
+      title: '',
+      value: '',
+    }]);
   const [wasProcessing, setWasProcessing] = useState(false);
   const timer = null || number;
 
@@ -220,7 +222,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
               _handleStudyClick();
             }}
           >
-            Analyze
+            {t('Analyze')}
           </Button>
         );
       case AIState.loading:
@@ -237,7 +239,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
               <StudyItem key={item.title}
                 title={item.title ?? "Unknown"}
                 value={item.value.toString() ?? "Undefined"}
-            />
+              />
             ))}
             <Button
               size="initial"
@@ -250,7 +252,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
                 _handleStudyClick();
               }}
             >
-              Analyze again
+              {t('AnalyzeAgain')}
             </Button>
           </div>
         );
