@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 // import { useState } from 'react-usestateref'
 import PropTypes, { number } from 'prop-types';
+import classnames from 'classnames';
 import {
   Button,
   Icon,
@@ -270,9 +271,13 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   }
   return (
     <React.Fragment>
-      <div className="pt-5"></div>
-      <div className="flex flex-col flex-1 mr-1">
-        <div className="flex flexRow flex-center">
+      <div
+        className={classnames('flex flex-col mr-1 justify-center', {
+          'align-center h-screen': processingState === AIState.loading,
+          'mt-4': processingState !== AIState.loading,
+        })}
+      >
+        <div className="flex justify-center">
           {renderState(processingState)}
         </div>
       </div>
