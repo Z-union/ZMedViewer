@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 // import { useState } from 'react-usestateref'
 import PropTypes, { number } from 'prop-types';
+import classnames from 'classnames';
 import {
   Button,
   Icon,
@@ -209,19 +210,21 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
       case AIState.undefined:
         // ["default","primary","primaryActive","secondary","white","black","inherit","light","translucent"].
         return (
-          <Button
-            size="initial"
-            className="px-2 py-2 text-base text-white"
-            color="primaryActive"
-            variant="outlined"
-            fullWidth={true}
-            border="primaryActive"
-            onClick={() => {
-              _handleStudyClick();
-            }}
-          >
-            Analyze
-          </Button>
+          <div>
+            <Button
+              size="initial"
+              className="px-2 py-2 mt-2 text-base text-white"
+              color="primaryActive"
+              variant="outlined"
+              fullWidth={true}
+              border="primaryActive"
+              onClick={() => {
+                _handleStudyClick();
+              }}
+            >
+              Analyze
+            </Button>
+          </div>
         );
       case AIState.loading:
         return (
@@ -232,26 +235,28 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
       case AIState.finished:
       case AIState.finishedWithApply:
         return (
-          <div>
+          <div className="flex flex-col">
             {seriesData.map((item) => (
               <StudyItem key={item.title}
                 title={item.title ?? "Unknown"}
                 value={item.value.toString() ?? "Undefined"}
-            />
+              />
             ))}
-            <Button
-              size="initial"
-              className="px-2 py-2 text-base text-white"
-              color="light"
-              variant="outlined"
-              fullWidth={true}
-              border="primaryActive"
-              onClick={() => {
-                _handleStudyClick();
-              }}
-            >
-              Analyze again
-            </Button>
+            <div>
+              <Button
+                size="initial"
+                className="px-2 py-2 mt-2 text-base text-white"
+                color="light"
+                variant="outlined"
+                fullWidth={true}
+                border="primaryActive"
+                onClick={() => {
+                  _handleStudyClick();
+                }}
+              >
+                Analyze again
+              </Button>
+            </div>
           </div>
         );
       case AIState.error:
@@ -266,9 +271,13 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   }
   return (
     <React.Fragment>
-      <div className="pt-5"></div>
-      <div className="flex flex-col flex-1">
-        <div className="flex flexRow flex-center">
+      <div
+        className={classnames('flex flex-col mr-1 justify-center', {
+          'align-center h-screen': processingState === AIState.loading,
+          'mt-4': processingState !== AIState.loading,
+        })}
+      >
+        <div className="flex justify-center">
           {renderState(processingState)}
         </div>
       </div>
