@@ -49,7 +49,7 @@ services:
 
   # LINK: https://hub.docker.com/r/jboss/keycloak
   zmed_keycloak:
-    image: jboss/keycloak:6.0.1
+    image: quay.io/keycloak/keycloak:6.0.1
     hostname: zmed_keycloak
     container_name: zmed_keycloak
     volumes:
@@ -71,13 +71,13 @@ services:
       DB_PASSWORD: password
       # Keycloak
       KEYCLOAK_USER: admin
-      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KEYCLOAK_PASSWORD: secret-password
       KEYCLOAK_IMPORT: /tmp/ohif-keycloak-realm.json -Dkeycloak.profile.feature.upload_scripts=enabled
       # KEYCLOAK_WELCOME_THEME: <theme-name>
       # KEYCLOAK_DEFAULT_THEME: <theme-name>
       # KEYCLOAK_HOSTNAME: https://app.zmed.z-union.ru/
       # KEYCLOAK_LOGLEVEL: DEBUG
-      KC_HOSTNAME_URL: https://app.zmed.z-union.ru/auth
+      KC_HOSTNAME_URL: https://dev.app.zmed.z-union.ru/auth
       PROXY_ADDRESS_FORWARDING: 'true'
     ports:
       - "18443:8443"

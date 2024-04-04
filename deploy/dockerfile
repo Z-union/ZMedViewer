@@ -23,14 +23,14 @@
 
 
 # Stage 1: Build the application
-FROM node:16.15.0-slim as builder
+FROM node:18.16.1-slim as builder
 
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 
 ENV APP_CONFIG=config/zmed.js
 ENV HTML_TEMPLATE=zmed-index.html
-ENV PUBLIC_URL=https://app.zmed.z-union.ru/
+ENV PUBLIC_URL=https://dev.app.zmed.z-union.ru/
 
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 

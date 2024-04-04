@@ -536,7 +536,7 @@
     {
       "id": "3785434d-2af8-478c-b135-f0b11d1d3205",
       "clientId": "pacs",
-      "rootUrl": "https://app.zmed.z-union.ru",
+      "rootUrl": "https://dev.app.zmed.z-union.ru",
       "baseUrl": "/pacs-admin",
       "surrogateAuthRequired": false,
       "enabled": true,
@@ -725,8 +725,8 @@
     {
       "id": "53d51818-e1bf-4fc2-aa20-5541f2646f12",
       "clientId": "ohif-viewer",
-      "rootUrl": "https://app.zmed.z-union.ru",
-      "adminUrl": "https://app.zmed.z-union.ru",
+      "rootUrl": "https://dev.app.zmed.z-union.ru",
+      "adminUrl": "https://dev.app.zmed.z-union.ru",
       "baseUrl": "/",
       "surrogateAuthRequired": false,
       "enabled": true,
@@ -736,7 +736,7 @@
         "*"
       ],
       "webOrigins": [
-        "https://app.zmed.z-union.ru"
+        "https://dev.app.zmed.z-union.ru"
       ],
       "notBefore": 0,
       "bearerOnly": false,
