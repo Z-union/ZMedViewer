@@ -1,9 +1,3 @@
-/** UTILS */
-//import utils from './utils';
-//export { utils };
-
-/** CONTEXT/HOOKS */
-// Export types - need to do as two lines due to a bug in babel
 import * as Types from './types';
 
 export {
@@ -31,11 +25,15 @@ export {
   UserAuthenticationContext,
   UserAuthenticationProvider,
   useUserAuthentication,
+  useToolbox,
+  ToolboxProvider,
 } from './contextProviders';
 
 /** COMPONENTS */
 export {
   AboutModal,
+  AdvancedToolbox,
+  AllInOneMenu,
   HotkeyField,
   Header,
   UserPreferences,
@@ -44,6 +42,7 @@ export {
   ButtonGroup,
   ButtonEnums,
   ContextMenu,
+  CheckBox,
   CinePlayer,
   DateRange,
   Dialog,
@@ -56,6 +55,7 @@ export {
   IconButton,
   Input,
   InputRange,
+  InputDoubleRange,
   InputNumber,
   InputDateRange,
   InputFilterText,
@@ -66,7 +66,9 @@ export {
   Label,
   LayoutSelector,
   LegacyButton,
+  LegacyButtonGroup,
   LegacyCinePlayer,
+  LegacySidePanel,
   LegacyViewportActionBar,
   LoadingIndicatorProgress,
   LoadingIndicatorTotalPercent,
@@ -74,12 +76,15 @@ export {
   Modal,
   NavBar,
   Notification,
+  PanelSection,
   ProgressLoadingBar,
   Select,
   SegmentationTable,
   SegmentationGroupTable,
+  SegmentationGroupTableExpanded,
   SidePanel,
   SplitButton,
+  LegacySplitButton,
   StudyBrowser,
   StudyItem,
   StudyListExpandedRow,
@@ -89,6 +94,8 @@ export {
   StudyListTableRow,
   StudySummary,
   Svg,
+  SwitchButton,
+  SwitchLabelLocation,
   Table,
   TableBody,
   TableCell,
@@ -104,14 +111,25 @@ export {
   TooltipClipboard,
   Typography,
   Viewport,
+  ViewportActionArrows,
   ViewportActionBar,
+  ViewportActionCorners,
+  ViewportActionCornersLocations,
   ViewportDownloadForm,
   ViewportGrid,
   ViewportPane,
   WindowLevelMenuItem,
   ImageScrollbar,
   ViewportOverlay,
+  HeaderPatientInfo,
+  ToolSettings,
+  Toolbox,
+  InvestigationalUseDialog,
+  MeasurementItem,
+  LayoutPreset,
 } from './components';
+
+export { useSessionStorage } from './hooks';
 
 /** These are mostly used in the docs */
 export { getIcon, ICONS, addIcon } from './components/Icon/getIcon';

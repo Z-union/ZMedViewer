@@ -59,6 +59,9 @@
   ],
   "modes": [
     {
+      "packageName": "@ohif/mode-segmentation"
+    },
+    {
       "packageName": "@ohif/mode-tmtv"
     },
     {

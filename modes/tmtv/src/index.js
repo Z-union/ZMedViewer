@@ -4,6 +4,7 @@ import { id } from './id.js';
 import initToolGroups, { toolGroupIds } from './initToolGroups.js';
 import setCrosshairsConfiguration from './utils/setCrosshairsConfiguration.js';
 import setFusionActiveVolume from './utils/setFusionActiveVolume.js';
+import i18n from 'i18next';
 
 const { MetadataProvider } = classes;
 
@@ -38,17 +39,13 @@ function modeFactory({ modeConfiguration }) {
     // We should not be.
     id,
     routeName: 'tmtv',
-    displayName: 'Total Metabolic Tumor Volume',
+    displayName: i18n.t('Modes:Total Metabolic Tumor Volume'),
     /**
      * Lifecycle hooks
      */
     onModeEnter: ({ servicesManager, extensionManager, commandsManager }) => {
-      const {
-        toolbarService,
-        toolGroupService,
-        hangingProtocolService,
-        displaySetService,
-      } = servicesManager.services;
+      const { toolbarService, toolGroupService, hangingProtocolService, displaySetService } =
+        servicesManager.services;
 
       const utilityModule = extensionManager.getModuleEntry(
         '@ohif/extension-cornerstone.utilityModule.tools'
@@ -59,49 +56,13 @@ function modeFactory({ modeConfiguration }) {
       // Init Default and SR ToolGroups
       initToolGroups(toolNames, Enums, toolGroupService, commandsManager);
 
-      const setWindowLevelActive = () => {
-        toolbarService.recordInteraction({
-          groupId: 'WindowLevel',
-          itemId: 'WindowLevel',
-          interactionType: 'tool',
-          commands: [
-            {
-              commandName: 'setToolActive',
-              commandOptions: {
-                toolName: toolNames.WindowLevel,
-                toolGroupId: toolGroupIds.CT,
-              },
-              context: 'CORNERSTONE',
-            },
-            {
-              commandName: 'setToolActive',
-              commandOptions: {
-                toolName: toolNames.WindowLevel,
-                toolGroupId: toolGroupIds.PT,
-              },
-              context: 'CORNERSTONE',
-            },
-            {
-              commandName: 'setToolActive',
-              commandOptions: {
-                toolName: toolNames.WindowLevel,
-                toolGroupId: toolGroupIds.Fusion,
-              },
-              context: 'CORNERSTONE',
-            },
-          ],
-        });
-      };
-
       const { unsubscribe } = toolGroupService.subscribe(
         toolGroupService.EVENTS.VIEWPORT_ADDED,
         () => {
           // For fusion toolGroup we need to add the volumeIds for the crosshairs
           // since in the fusion viewport we don't want both PT and CT to render MIP
           // when slabThickness is modified
-          const {
-            displaySetMatchDetails,
-          } = hangingProtocolService.getMatchDetails();
+          const { displaySetMatchDetails } = hangingProtocolService.getMatchDetails();
 
           setCrosshairsConfiguration(
             displaySetMatchDetails,
@@ -116,13 +77,10 @@ function modeFactory({ modeConfiguration }) {
             toolGroupService,
             displaySetService
           );
-
-          setWindowLevelActive();
         }
       );
 
       unsubscriptions.push(unsubscribe);
-      toolbarService.init(extensionManager);
       toolbarService.addButtons(toolbarButtons);
       toolbarService.createButtonSection('primary', [
         'MeasurementTools',
@@ -130,9 +88,9 @@ function modeFactory({ modeConfiguration }) {
         'WindowLevel',
         'Crosshairs',
         'Pan',
-        'RectangleROIStartEndThreshold',
-        'fusionPTColormap',
+        'SyncToggle',
       ]);
+      toolbarService.createButtonSection('tmtvToolbox', ['RectangleROIStartEndThreshold']);
 
       // For the hanging protocol we need to decide on the window level
       // based on whether the SUV is corrected or not, hence we can't hard
@@ -143,22 +101,16 @@ function modeFactory({ modeConfiguration }) {
         'getPTVOIRange',
         'get PT VOI based on corrected or not',
         props => {
-          const ptDisplaySet = props.find(
-            imageSet => imageSet.Modality === 'PT'
-          );
+          const ptDisplaySet = props.find(imageSet => imageSet.Modality === 'PT');
 
           if (!ptDisplaySet) {
             return;
           }
 
           const { imageId } = ptDisplaySet.images[0];
-          const imageIdScalingFactor = MetadataProvider.get(
-            'scalingModule',
-            imageId
-          );
+          const imageIdScalingFactor = MetadataProvider.get('scalingModule', imageId);
 
-          const isSUVAvailable =
-            imageIdScalingFactor && imageIdScalingFactor.suvbw;
+          const isSUVAvailable = imageIdScalingFactor && imageIdScalingFactor.suvbw;
 
           if (isSUVAvailable) {
             return {
@@ -177,9 +129,13 @@ function modeFactory({ modeConfiguration }) {
         syncGroupService,
         segmentationService,
         cornerstoneViewportService,
+        uiDialogService,
+        uiModalService,
       } = servicesManager.services;
 
       unsubscriptions.forEach(unsubscribe => unsubscribe());
+      uiDialogService.dismissAll();
+      uiModalService.hide();
       toolGroupService.destroy();
       syncGroupService.destroy();
       segmentationService.destroy();
@@ -196,19 +152,19 @@ function modeFactory({ modeConfiguration }) {
       const isValid =
         modalities_list.includes('CT') &&
         modalities_list.includes('PT') &&
-        !invalidModalities.some(modality =>
-          modalities_list.includes(modality)
-        ) &&
+        !invalidModalities.some(modality => modalities_list.includes(modality)) &&
         // This is study is a 4D study with PT and CT and not a 3D study for the tmtv
         // mode, until we have a better way to identify 4D studies we will use the
         // StudyInstanceUID to identify the study
         // Todo: when we add the 4D mode which comes with a mechanism to identify
         // 4D studies we can use that
-        study.studyInstanceUid !==
-          '1.3.6.1.4.1.12842.1.1.14.3.20220915.105557.468.2963630849';
+        study.studyInstanceUid !== '1.3.6.1.4.1.12842.1.1.14.3.20220915.105557.468.2963630849';
 
       // there should be both CT and PT modalities and the modality should not be SM
-      return isValid;
+      return {
+        valid: isValid,
+        description: 'The mode requires both PT and CT series in the study',
+      };
     },
     routes: [
       {

@@ -13,11 +13,13 @@ import init from './init';
 import getCustomizationModule from './getCustomizationModule';
 import getCommandsModule from './commandsModule';
 import getHangingProtocolModule from './getHangingProtocolModule';
+import getToolbarModule from './getToolbarModule';
 import ToolGroupService from './services/ToolGroupService';
 import SyncGroupService from './services/SyncGroupService';
 import SegmentationService from './services/SegmentationService';
 import CornerstoneCacheService from './services/CornerstoneCacheService';
 import CornerstoneViewportService from './services/ViewportService/CornerstoneViewportService';
+import ColorbarService from './services/ColorbarService';
 import * as CornerstoneExtensionTypes from './types';
 
 import { toolNames } from './initCornerstoneTools';
@@ -26,14 +28,14 @@ import dicomLoaderService from './utils/dicomLoaderService';
 import getActiveViewportEnabledElement from './utils/getActiveViewportEnabledElement';
 
 import { id } from './id';
-import * as csWADOImageLoader from './initWADOImageLoader.js';
 import { measurementMappingUtils } from './utils/measurementServiceMappings';
 import type { PublicViewportOptions } from './services/ViewportService/Viewport';
+import ImageOverlayViewerTool from './tools/ImageOverlayViewerTool';
+import ViewportActionCornersService from './services/ViewportActionCornersService/ViewportActionCornersService';
+import { ViewportActionCornersProvider } from './contextProviders/ViewportActionCornersProvider';
 
 const Component = React.lazy(() => {
-  return import(
-    /* webpackPrefetch: true */ './Viewport/OHIFCornerstoneViewport'
-  );
+  return import(/* webpackPrefetch: true */ './Viewport/OHIFCornerstoneViewport');
 });
 
 const OHIFCornerstoneViewport = props => {
@@ -69,19 +71,24 @@ const cornerstoneExtension: Types.Extensions.Extension = {
    *
    * @param configuration.csToolsConfig - Passed directly to `initCornerstoneTools`
    */
-  preRegistration: function (
-    props: Types.Extensions.ExtensionParams
-  ): Promise<void> {
-    const { servicesManager } = props;
+  preRegistration: function (props: Types.Extensions.ExtensionParams): Promise<void> {
+    const { servicesManager, serviceProvidersManager } = props;
     servicesManager.registerService(CornerstoneViewportService.REGISTRATION);
     servicesManager.registerService(ToolGroupService.REGISTRATION);
     servicesManager.registerService(SyncGroupService.REGISTRATION);
     servicesManager.registerService(SegmentationService.REGISTRATION);
     servicesManager.registerService(CornerstoneCacheService.REGISTRATION);
+    servicesManager.registerService(ViewportActionCornersService.REGISTRATION);
+    servicesManager.registerService(ColorbarService.REGISTRATION);
 
+    serviceProvidersManager.registerProvider(
+      ViewportActionCornersService.REGISTRATION.name,
+      ViewportActionCornersProvider
+    );
     return init.call(this, props);
   },
 
+  getToolbarModule,
   getHangingProtocolModule,
   getViewportModule({ servicesManager, commandsManager }) {
     const ExtendedOHIFCornerstoneViewport = props => {
@@ -139,5 +146,11 @@ const cornerstoneExtension: Types.Extensions.Extension = {
 };
 
 export type { PublicViewportOptions };
-export { measurementMappingUtils, CornerstoneExtensionTypes, toolNames , getActiveViewportEnabledElement};
+export {
+  measurementMappingUtils,
+  CornerstoneExtensionTypes as Types,
+  toolNames,
+  getActiveViewportEnabledElement,
+  ImageOverlayViewerTool,
+};
 export default cornerstoneExtension;

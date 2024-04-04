@@ -104,8 +104,7 @@ module.exports = (env, argv) => {
           },
           // Copy Dicom Microscopy Viewer build files
           {
-            from:
-              '../../../node_modules/dicom-microscopy-viewer/dist/dynamic-import',
+            from: '../../../node_modules/dicom-microscopy-viewer/dist/dynamic-import',
             to: DIST_DIR,
             globOptions: {
               ignore: ['**/*.min.js.map'],
@@ -113,8 +112,7 @@ module.exports = (env, argv) => {
           },
           // Copy dicom-image-loader build files
           {
-            from:
-              '../../../node_modules/@cornerstonejs/dicom-image-loader/dist/dynamic-import',
+            from: '../../../node_modules/@cornerstonejs/dicom-image-loader/dist/dynamic-import',
             to: DIST_DIR,
           },
         ],
@@ -135,6 +133,8 @@ module.exports = (env, argv) => {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // Need to exclude the theme as it is updated independently
         exclude: [/theme/],
+        // Cache large files for the manifests to avoid warning messages
+        maximumFileSizeToCacheInBytes: 1024 * 1024 * 50,
       }),
     ],
     // https://webpack.js.org/configuration/dev-server/
@@ -156,7 +156,7 @@ module.exports = (env, argv) => {
         {
           directory: '../../testdata',
           staticOptions: {
-            extensions: ['gz', 'br'],
+            extensions: ['gz', 'br', 'mht'],
             index: ['index.json.gz', 'index.mht.gz'],
             redirect: true,
             setHeaders,
@@ -168,6 +168,7 @@ module.exports = (env, argv) => {
       //writeToDisk: true,
       historyApiFallback: {
         disableDotRule: true,
+        index: PUBLIC_URL + 'index.html',
       },
       headers: {
         'Cross-Origin-Embedder-Policy': 'require-corp',

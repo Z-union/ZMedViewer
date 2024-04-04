@@ -14,7 +14,7 @@ const roundedClasses = {
 };
 
 const disabledClasses = {
-  true: 'cursor-not-allowed',
+  true: 'ohif-disabled',
   false: '',
 };
 
@@ -38,42 +38,16 @@ const variantClasses = {
       'border border-primary-main text-primary-main hover:opacity-80 active:opacity-100 focus:opacity-80',
     secondary:
       'border border-secondary-light text-secondary-light hover:opacity-80 active:opacity-100 focus:opacity-80',
-    white:
-      'border border-white text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
+    white: 'border border-white text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
     black:
       'border border-primary-main text-white hover:bg-primary-main focus:bg-primary-main hover:border-black focus:border-black',
   },
   contained: {
-    default: 'text-black hover:opacity-80 active:opacity-100 focus:opacity-80',
+    default: 'text-common-bright hover:opacity-80 active:opacity-100 focus:opacity-80',
     primary: 'text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
-    secondary:
-      'text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
+    secondary: 'text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
     white: 'text-black hover:opacity-80 active:opacity-100 focus:opacity-80',
     black: 'text-white hover:opacity-80 active:opacity-100 focus:opacity-80',
-  },
-};
-
-const backgroundClasses = {
-  text: {
-    default: '',
-    primary: '',
-    secondary: '',
-    white: '',
-    black: '',
-  },
-  outlined: {
-    default: 'bg-transparent',
-    primary: 'bg-transparent',
-    secondary: 'bg-transparent',
-    white: 'bg-transparent',
-    black: 'bg-black',
-  },
-  contained: {
-    default: 'bg-primary-light',
-    primary: 'bg-primary-main',
-    secondary: 'bg-secondary-light',
-    white: 'bg-white',
-    black: 'bg-black',
   },
 };
 
@@ -89,7 +63,7 @@ const iconSizeClasses = {
   small: 'w-4 h-4',
   medium: 'w-5 h-5',
   large: 'w-6 h-6',
-  toolbar: 'w-5 h-5',
+  toolbar: 'w-[24px] h-[24px]',
 };
 
 const fullWidthClasses = {
@@ -108,9 +82,7 @@ const IconButton = ({
   fullWidth,
   onClick,
   className,
-  name,
   id,
-  bgColor,
   ...rest
 }) => {
   const buttonElement = useRef(null);
@@ -120,7 +92,7 @@ const IconButton = ({
     onClick(e);
   };
 
-  const bgColorToUse = bgColor ? bgColor : backgroundClasses[variant][color];
+  const padding = size === 'toolbar' ? '8px' : size === 'toolbox' ? '4px' : null;
 
   return (
     <button
@@ -131,11 +103,10 @@ const IconButton = ({
         sizeClasses[size],
         fullWidthClasses[fullWidth],
         disabledClasses[disabled],
-        bgColorToUse,
         className
       )}
       style={{
-        padding: size === 'toolbar' ? '10px' : null,
+        padding,
       }}
       ref={buttonElement}
       onClick={handleOnClick}
@@ -163,17 +134,10 @@ IconButton.defaultProps = {
 
 IconButton.propTypes = {
   children: PropTypes.node.isRequired,
-  size: PropTypes.oneOf(['small', 'medium', 'large', 'initial', 'toolbar']),
+  size: PropTypes.oneOf(['small', 'medium', 'large', 'initial', 'toolbar', 'toolbox']),
   rounded: PropTypes.oneOf(['none', 'small', 'medium', 'large', 'full']),
   variant: PropTypes.oneOf(['text', 'outlined', 'contained']),
-  color: PropTypes.oneOf([
-    'default',
-    'primary',
-    'secondary',
-    'white',
-    'black',
-    'inherit',
-  ]),
+  color: PropTypes.oneOf(['default', 'primary', 'secondary', 'white', 'black', 'inherit']),
   fullWidth: PropTypes.bool,
   disabled: PropTypes.bool,
   type: PropTypes.string,

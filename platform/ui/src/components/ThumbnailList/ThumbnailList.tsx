@@ -16,7 +16,7 @@ const ThumbnailList = ({
   return (
     <div
       id="ohif-thumbnail-list"
-      className="py-3 bg-black overflow-y-hidden ohif-scrollbar study-min-height"
+      className="ohif-scrollbar study-min-height overflow-y-hidden bg-black py-3"
     >
       {thumbnails.map(
         ({
@@ -29,7 +29,6 @@ const ThumbnailList = ({
           componentType,
           seriesDate,
           countIcon,
-          viewportIdentificator,
           isTracked,
           canReject,
           onReject,
@@ -38,9 +37,7 @@ const ThumbnailList = ({
           imageAltText,
           isHydratedForDerivedDisplaySet,
         }) => {
-          const isActive = activeDisplaySetInstanceUIDs.includes(
-            displaySetInstanceUID
-          );
+          const isActive = activeDisplaySetInstanceUIDs.includes(displaySetInstanceUID);
           switch (componentType) {
             case 'thumbnail':
               return (
@@ -55,12 +52,9 @@ const ThumbnailList = ({
                   imageSrc={imageSrc}
                   imageAltText={imageAltText}
                   messages={messages}
-                  viewportIdentificator={viewportIdentificator}
                   isActive={isActive}
                   onClick={() => onThumbnailClick(displaySetInstanceUID)}
-                  onDoubleClick={() =>
-                    onThumbnailDoubleClick(displaySetInstanceUID)
-                  }
+                  onDoubleClick={() => onThumbnailDoubleClick(displaySetInstanceUID)}
                 />
               );
             case 'thumbnailTracked':
@@ -76,13 +70,10 @@ const ThumbnailList = ({
                   imageSrc={imageSrc}
                   imageAltText={imageAltText}
                   messages={messages}
-                  viewportIdentificator={viewportIdentificator}
                   isTracked={isTracked}
                   isActive={isActive}
                   onClick={() => onThumbnailClick(displaySetInstanceUID)}
-                  onDoubleClick={() =>
-                    onThumbnailDoubleClick(displaySetInstanceUID)
-                  }
+                  onDoubleClick={() => onThumbnailDoubleClick(displaySetInstanceUID)}
                   onClickUntrack={() => onClickUntrack(displaySetInstanceUID)}
                 />
               );
@@ -101,13 +92,8 @@ const ThumbnailList = ({
                   canReject={canReject}
                   onReject={onReject}
                   onClick={() => onThumbnailClick(displaySetInstanceUID)}
-                  onDoubleClick={() =>
-                    onThumbnailDoubleClick(displaySetInstanceUID)
-                  }
-                  viewportIdentificator={viewportIdentificator}
-                  isHydratedForDerivedDisplaySet={
-                    isHydratedForDerivedDisplaySet
-                  }
+                  onDoubleClick={() => onThumbnailDoubleClick(displaySetInstanceUID)}
+                  isHydratedForDerivedDisplaySet={isHydratedForDerivedDisplaySet}
                 />
               );
             default:
@@ -130,7 +116,6 @@ ThumbnailList.propTypes = {
       numInstances: PropTypes.number,
       description: PropTypes.string,
       componentType: Types.ThumbnailType.isRequired,
-      viewportIdentificator: Types.StringArray,
       isTracked: PropTypes.bool,
       /**
        * Data the thumbnail should expose to a receiving drop target. Use a matching

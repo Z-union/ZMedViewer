@@ -20,6 +20,8 @@ type Segment = {
   isVisible: boolean;
   // whether the segment is locked
   isLocked: boolean;
+  // display texts
+  displayText?: string[];
 };
 
 type Segmentation = {
@@ -39,6 +41,8 @@ type Segmentation = {
   isActive: boolean;
   // if the segmentation is visible in the viewer
   isVisible: boolean;
+  // the frame of reference UID of the segmentation
+  FrameOfReferenceUID: string;
   // the label of the segmentation
   label: string;
   // the number of segments in the segmentation
@@ -65,4 +69,4 @@ type SegmentationRepresentationData = {
   LABELMAP?: LabelmapSegmentationData;
 };
 
-export { SegmentationConfig, Segment, Segmentation };
+export type { SegmentationConfig, Segment, Segmentation };

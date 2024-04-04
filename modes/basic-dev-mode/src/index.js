@@ -1,6 +1,7 @@
 import toolbarButtons from './toolbarButtons.js';
 import { hotkeys } from '@ohif/core';
 import { id } from './id';
+import i18n from 'i18next';
 
 const configs = {
   Length: {},
@@ -19,14 +20,12 @@ const cs3d = {
 };
 
 const dicomsr = {
-  sopClassHandler:
-    '@ohif/extension-cornerstone-dicom-sr.sopClassHandlerModule.dicom-sr',
+  sopClassHandler: '@ohif/extension-cornerstone-dicom-sr.sopClassHandlerModule.dicom-sr',
   viewport: '@ohif/extension-cornerstone-dicom-sr.viewportModule.dicom-sr',
 };
 
 const dicomvideo = {
-  sopClassHandler:
-    '@ohif/extension-dicom-video.sopClassHandlerModule.dicom-video',
+  sopClassHandler: '@ohif/extension-dicom-video.sopClassHandlerModule.dicom-video',
   viewport: '@ohif/extension-dicom-video.viewportModule.dicom-video',
 };
 
@@ -47,7 +46,7 @@ function modeFactory({ modeConfiguration }) {
   return {
     id,
     routeName: 'dev',
-    displayName: 'Basic Dev Viewer',
+    displayName: i18n.t('Modes:Basic Dev Viewer'),
     /**
      * Lifecycle hooks
      */
@@ -86,43 +85,12 @@ function modeFactory({ modeConfiguration }) {
           { toolName: toolNames.CalibrationLine },
         ],
         // enabled
+        enabled: [{ toolName: toolNames.ImageOverlayViewer }],
         // disabled
       };
 
-      const toolGroupId = 'default';
-      toolGroupService.createToolGroupAndAddTools(toolGroupId, tools, configs);
+      toolGroupService.createToolGroupAndAddTools('default', tools);
 
-      let unsubscribe;
-
-      const activateTool = () => {
-        toolbarService.recordInteraction({
-          groupId: 'WindowLevel',
-          itemId: 'WindowLevel',
-          interactionType: 'tool',
-          commands: [
-            {
-              commandName: 'setToolActive',
-              commandOptions: {
-                toolName: 'WindowLevel',
-              },
-              context: 'CORNERSTONE',
-            },
-          ],
-        });
-
-        // We don't need to reset the active tool whenever a viewport is getting
-        // added to the toolGroup.
-        unsubscribe();
-      };
-
-      // Since we only have one viewport for the basic cs3d mode and it has
-      // only one hanging protocol, we can just use the first viewport
-      ({ unsubscribe } = toolGroupService.subscribe(
-        toolGroupService.EVENTS.VIEWPORT_ADDED,
-        activateTool
-      ));
-
-      toolbarService.init(extensionManager);
       toolbarService.addButtons(toolbarButtons);
       toolbarService.createButtonSection('primary', [
         'MeasurementTools',
@@ -138,8 +106,11 @@ function modeFactory({ modeConfiguration }) {
         toolGroupService,
         measurementService,
         toolbarService,
+        uiDialogService,
+        uiModalService,
       } = servicesManager.services;
-
+      uiDialogService.dismissAll();
+      uiModalService.hide();
       toolGroupService.destroy();
     },
     validationTags: {
@@ -150,7 +121,10 @@ function modeFactory({ modeConfiguration }) {
       const modalities_list = modalities.split('\\');
 
       // Slide Microscopy modality not supported by basic mode yet
-      return !modalities_list.includes('SM');
+      return {
+        valid: !modalities_list.includes('SM'),
+        description: 'The mode does not support the following modalities: SM',
+      };
     },
     routes: [
       {

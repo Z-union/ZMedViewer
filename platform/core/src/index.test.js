@@ -9,6 +9,7 @@ describe('Top level exports', () => {
       'ExtensionManager',
       'HotkeysManager',
       'ServicesManager',
+      'ServiceProvidersManager',
       //
       'defaults',
       'utils',
@@ -25,6 +26,7 @@ describe('Top level exports', () => {
       //
       'CineService',
       'CustomizationService',
+      'Enums',
       'StateSyncService',
       'UIDialogService',
       'UIModalService',
@@ -44,6 +46,7 @@ describe('Top level exports', () => {
       'pubSubServiceInterface',
       'PubSubService',
       'PanelService',
+      'useToolbar',
     ].sort();
 
     const exports = Object.keys(OHIF).sort();

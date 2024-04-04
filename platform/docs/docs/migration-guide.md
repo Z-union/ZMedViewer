@@ -1,6 +1,6 @@
 ---
 sidebar_position: 10
-sidebar_label: Migration Guide (NEW)
+sidebar_label: Migration Guide
 ---
 
 # Migration Guide
@@ -649,7 +649,6 @@ onModeEnter: ({ servicesManager, extensionManager, commandsManager }) => {
   // Init tool groups (see cornerstone3D for more details)
   initToolGroups(extensionManager, toolGroupService, commandsManager);
 
-  toolbarService.init(extensionManager);
   toolbarService.addButtons(toolbarButtons);
   toolbarService.createButtonSection('primary', [
     'MeasurementTools',
@@ -658,7 +657,6 @@ onModeEnter: ({ servicesManager, extensionManager, commandsManager }) => {
     'Pan',
     'Capture',
     'Layout',
-    'MPR',
     'Crosshairs',
     'MoreTools',
   ]);
@@ -935,7 +933,7 @@ We have gone through extensive re-design of each part of the UI, and we have als
 
 <details>
 <summary>
-I have a huge complex styles using native CSS, how can I re-use them?
+I have a huge complex styles using native CSS, how can I reuse them?
 </summary>
 You can leverage the power of Tailwind CSS (https://TailwindCSS.com/) in OHIF v3 to reuse your existing styles. Tailwind CSS is a utility-first approach, allowing you to create reusable CSS classes by composing utility classes together. You can migrate your existing styles to Tailwind CSS by breaking them down into utility classes and utilizing the extensive set of predefined utilities provided by Tailwind CSS.
 

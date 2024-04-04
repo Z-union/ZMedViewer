@@ -1,5 +1,5 @@
 import { ExtensionManager, MODULE_TYPES } from './extensions';
-import { ServicesManager } from './services';
+import { ServiceProvidersManager, ServicesManager } from './services';
 import classes, { CommandsManager, HotkeysManager } from './classes';
 
 import DICOMWeb from './DICOMWeb';
@@ -11,6 +11,8 @@ import user from './user.js';
 import utils from './utils';
 import defaults from './defaults';
 import * as Types from './types';
+import * as Enums from './enums';
+import { useToolbar } from './hooks/useToolbar';
 
 import {
   CineService,
@@ -33,10 +35,7 @@ import {
   PanelService,
 } from './services';
 
-import {
-  DisplaySetMessage,
-  DisplaySetMessageList,
-} from './services/DisplaySetService';
+import { DisplaySetMessage, DisplaySetMessageList } from './services/DisplaySetService';
 
 import IWebApiDataSource from './DataSources/IWebApiDataSource';
 
@@ -52,6 +51,7 @@ const OHIF = {
   ExtensionManager,
   HotkeysManager,
   ServicesManager,
+  ServiceProvidersManager,
   //
   defaults,
   utils,
@@ -83,6 +83,7 @@ const OHIF = {
   pubSubServiceInterface,
   PubSubService,
   PanelService,
+  useToolbar,
 };
 
 export {
@@ -92,6 +93,7 @@ export {
   ExtensionManager,
   HotkeysManager,
   ServicesManager,
+  ServiceProvidersManager,
   //
   defaults,
   utils,
@@ -123,8 +125,10 @@ export {
   DicomMetadataStore,
   pubSubServiceInterface,
   PubSubService,
+  Enums,
   Types,
   PanelService,
+  useToolbar,
 };
 
 export { OHIF };
