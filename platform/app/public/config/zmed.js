@@ -4,8 +4,6 @@ window.config = {
   extensions: [],
   modes: [],
   customizationService: {
-    // Shows a custom route -access via http://localhost:3000/custom
-    // helloPage: '@ohif/extension-default.customizationModule.helloPage',
     worksheet: `zmed-common.customizationModule.worksheet`,
     dicomUploadComponent:
       '@ohif/extension-cornerstone.customizationModule.cornerstoneDicomUploadComponent',
@@ -47,9 +45,9 @@ window.config = {
         // wadoUriRoot: 'http://52.29.40.199:8042/wado',
         // qidoRoot: 'http://52.29.40.199:8042/dicom-web',
         // wadoRoot: 'http://52.29.40.199:8042/dicom-web',
-        wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
-        qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
-        wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
+        wadoUriRoot: 'https://dev.app.zmed.z-union.ru/pacs/wado',
+        qidoRoot: 'https://dev.app.zmed.z-union.ru/pacs/dicom-web',
+        wadoRoot: 'https://dev.app.zmed.z-union.ru/pacs/dicom-web',
         // wadoUriRoot: 'https://app.zmed.z-union.ru/pacs/wado',
         // qidoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
         // wadoRoot: 'https://app.zmed.z-union.ru/pacs/dicom-web',
@@ -110,12 +108,12 @@ window.config = {
     console.warn(error.status);
 
     // Could use services manager here to bring up a dialog/modal if needed.
-    console.warn('test, navigate to https://app.zmed.z-union.ru/');
+    console.warn('test, navigate to https://dev.app.zmed.z-union.ru/');
   },
   zmedtools: {
-    covidURL: 'https://app.zmed.z-union.ru/zmedtools/',
-    mammoURL: 'https://app.zmed.z-union.ru/zmedtools/',
-    innpolisURL: 'https://app.zmed.z-union.ru/zmedtools/',
+    covidURL: 'https://dev.app.zmed.z-union.ru/zmedtools/',
+    mammoURL: 'https://dev.app.zmed.z-union.ru/zmedtools/',
+    innpolisURL: 'https://dev.app.zmed.z-union.ru/zmedtools/',
   },
   // This is an array, but we'll only use the first entry for now
   oidc: [
@@ -124,7 +122,7 @@ window.config = {
       // Authorization Server URL
       authority: '/auth/realms/ohif',
       client_id: 'ohif-viewer',
-      redirect_uri: 'https://app.zmed.z-union.ru/callback', // `OHIFStandaloneViewer.js`
+      redirect_uri: 'https://dev.app.zmed.z-union.ru/callback', // `OHIFStandaloneViewer.js`
       // "Authorization Code Flow"
       // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
       response_type: 'code',

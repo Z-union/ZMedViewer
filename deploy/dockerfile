@@ -28,9 +28,12 @@ FROM node:18.16.1-slim as builder
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 
+RUN apt-get update && apt-get install -y build-essential python3
+
 ENV APP_CONFIG=config/zmed.js
 ENV HTML_TEMPLATE=zmed-index.html
 ENV PUBLIC_URL=https://dev.app.zmed.z-union.ru/
+ENV QUICK_BUILD true
 
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 
@@ -38,6 +41,7 @@ COPY package.json /usr/src/app/package.json
 COPY yarn.lock /usr/src/app/yarn.lock
 
 ADD . /usr/src/app/
+RUN yarn config set workspaces-experimental true
 RUN yarn install
 RUN yarn run build
 
