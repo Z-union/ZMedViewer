@@ -133,25 +133,32 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
           // headers['Content-Type'] = 'application/json';
 
           var results = [];
+          let response = null;
 
           qidoDicomWebClient.headers = headers;
 
           if (origParams.me) {
             var head = headers;
             head['Content-Type'] = 'application/json';
+            const params = {
+              page: origParams.pageNumber, 
+              size: origParams.resultsPerPage, 
+            };
             var config = {
               method: 'get',
               url: dicomWebConfig.personalAccountUri + '/me/studies/',
               headers: head,
+              params: params,
             };
 
-            let response = await axios(config);
+            response = await axios(config);
             if (response.status == 200) {
               const studies = response.data.items.map(el => {
                 return el.study_id;
               });
               if (studies.length > 0) {
                 origParams.studyInstanceUid = studies;
+                origParams.size = response.data.size;
                 const { studyInstanceUid, seriesInstanceUid, ...mappedParams } =
                   mapParams(origParams, {
                     supportsFuzzyMatching: dicomWebConfig.supportsFuzzyMatching,
@@ -179,9 +186,15 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
               undefined,
               mappedParams
             );
-          }
 
-          return processResults(results);
+            return processResults(results);
+          }
+          return {
+            studies: processResults(results),
+            pages: response.data.pages,
+            size: response.data.size,
+            total: response.data.total,
+          };
         },
         processResults: processResults.bind(),
       },

@@ -12,6 +12,7 @@ const StudyListPagination = ({
   currentPage,
   perPage,
   onChangePerPage,
+  pages = null
 }) => {
   const { t } = useTranslation('StudyList');
 
@@ -67,6 +68,7 @@ const StudyListPagination = ({
                   color="translucent"
                   border="primary"
                   variant="outlined"
+                  disabled={currentPage === 1}
                   onClick={() => navigateToPage(1)}
                 >
                   {`<<`}
@@ -77,6 +79,7 @@ const StudyListPagination = ({
                   color="translucent"
                   border="primary"
                   variant="outlined"
+                  disabled={currentPage === 1}
                   onClick={() => navigateToPage(currentPage - 1)}
                 >
                   {t('Previous')}
@@ -87,6 +90,7 @@ const StudyListPagination = ({
                   color="translucent"
                   border="primary"
                   variant="outlined"
+                  disabled={pages === currentPage}
                   onClick={() => navigateToPage(currentPage + 1)}
                 >
                   {t('Next')}
@@ -105,6 +109,7 @@ StudyListPagination.propTypes = {
   currentPage: PropTypes.number.isRequired,
   perPage: PropTypes.number.isRequired,
   onChangePerPage: PropTypes.func.isRequired,
+  pages: PropTypes.number,
 };
 
 export default StudyListPagination;
