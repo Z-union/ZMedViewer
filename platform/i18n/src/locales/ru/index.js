@@ -5,6 +5,7 @@ import Common from './Common.json';
 import DataSourceConfiguration from './DataSourceConfiguration.json';
 import DatePicker from './DatePicker.json';
 import Header from './Header.json';
+import HeaderModal from './HeaderModal.json';
 import MeasurementTable from './MeasurementTable.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
@@ -22,6 +23,7 @@ export default {
     DataSourceConfiguration,
     DatePicker,
     Header,
+    HeaderModal,
     MeasurementTable,
     SidePanel,
     StudyBrowser,
