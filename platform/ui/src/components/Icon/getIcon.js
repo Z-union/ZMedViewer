@@ -47,6 +47,9 @@ import statusAlert from './../../assets/icons/status-alert.svg';
 import statusLocked from './../../assets/icons/status-locked.svg';
 import statusTracked from './../../assets/icons/status-tracked.svg';
 import statusUntracked from './../../assets/icons/status-untracked.svg';
+import statusSuccess from './../../assets/icons/status-success.svg';
+import statusWarning from './../../assets/icons/status-warning.svg';
+import statusError from './../../assets/icons/status-error.svg';
 import tracked from './../../assets/icons/tracked.svg';
 import unlink from './../../assets/icons/unlink.svg';
 import checkboxChecked from './../../assets/icons/checkbox-checked.svg';
@@ -74,6 +77,7 @@ import tabSegmentation from './../../assets/icons/tab-segmentation.svg';
 import uiArrowDown from './../../assets/icons/ui-arrow-down.svg';
 import uiArrowUp from './../../assets/icons/ui-arrow-up.svg';
 import loadingOHIFMark from './../../assets/icons/loading-ohif-mark.svg';
+import loadingZmedMark from './../../assets/icons/loading-zmed-mark.svg';
 import notificationsInfo from './../../assets/icons/notifications-info.svg';
 import notificationsWarning from './../../assets/icons/notifications-warning.svg';
 import notificationsError from './../../assets/icons/notifications-error.svg';
@@ -186,6 +190,9 @@ const ICONS = {
   'status-locked': statusLocked,
   'status-tracked': statusTracked,
   'status-untracked': statusUntracked,
+  'status-success': statusSuccess,
+  'status-warning': statusWarning,
+  'status-error': statusError,
   sorting: sorting,
   tracked: tracked,
   unlink: unlink,
@@ -203,6 +210,7 @@ const ICONS = {
   'checkbox-checked': checkboxChecked,
   'checkbox-unchecked': checkboxUnchecked,
   'loading-ohif-mark': loadingOHIFMark,
+  'loading-zmed-mark': loadingZmedMark,
   'notifications-info': notificationsInfo,
   'notifications-error': notificationsError,
   'notifications-success': notificationsSuccess,

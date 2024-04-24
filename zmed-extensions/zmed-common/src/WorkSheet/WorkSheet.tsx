@@ -11,6 +11,7 @@ import filtersMeta from './filtersMeta.js';
 import { useAppConfig } from '@state';
 import { useDebounce, useSearchParams } from '@hooks';
 import { utils, hotkeys, ServicesManager } from '@ohif/core';
+import { getStatusIcon } from './../config';
 
 import {
   Icon,
@@ -240,6 +241,7 @@ function WorkSheet({
       patientName,
       date,
       time,
+      status,
     } = study;
     const studyDate =
       date &&
@@ -267,6 +269,20 @@ function WorkSheet({
           gridCol: 3,
         },
         {
+          key: 'status',
+          content: (
+            <TooltipClipboard>
+              <span className="flex justify-center align-center gap-2">
+                {status && (
+                  <Icon className="w-3 h-3 mt-1" name={getStatusIcon(status)} />
+                )}
+                {status}
+              </span>
+            </TooltipClipboard>
+          ),
+          gridCol: 4,
+        },
+        {
           key: 'studyDate',
           content: (
             <>
@@ -280,18 +296,18 @@ function WorkSheet({
         {
           key: 'description',
           content: <TooltipClipboard>{description}</TooltipClipboard>,
-          gridCol: 4,
+          gridCol: 3,
         },
         {
           key: 'modality',
           content: modalities,
           title: modalities,
-          gridCol: 3,
+          gridCol: 2,
         },
         {
           key: 'accession',
           content: <TooltipClipboard>{accession}</TooltipClipboard>,
-          gridCol: 3,
+          gridCol: 1,
         },
         {
           key: 'instances',

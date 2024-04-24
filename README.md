@@ -1,5 +1,6 @@
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+<!-- for view purposes -->
 <div align="center">
   <h1>OHIF Medical Imaging Viewer</h1>
   <p><strong>The OHIF Viewer</strong> is a zero-footprint medical image viewer
