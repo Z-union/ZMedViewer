@@ -70,7 +70,7 @@ const StudyListFilter = ({
                   className="mr-2"
                   data-cy={'num-studies'}
                 >
-                  {numOfStudies > 100 ? '>100' : numOfStudies}
+                  {numOfStudies}
                 </Typography>
                 <Typography
                   variant="h6"
@@ -94,15 +94,6 @@ const StudyListFilter = ({
             isSortingEnabled={isSortingEnabled}
           />
         </div>
-        {numOfStudies > 100 && (
-          <div className="container m-auto">
-            <div className="py-1 text-base text-center rounded-b bg-primary-main">
-              <p className="text-white">
-                {t('NumOfStudiesHiggerThan100Message')}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </React.Fragment>
   );
