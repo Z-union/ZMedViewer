@@ -1,18 +1,18 @@
 {
+  "About ZMed Viewer": "О Z-Med Вьювере",
   "Browser": "Браузер",
   "Build Number": "Номер версии",
+  "Commit Hash": "Хэш коммита",
+  "Data Citation": "Ссылка на данные",
+  "Important Links": "Важные ссылки",
   "Latest Master Commits": "Последние коммиты в мастере",
   "More details": "Больше информации",
   "Name": "Имя",
-  "About ZMed Viewer": "О Z-Med Вьювере",
   "OS": "ОС",
   "Report an issue": "Сообщить об ошибке",
   "Repository URL": "Репозиторий URL",
   "Value": "Значение",
   "Version Information": "Информация о версии",
-  "Visit the forum": "Посетить форум",
-  "Important Links": "Важные ссылки",
   "Version number": "Версия",
-  "Commit Hash": "Хэш коммита",
-  "Data Citation": "Ссылка на данные"
+  "Visit the forum": "Посетить форум"
 }

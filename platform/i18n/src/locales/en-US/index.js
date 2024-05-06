@@ -12,6 +12,8 @@ import StudyList from './StudyList.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
+import UploadModal from './UploadModal.json';
+import HeaderModal from './HeaderModal.json';
 
 export default {
   'en-US': {
@@ -29,5 +31,7 @@ export default {
     UserPreferencesModal,
     ViewportDownloadForm,
     Messages,
+    UploadModal,
+    HeaderModal,
   },
 };

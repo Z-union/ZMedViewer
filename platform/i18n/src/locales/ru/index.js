@@ -13,6 +13,7 @@ import StudyList from './StudyList.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
+import UploadModal from './UploadModal.json';
 
 export default {
   ru: {
@@ -31,5 +32,6 @@ export default {
     UserPreferencesModal,
     ViewportDownloadForm,
     Messages,
+    UploadModal
   },
 };

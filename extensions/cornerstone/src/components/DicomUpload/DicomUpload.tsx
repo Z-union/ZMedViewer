@@ -3,6 +3,7 @@ import { ReactElement } from 'react';
 import Dropzone from 'react-dropzone';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import DicomFileUploader from '../../utils/DicomFileUploader';
 import DicomUploadProgress from './DicomUploadProgress';
 import { Button, ButtonEnums } from '@ohif/ui';
@@ -19,6 +20,7 @@ function DicomUpload({
   onComplete,
   onStarted,
 }: DicomUploadProps): ReactElement {
+  const { t } = useTranslation('UploadModal');
   const baseClassNames = 'min-h-[480px] flex flex-col bg-black select-none';
   const [dicomFileUploaderArr, setDicomFileUploaderArr] = useState([]);
 
@@ -47,7 +49,7 @@ function DicomUpload({
                 {({ getRootProps, getInputProps }) => (
                   <div {...getRootProps()}>
                     <Button disabled={false} onClick={() => {}}>
-                      {'Add files'}
+                      {t('Add files')}
                       <input {...getInputProps()} />
                     </Button>
                   </div>
@@ -61,7 +63,7 @@ function DicomUpload({
                       disabled={false}
                       onClick={() => {}}
                     >
-                      {'Add folder'}
+                      {t('Add folder')}
                       <input
                         {...getInputProps()}
                         webkitdirectory="true"
@@ -72,9 +74,9 @@ function DicomUpload({
                 )}
               </Dropzone>
             </div>
-            <div className="pt-5">or drag images or folders here</div>
+            <div className="pt-5">{t('or drag images or folders here')}</div>
             <div className="pt-3 text-aqua-pale text-lg">
-              (DICOM files supported)
+              {t('DICOM files supported')}
             </div>
           </div>
         )}
