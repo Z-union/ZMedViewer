@@ -130,6 +130,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
             .lastIndexOf(true);
           if (lastIndex == -1) {
             setProcessingState(AIState.undefined);
+            sessionStorage.setItem(currentZFluData, JSON.stringify([]));
             return;
           }
           const element = response.data[lastIndex];
@@ -195,8 +196,10 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
       setProcessingState(AIState.loading)
       _retrieveData();
     } else {
-      setSeriesData(JSON.parse(sessionStorage.getItem(currentZFluData)))
-      setProcessingState(AIState.finished)
+      const storedData = sessionStorage.getItem(currentZFluData);
+      const diases = storedData ? JSON.parse(storedData) : [];
+      setSeriesData(diases);
+      diases.length > 0 ? setProcessingState(AIState.finished) : setProcessingState(AIState.undefined);
     }
     return () => {
       isMounted.current = false;
