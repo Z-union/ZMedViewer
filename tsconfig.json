@@ -19,6 +19,11 @@
       "@ohif/app": ["platform/app/src"]
     }
   },
-  "include": ["platform/**/src/**/*", "extensions/**/src/**/*", "modes/**/src/**/*"],
+  "include": [
+    "platform/**/src/**/*",
+    "extensions/**/src/**/*",
+    "modes/**/src/**/*",
+    "zmed-extensions/zmed-common/src/hooks/useToolbar.tsx"
+  ],
   "exclude": ["node_modules", "dist"]
 }

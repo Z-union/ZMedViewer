@@ -67,6 +67,10 @@ export default class ToolbarService extends PubSubService {
     this._servicesManager = servicesManager;
   }
 
+  public init(extensionManager: ExtensionManager): void {
+    this._extensionManager = extensionManager;
+  }
+
   public reset(): void {
     this.unsubscriptions.forEach(unsub => unsub());
     this.state = {
@@ -339,7 +343,6 @@ export default class ToolbarService extends PubSubService {
       toolbarModule.module.forEach(def => {
         buttonTypes[def.name] = def;
       });
-
       return buttonTypes;
     }, {});
   }
@@ -384,12 +387,12 @@ export default class ToolbarService extends PubSubService {
       return;
     }
 
-    const { id, uiType, component } = btn;
+    const { id, uiType, type, component } = btn;
     const { groupId } = btn.props;
 
     const buttonTypes = this._getButtonUITypes();
 
-    const buttonType = buttonTypes[uiType];
+    const buttonType = buttonTypes[uiType ?? type];
 
     if (!buttonType) {
       return;

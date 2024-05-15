@@ -51,7 +51,8 @@ const metadataProvider = classes.MetadataProvider;
  * @param {bool} lazyLoadStudy - "enableStudyLazyLoad"; Request series meta async instead of blocking
  * @param {string|bool} singlepart - indicates of the retrieves can fetch singlepart.  Options are bulkdata, video, image or boolean true
  */
-function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
+function createDicomWebApi(dicomWebConfig, servicesManager) {
+  const { userAuthenticationService, customizationService } = servicesManager.services;
   let dicomWebConfigCopy,
     qidoConfig,
     wadoConfig,
@@ -147,7 +148,7 @@ function createDicomWebApi(dicomWebConfig, userAuthenticationService) {
 
             let response = await axios(config);
             if (response.status == 200) {
-              const studies = response.data.map(el => {
+              const studies = response.data.items.map(el => {
                 return el.study_id;
               });
               if (studies.length > 0) {

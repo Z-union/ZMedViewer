@@ -21,7 +21,7 @@ import {
   CommandsManager,
 } from '@ohif/core';
 import { useAppConfig } from '@state';
-import Toolbar from '../Toolbar/Toolbar';
+import {Toolbar} from '../Toolbar/Toolbar';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
@@ -231,6 +231,8 @@ function ViewerLayout({
         isReturnEnabled={!!!appConfig.showStudyList}
         onClickReturnButton={onClickReturnButton}
         WhiteLabeling={appConfig.whiteLabeling}
+        showPatientInfo={appConfig.showPatientInfo}
+        servicesManager={servicesManager}
       >
         <ErrorBoundary context="Primary Toolbar">
           <div className="relative flex justify-center">

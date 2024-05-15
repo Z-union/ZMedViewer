@@ -31,9 +31,13 @@ import AboutModal from '../components/AboutModal' ;
 
 import i18n from '@ohif/i18n';
 
+import { Types } from '@ohif/ui';
+
 const { sortBySeriesDate } = utils;
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
+
+const PatientInfoVisibility = Types.PatientInfoVisibility;
 
 const seriesInStudiesMap = new Map();
 
@@ -349,10 +353,11 @@ function WorkSheet({
 
               const modalitiesToCheck = modalities.replaceAll('/', '\\');
 
-              const isValidMode = mode.isValidMode({
+              const isValidModeCheck = mode.isValidMode({
                 modalities: modalitiesToCheck,
                 study,
               });
+              const isValidMode = isValidModeCheck === !! isValidModeCheck;
               // TODO: Modes need a default/target route? We mostly support a single one for now.
               // We should also be using the route path, but currently are not
               // mode.routeName
@@ -498,6 +503,8 @@ function WorkSheet({
         menuOptions={menuOptions}
         isReturnEnabled={false}
         WhiteLabeling={appConfig.whiteLabeling}
+        showPatientInfo={PatientInfoVisibility.DISABLED}
+        servicesManager={servicesManager}
       />
       <div className="overflow-y-auto ohif-scrollbar flex flex-col grow">
         <StudyListFilter
