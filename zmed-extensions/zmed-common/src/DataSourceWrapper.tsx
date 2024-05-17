@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { ExtensionManager, MODULE_TYPES } from '@ohif/core';
 //
@@ -107,6 +107,8 @@ function DataSourceWrapper(props) {
   const [isLoading, setIsLoading] = useState(false);
   const [pages, setPages] = useState(null);
   const [size, setSize] = useState(null);
+  const [total, setTotal] = useState(null);
+  const cache = useRef(new Map());
 
   /**
    * The effect to initialize the data source whenever it changes. Similar to
@@ -152,24 +154,30 @@ function DataSourceWrapper(props) {
     );
 
     // 204: no content
-    async function getData() {
+    const getData = async () => {
       setIsLoading(true);
 
-      const {studies, pages, size, total} = await dataSource.query.studies.search(queryFilterValues);
-
-      setPages(pages);
-      setSize(size);
-
-      setData({
-        studies: studies || [],
-        total: total,
-        resultsPerPage: queryFilterValues.resultsPerPage,
-        pageNumber: queryFilterValues.pageNumber,
-        location,
-      });
-
+      const updateState = ({ studies = [], pages, size, total }) => {
+        setPages(pages);
+        setSize(size);
+        setTotal(total);
+        setData({ studies, total, ...queryFilterValues, location });
+      };
+    
+      if (data.location === 'Not a valid location, causes first load to occur') cache.current.clear();
+      const queryKey = JSON.stringify(queryFilterValues);
+    
+      if (cache.current.has(queryKey)) { //Данные из кэша
+        const cachedData = cache.current.get(queryKey);
+        updateState(cachedData);
+      } else {                           //Данные из сетевого запроса
+        const data = await dataSource.query.studies.search(queryFilterValues);
+        cache.current.set(queryKey, data);
+        updateState(data);
+      }
+    
       setIsLoading(false);
-    }
+    };
 
     try {
       // Cache invalidation :thinking:

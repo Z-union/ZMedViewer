@@ -68,7 +68,8 @@ function WorkSheet({
     ...queryFilterValues,
   });
 
-  const debouncedFilterValues = useDebounce(filterValues, 200);
+  const debouncedFilterValues = useDebounce(filterValues, 20);
+  // Пока что большой Debounce не требуется за счет использования кэширования
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
 
   sessionStorage.setItem('pageNumber', pageNumber);
