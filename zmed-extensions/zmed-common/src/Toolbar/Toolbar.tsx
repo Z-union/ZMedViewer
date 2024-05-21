@@ -13,8 +13,6 @@ export function Toolbar({ servicesManager }) {
     return null;
   }
 
-  console.log(toolbarButtons);
-
   return (
     <>
       {toolbarButtons.map(toolDef => {
