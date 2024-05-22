@@ -6,8 +6,9 @@ import {
   imageLoadPoolManager,
   imageRetrievalPoolManager,
 } from '@cornerstonejs/core';
+import * as csStreamingImageVolumeLoader from '@cornerstonejs/streaming-image-volume-loader';
 import { Enums as cs3DToolsEnums } from '@cornerstonejs/tools';
-import { ServicesManager, Types } from '@ohif/core';
+import { Types } from '@ohif/core';
 
 import init from './init';
 import getCustomizationModule from './getCustomizationModule';
@@ -31,8 +32,13 @@ import { id } from './id';
 import { measurementMappingUtils } from './utils/measurementServiceMappings';
 import type { PublicViewportOptions } from './services/ViewportService/Viewport';
 import ImageOverlayViewerTool from './tools/ImageOverlayViewerTool';
+import { showLabelAnnotationPopup } from './utils/callInputDialog';
 import ViewportActionCornersService from './services/ViewportActionCornersService/ViewportActionCornersService';
 import { ViewportActionCornersProvider } from './contextProviders/ViewportActionCornersProvider';
+import ActiveViewportWindowLevel from './components/ActiveViewportWindowLevel';
+
+const { helpers: volumeLoaderHelpers } = csStreamingImageVolumeLoader;
+const { getDynamicVolumeInfo } = volumeLoaderHelpers ?? {};
 
 const Component = React.lazy(() => {
   return import(/* webpackPrefetch: true */ './Viewport/OHIFCornerstoneViewport');
@@ -55,13 +61,34 @@ const cornerstoneExtension: Types.Extensions.Extension = {
    */
   id,
 
-  onModeExit: (): void => {
+  onModeEnter: ({ servicesManager }: withAppTypes): void => {
+    const { cornerstoneViewportService, toolbarService, segmentationService } =
+      servicesManager.services;
+    toolbarService.registerEventForToolbarUpdate(cornerstoneViewportService, [
+      cornerstoneViewportService.EVENTS.VIEWPORT_DATA_CHANGED,
+    ]);
+
+    toolbarService.registerEventForToolbarUpdate(segmentationService, [
+      segmentationService.EVENTS.SEGMENTATION_ADDED,
+      segmentationService.EVENTS.SEGMENTATION_REMOVED,
+      segmentationService.EVENTS.SEGMENTATION_UPDATED,
+    ]);
+
+    toolbarService.registerEventForToolbarUpdate(cornerstone.eventTarget, [
+      cornerstoneTools.Enums.Events.TOOL_ACTIVATED,
+    ]);
+  },
+
+  onModeExit: ({ servicesManager }: withAppTypes): void => {
+    const { cineService } = servicesManager.services;
     // Empty out the image load and retrieval pools to prevent memory leaks
     // on the mode exits
     Object.values(cs3DEnums.RequestType).forEach(type => {
       imageLoadPoolManager.clearRequestStack(type);
       imageRetrievalPoolManager.clearRequestStack(type);
     });
+
+    cineService.setIsCineEnabled(false);
 
     enabledElementReset();
   },
@@ -89,13 +116,23 @@ const cornerstoneExtension: Types.Extensions.Extension = {
   },
 
   getToolbarModule,
+  getPanelModule({ servicesManager }) {
+    return [
+      {
+        name: 'activeViewportWindowLevel',
+        component: () => {
+          return <ActiveViewportWindowLevel servicesManager={servicesManager} />;
+        },
+      },
+    ];
+  },
   getHangingProtocolModule,
   getViewportModule({ servicesManager, commandsManager }) {
     const ExtendedOHIFCornerstoneViewport = props => {
       // const onNewImageHandler = jumpData => {
       //   commandsManager.runCommand('jumpToImage', jumpData);
       // };
-      const { toolbarService } = (servicesManager as ServicesManager).services;
+      const { toolbarService } = servicesManager.services;
 
       return (
         <OHIFCornerstoneViewport
@@ -126,6 +163,7 @@ const cornerstoneExtension: Types.Extensions.Extension = {
           },
           getEnabledElement,
           dicomLoaderService,
+          showLabelAnnotationPopup,
         },
       },
       {
@@ -139,6 +177,12 @@ const cornerstoneExtension: Types.Extensions.Extension = {
         exports: {
           toolNames,
           Enums: cs3DToolsEnums,
+        },
+      },
+      {
+        name: 'volumeLoader',
+        exports: {
+          getDynamicVolumeInfo,
         },
       },
     ];

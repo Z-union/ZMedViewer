@@ -8,7 +8,7 @@ import { useTrackedMeasurements } from './../getContextModule';
 import { BaseVolumeViewport, Enums } from '@cornerstonejs/core';
 import { useTranslation } from 'react-i18next';
 
-function TrackedCornerstoneViewport(props) {
+function TrackedCornerstoneViewport(props: withAppTypes) {
   const { displaySets, viewportId, servicesManager, extensionManager } = props;
 
   const {
@@ -140,14 +140,18 @@ function TrackedCornerstoneViewport(props) {
           // Only send the tracked measurements event for the active viewport to avoid
           // sending it more than once.
           if (viewportId === activeViewportId) {
-            const { referenceStudyUID: StudyInstanceUID, referenceSeriesUID: SeriesInstanceUID } =
-              measurement;
+            const {
+              referenceStudyUID: StudyInstanceUID,
+              referenceSeriesUID: SeriesInstanceUID,
+              uid: measurementId,
+            } = measurement;
 
             sendTrackedMeasurementsEvent('SET_DIRTY', { SeriesInstanceUID });
             sendTrackedMeasurementsEvent('TRACK_SERIES', {
               viewportId,
               StudyInstanceUID,
               SeriesInstanceUID,
+              measurementId,
             });
           }
         }).unsubscribe
@@ -215,7 +219,10 @@ function TrackedCornerstoneViewport(props) {
     return (
       <Component
         {...props}
-        onElementEnabled={onElementEnabled}
+        onElementEnabled={evt => {
+          props.onElementEnabled?.(evt);
+          onElementEnabled(evt);
+        }}
         onElementDisabled={onElementDisabled}
       />
     );
@@ -244,7 +251,7 @@ TrackedCornerstoneViewport.defaultProps = {
 
 function _getNextMeasurementUID(
   direction,
-  servicesManager,
+  servicesManager: AppTypes.ServicesManager,
   trackedMeasurementId,
   trackedMeasurements
 ) {
