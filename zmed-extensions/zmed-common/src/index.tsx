@@ -2,6 +2,7 @@ import { id } from './id';
 import getCustomizationModule from './getCustomizationModule';
 import getDataSourcesModule from './getDataSourcesModule';
 import getLayoutTemplateModule from './getLayoutTemplateModule';
+import getToolbarModule from './getToolbarModule';
 import { Types } from '@ohif/core';
 import PanelAI from './panels/PanelAI';
 import config from './config'
@@ -79,11 +80,7 @@ export default {
    * {name, defaultComponent, clickHandler }. Examples include radioGroupIcons and
    * splitButton toolButton that the default extension is providing.
    */
-  getToolbarModule: ({
-    servicesManager,
-    commandsManager,
-    extensionManager,
-  }) => {},
+  getToolbarModule,
   /**
    * LayoutTemplateMOdule should provide a list of layout templates that will be
    * available in OHIF for Modes to consume and use to layout the viewer.

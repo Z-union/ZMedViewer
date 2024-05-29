@@ -3,6 +3,7 @@ import React from 'react';
 
 import arrowDown from './../../assets/icons/arrow-down.svg';
 import arrowLeft from './../../assets/icons/arrow-left.svg';
+import arrowRight from './../../assets/icons/arrow-right.svg';
 import arrowLeftSmall from './../../assets/icons/arrow-left-small.svg';
 import arrowRightSmall from './../../assets/icons/arrow-right-small.svg';
 import calendar from './../../assets/icons/calendar.svg';
@@ -29,10 +30,11 @@ import infoAction from './../../assets/icons/info-action.svg';
 import infoLink from './../../assets/icons/info-link.svg';
 import launchArrow from './../../assets/icons/launch-arrow.svg';
 import launchInfo from './../../assets/icons/launch-info.svg';
-import link from './../../assets/icons/link.svg';
+import link from './../../assets/icons/tool-stack-image-sync.svg';
 import listBullets from './../../assets/icons/list-bullets.svg';
 import lock from './../../assets/icons/lock.svg';
 import logoOhifSmall from './../../assets/icons/logo-ohif-small.svg';
+import logoDarkBackGround from './../../assets/icons/ohif-logo-color-darkbg.svg';
 import magnifier from './../../assets/icons/magnifier.svg';
 import notificationwarningDiamond from './../../assets/icons/notificationwarning-diamond.svg';
 import pencil from './../../assets/icons/pencil.svg';
@@ -90,35 +92,40 @@ import prevArrow from './../../assets/icons/prev-arrow.svg';
 import viewportStatusTracked from './../../assets/icons/viewport-status-tracked.svg';
 
 /** Tools */
-import toggleDicomOverlay from './../../assets/icons/toggle-dicom-overlay.svg';
+import toggleDicomOverlay from './../../assets/icons/tool-toggle-dicom-overlay.svg';
 import toolZoom from './../../assets/icons/tool-zoom.svg';
 import toolCapture from './../../assets/icons/tool-capture.svg';
-import toolLayout from './../../assets/icons/tool-layout.svg';
+import toolLayout from './../../assets/icons/tool-layout-default.svg';
 import toolMore from './../../assets/icons/tool-more-menu.svg';
 import toolMove from './../../assets/icons/tool-move.svg';
 import toolWindow from './../../assets/icons/tool-window-level.svg';
 import toolAnnotate from './../../assets/icons/tool-annotate.svg';
 import toolBidirectional from './../../assets/icons/tool-bidirectional.svg';
-import toolElipse from './../../assets/icons/tool-ellipse.svg';
+import toolElipse from './../../assets/icons/tool-measure-elipse.svg';
 import toolCircle from './../../assets/icons/tool-circle.svg';
 import toolLength from './../../assets/icons/tool-length.svg';
 import toolStackScroll from './../../assets/icons/tool-stack-scroll.svg';
-import toolMagnify from './../../assets/icons/tool-magnify.svg';
+import toolMagnify from './../../assets/icons/tool-quick-magnify.svg';
 import toolFlipHorizontal from './../../assets/icons/tool-flip-horizontal.svg';
 import toolInvert from './../../assets/icons/tool-invert.svg';
 import toolRotateRight from './../../assets/icons/tool-rotate-right.svg';
 import toolCine from './../../assets/icons/tool-cine.svg';
 import toolCrosshair from './../../assets/icons/tool-crosshair.svg';
-import toolProbe from './../../assets/icons/tool-probe.svg';
+import toolProbe from './../../assets/icons/focus-frame-target.svg';
 import toolAngle from './../../assets/icons/tool-angle.svg';
 import toolReset from './../../assets/icons/tool-reset.svg';
 import toolRectangle from './../../assets/icons/tool-rectangle.svg';
 import toolFusionColor from './../../assets/icons/tool-fusion-color.svg';
 import toolCreateThreshold from './../../assets/icons/tool-create-threshold.svg';
-import toolCalibration from './../../assets/icons/tool-calibration.svg';
+import toolCalibration from './../../assets/icons/tool-calibrate.svg';
 import toolFreehand from './../../assets/icons/tool-freehand.svg';
 import toolFreehandPolygon from './../../assets/icons/tool-freehand-polygon.svg';
 import toolPolygon from './../../assets/icons/tool-polygon.svg';
+import toolBrush from './../../assets/icons/tool-brush.svg';
+import toolEraser from './../../assets/icons/tool-eraser.svg';
+import toolScissorRect from './../../assets/icons/tool-scissor-rect.svg';
+import toolScissorCircle from './../../assets/icons/tool-scissor-circle.svg';
+import toolPaintFill from './../../assets/icons/tool-paint-fill.svg';
 import editPatient from './../../assets/icons/edit-patient.svg';
 import panelGroupMore from './../../assets/icons/panel-group-more.svg';
 import panelGroupOpenClose from './../../assets/icons/panel-group-open-close.svg';
@@ -131,7 +138,7 @@ import rowUnlock from './../../assets/icons/row-unlock.svg';
 import iconMPR from './../../assets/icons/icon-mpr-alt.svg';
 import checkboxDefault from './../../assets/icons/checkbox-default.svg';
 import checkboxActive from './../../assets/icons/checkbox-active.svg';
-import referenceLines from './../../assets/icons/reference-lines.svg';
+import referenceLines from './../../assets/icons/tool-reference-lines.svg';
 import chevronDownNew from './../../assets/icons/icon-disclosure-close.svg';
 import chevronLeftNew from './../../assets/icons/icon-disclosure-open.svg';
 import settingsBars from './../../assets/icons/icon-display-settings.svg';
@@ -139,13 +146,18 @@ import iconAdd from './../../assets/icons/icon-add.svg';
 import iconRename from './../../assets/icons/icon-rename.svg';
 import iconDelete from './../../assets/icons/icon-delete.svg';
 import iconMoreMenu from './../../assets/icons/icon-more-menu.svg';
-import iconToolBrush from './../../assets/icons/icon-tool-brush.svg';
-import iconToolEraser from './../../assets/icons/icon-tool-eraser.svg';
+import iconToolBrush from './../../assets/icons/tool-seg-brush.svg';
+import iconToolEraser from './../../assets/icons/tool-seg-eraser.svg';
 import iconToolScissor from './../../assets/icons/icon-tool-scissor.svg';
-import iconToolShape from './../../assets/icons/icon-tool-shape.svg';
-import iconToolThreshold from './../../assets/icons/icon-tool-threshold.svg';
+import iconToolShape from './../../assets/icons/tool-seg-shape.svg';
+import iconToolThreshold from './../../assets/icons/tool-seg-threshold.svg';
 import viewportWindowLevel from './../../assets/icons/viewport-window-level.svg';
-
+import dicomTagBrowser from './../../assets/icons/tool-dicom-tag-browser.svg';
+import iconToolFreehandRoi from './../../assets/icons/tool-freehand-roi.svg';
+import iconToolLivewire from './../../assets/icons/tool-magnetic-roi.svg';
+import iconToolSplineRoi from './../../assets/icons/tool-spline-roi.svg';
+import iconToolUltrasoundBidirectional from './../../assets/icons/tool-ultrasound-bidirectional.svg';
+import iconToolLoupe from './../../assets/icons/tool-magnify.svg';
 /** Old OHIF */
 import oldTrash from './../../assets/icons/old-trash.svg';
 import oldPlay from './../../assets/icons/old-play.svg';
@@ -205,12 +217,16 @@ import layoutCommon2x2 from './../../assets/icons/layout-common-2x2.svg';
 import layoutCommon2x3 from './../../assets/icons/layout-common-2x3.svg';
 import iconToolRotate from './../../assets/icons/tool-3d-rotate.svg';
 
+//
+import tab4D from './../../assets/icons/tab-4d.svg';
+
 /** New investigational use */
 import investigationalUse from './../../assets/icons/illustration-investigational-use.svg';
 
 const ICONS = {
   'arrow-down': arrowDown,
   'arrow-left': arrowLeft,
+  'arrow-right': arrowRight,
   'arrow-left-small': arrowLeftSmall,
   'arrow-right-small': arrowRightSmall,
   calendar: calendar,
@@ -249,6 +265,7 @@ const ICONS = {
   'list-bullets': listBullets,
   lock: lock,
   'logo-ohif-small': logoOhifSmall,
+  'logo-dark-background': logoDarkBackGround,
   magnifier: magnifier,
   exclamation: exclamation,
   'notificationwarning-diamond': notificationwarningDiamond,
@@ -355,6 +372,13 @@ const ICONS = {
   'prev-arrow': prevArrow,
   'viewport-status-tracked': viewportStatusTracked,
   'viewport-window-level': viewportWindowLevel,
+  'dicom-tag-browser': dicomTagBrowser,
+  /** New Tools */
+  'icon-tool-freehand-roi': iconToolFreehandRoi,
+  'icon-tool-livewire': iconToolLivewire,
+  'icon-tool-spline-roi': iconToolSplineRoi,
+  'icon-tool-ultrasound-bidirectional': iconToolUltrasoundBidirectional,
+  'icon-tool-loupe': iconToolLoupe,
   /** Old OHIF */
   'old-trash': oldTrash,
   'old-play': oldPlay,
@@ -407,6 +431,7 @@ const ICONS = {
   'layout-common-1x2': layoutCommon1x2,
   'layout-common-2x2': layoutCommon2x2,
   'layout-common-2x3': layoutCommon2x3,
+  'tab-4d': tab4D,
 
   /** New investigational use */
   'illustration-investigational-use': investigationalUse,

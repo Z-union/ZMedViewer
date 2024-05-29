@@ -5,8 +5,8 @@
   "author": "Ilya Vinogradov",
   "license": "MIT",
   "repository": "OHIF/Viewers",
-  "main": "dist/umd/zmed-mode-longitudinal/index.umd.js",
-  "module": "src/index.js",
+  "main": "dist/umd/zmed-mode-longitudinal/index.umd.ts",
+  "module": "src/index.ts",
   "engines": {
     "node": ">=14",
     "npm": ">=6",

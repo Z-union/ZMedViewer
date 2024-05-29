@@ -1,8 +1,6 @@
 import type { Button } from '@ohif/core/types';
 import { defaults, ToolbarService, ViewportGridService } from '@ohif/core';
-import { WindowLevelMenuItem } from '@ohif/ui';
 
-const { windowLevelPresets } = defaults;
 const { createButton } = ToolbarService;
 
 const ReferenceLinesListeners: RunCommand = [
@@ -12,27 +10,10 @@ const ReferenceLinesListeners: RunCommand = [
   },
 ];
 
-function _createWwwcPreset(preset, title, subtitle) {
-  return {
-    id: preset.toString(),
-    title,
-    subtitle,
-    commands: [
-      {
-        commandName: 'setWindowLevel',
-        commandOptions: {
-          ...windowLevelPresets[preset],
-        },
-        context: 'CORNERSTONE',
-      },
-    ],
-  };
-}
-
 export const setToolActiveToolbar = {
   commandName: 'setToolActiveToolbar',
   commandOptions: {
-    toolGroupIds: ['default', 'mpr', 'SRToolGroup'],
+    toolGroupIds: ['default', 'mpr', 'SRToolGroup', 'volume3d'],
   },
 };
 
@@ -168,13 +149,7 @@ const toolbarButtons: Button[] = [
           icon: 'tool-referenceLines',
           label: 'Reference Lines',
           tooltip: 'Show Reference Lines',
-          commands: {
-            commandName: 'setToolEnabled',
-            commandOptions: {
-              toolName: 'ReferenceLines',
-              toggle: true, // Toggle the tool on/off upon click
-            },
-          },
+          commands: 'toggleEnabledDisabledToolbar',
           listeners: {
             [ViewportGridService.EVENTS.ACTIVE_VIEWPORT_ID_CHANGED]: ReferenceLinesListeners,
             [ViewportGridService.EVENTS.VIEWPORTS_READY]: ReferenceLinesListeners,
@@ -182,17 +157,11 @@ const toolbarButtons: Button[] = [
           evaluate: 'evaluate.cornerstoneTool.toggle',
         }),
         createButton({
-          id: 'ImageOverlay',
+          id: 'ImageOverlayViewer',
           icon: 'toggle-dicom-overlay',
           label: 'Image Overlay',
           tooltip: 'Toggle Image Overlay',
-          commands: {
-            commandName: 'setToolEnabled',
-            commandOptions: {
-              toolName: 'ImageOverlayViewer',
-              toggle: true, // Toggle the tool on/off upon click
-            },
-          },
+          commands: 'toggleEnabledDisabledToolbar',
           evaluate: 'evaluate.cornerstoneTool.toggle',
         }),
         createButton({
@@ -238,8 +207,8 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'Magnify',
           icon: 'tool-magnify',
-          label: 'Magnify',
-          tooltip: 'Magnify',
+          label: 'Zoom-in',
+          tooltip: 'Zoom-in',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
         }),
@@ -261,10 +230,26 @@ const toolbarButtons: Button[] = [
         }),
         createButton({
           id: 'TagBrowser',
-          icon: 'list-bullets',
+          icon: 'dicom-tag-browser',
           label: 'Dicom Tag Browser',
           tooltip: 'Dicom Tag Browser',
           commands: 'openDICOMTagViewer',
+        }),
+        createButton({
+          id: 'AdvancedMagnify',
+          icon: 'icon-tool-loupe',
+          label: 'Magnify Probe',
+          tooltip: 'Magnify Probe',
+          commands: 'toggleActiveDisabledToolbar',
+          evaluate: 'evaluate.cornerstoneTool.toggle.ifStrictlyDisabled',
+        }),
+        createButton({
+          id: 'UltrasoundDirectionalTool',
+          icon: 'icon-tool-ultrasound-bidirectional',
+          label: 'Ultrasound Directional',
+          tooltip: 'Ultrasound Directional',
+          commands: setToolActiveToolbar,
+          evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
         }),
       ],
     },

@@ -1,19 +1,20 @@
 import PropTypes from 'prop-types';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ServicesManager, ExtensionManager } from '@ohif/core';
+import { ExtensionManager } from '@ohif/core';
 
 import { setTrackingUniqueIdentifiersForElement } from '../tools/modules/dicomSRModule';
 
 import { Icon, Tooltip, useViewportGrid, ViewportActionArrows } from '@ohif/ui';
 import hydrateStructuredReport from '../utils/hydrateStructuredReport';
 import { useAppConfig } from '@state';
+import createReferencedImageDisplaySet from '../utils/createReferencedImageDisplaySet';
 
 const MEASUREMENT_TRACKING_EXTENSION_ID = '@ohif/extension-measurement-tracking';
 
 const SR_TOOLGROUP_BASE_NAME = 'SRToolGroup';
 
-function OHIFCornerstoneSRViewport(props) {
+function OHIFCornerstoneSRViewport(props: withAppTypes) {
   const { children, dataSource, displaySets, viewportOptions, servicesManager, extensionManager } =
     props;
 
@@ -125,6 +126,10 @@ function OHIFCornerstoneSRViewport(props) {
         console.warn('More than one SOPClassUID in the same series is not yet supported.');
       }
 
+      // if (!srDisplaySet.measurements || !srDisplaySet.measurements.length) {
+      //   return;
+      // }
+
       _getViewportReferencedDisplaySetData(
         srDisplaySet,
         newMeasurementSelected,
@@ -199,7 +204,10 @@ function OHIFCornerstoneSRViewport(props) {
           // The positionIds for the viewport aren't meaningful for the child display sets
           positionIds: null,
         }}
-        onElementEnabled={onElementEnabled}
+        onElementEnabled={evt => {
+          props.onElementEnabled?.(evt);
+          onElementEnabled(evt);
+        }}
         initialImageIndex={initialImageIndex}
         isJumpToMeasurementDisabled={true}
       ></Component>
@@ -253,12 +261,16 @@ function OHIFCornerstoneSRViewport(props) {
    * if it is hydrated we don't even use the SR viewport.
    */
   useEffect(() => {
-    if (!srDisplaySet.isLoaded) {
-      srDisplaySet.load();
-    }
-    const numMeasurements = srDisplaySet.measurements.length;
-    setMeasurementCount(numMeasurements);
-  }, [srDisplaySet]);
+    const loadSR = async () => {
+      if (!srDisplaySet.isLoaded) {
+        await srDisplaySet.load();
+      }
+      const numMeasurements = srDisplaySet.measurements.length;
+      setMeasurementCount(numMeasurements);
+      updateViewport(measurementSelected);
+    };
+    loadSR();
+  }, [dataSource, srDisplaySet]);
 
   /**
    * Hook to update the tracking identifiers when the selected measurement changes or
@@ -275,18 +287,10 @@ function OHIFCornerstoneSRViewport(props) {
    * Todo: what is this, not sure what it does regarding the react aspect,
    * it is updating a local variable? which is not state.
    */
-  let isLocked = trackedMeasurements?.context?.trackedSeries?.length > 0;
+  const [isLocked, setIsLocked] = useState(trackedMeasurements?.context?.trackedSeries?.length > 0);
   useEffect(() => {
-    isLocked = trackedMeasurements?.context?.trackedSeries?.length > 0;
+    setIsLocked(trackedMeasurements?.context?.trackedSeries?.length > 0);
   }, [trackedMeasurements]);
-
-  /**
-   * Data fetching for the SR displaySet, which updates the measurements and
-   * also gets the referenced image displaySet that SR is based on.
-   */
-  useEffect(() => {
-    updateViewport(measurementSelected);
-  }, [dataSource, srDisplaySet]);
 
   useEffect(() => {
     viewportActionCornersService.setComponents([
@@ -365,7 +369,7 @@ OHIFCornerstoneSRViewport.propTypes = {
   viewportLabel: PropTypes.string,
   customProps: PropTypes.object,
   viewportOptions: PropTypes.object,
-  servicesManager: PropTypes.instanceOf(ServicesManager).isRequired,
+  servicesManager: PropTypes.object.isRequired,
   extensionManager: PropTypes.instanceOf(ExtensionManager).isRequired,
 };
 
@@ -382,6 +386,13 @@ async function _getViewportReferencedDisplaySetData(
   const measurement = measurements[measurementSelected];
 
   const { displaySetInstanceUID } = measurement;
+  if (!displaySet.keyImageDisplaySet) {
+    // Create a new display set, and preserve a reference to it here,
+    // so that it can be re-displayed and shown inside the SR viewport.
+    // This is only for ease of redisplay - the display set is stored in the
+    // usual manner in the display set service.
+    displaySet.keyImageDisplaySet = createReferencedImageDisplaySet(displaySetService, displaySet);
+  }
 
   const referencedDisplaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
 
