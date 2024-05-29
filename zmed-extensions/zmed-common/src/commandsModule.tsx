@@ -55,15 +55,13 @@ const commandsModule = ({
   } = (servicesManager as ServicesManager).services;
 
   const { UIModalService } = servicesManager.services;
-
   const actions = {
         openGPTAnalyzer() {
-        const { activeViewportIndex } = viewportGridService.getState();
-        console.log(activeViewportIndex);
+        const { activeViewportId } = viewportGridService.getState();
 
       if (
-        !cornerstoneViewportService.getCornerstoneViewportByIndex(
-          activeViewportIndex
+        !cornerstoneViewportService.getCornerstoneViewport(
+          activeViewportId
         )
       ) {
         // Cannot download a non-cornerstone viewport (image).
@@ -81,9 +79,9 @@ const commandsModule = ({
       const displaySets = displaySetService.activeDisplaySets;
       console.log("@@@@@@@@");
       console.log(displaySets);
-      console.log(activeViewportIndex);
-      let viewPort = cornerstoneViewportService.getCornerstoneViewportByIndex(
-        activeViewportIndex
+      console.log(activeViewportId);
+      let viewPort = cornerstoneViewportService.getCornerstoneViewport(
+        activeViewportId
       )
 
   //     const { UIModalService } = servicesManager.services;
@@ -92,7 +90,7 @@ const commandsModule = ({
       UIModalService.show({
         content: GPTAnalyzer,
         contentProps: {
-          activeViewportIndex,
+          activeViewportId,
           onClose: UIModalService.hide,
           cornerstoneViewportService,
           viewPort,

@@ -1,7 +1,9 @@
 import { hotkeys } from '@ohif/core';
-import toolbarButtons from './toolbarButtons.js';
+import type { withAppTypes } from '@ohif/core/types';
+import toolbarButtons from './toolbarButtons.ts';
 import { id } from './id.js';
 import initToolGroups from './initToolGroups.js';
+import moreTools from './moreTools.ts';
 
 // Allow this mode by excluding non-imaging modalities such as SR, SEG
 // Also, SM is not a simple imaging modalities, so exclude it.
@@ -78,62 +80,33 @@ function modeFactory({ modeConfiguration }) {
     /**
      * Lifecycle hooks
      */
-    onModeEnter: ({ servicesManager, extensionManager, commandsManager }) => {
-      const {
-        measurementService,
-        toolbarService,
-        toolGroupService,
-        panelService,
-        segmentationService,
-      } = servicesManager.services;
+    onModeEnter: function ({ servicesManager, extensionManager, commandsManager }: withAppTypes) {
+      const { measurementService, toolbarService, toolGroupService, customizationService } =
+        servicesManager.services;
 
       measurementService.clearMeasurements();
 
       // Init Default and SR ToolGroups
-      initToolGroups(extensionManager, toolGroupService, commandsManager);
+      initToolGroups(extensionManager, toolGroupService, commandsManager, this.labelConfig);
 
-      let unsubscribe;
-
-      const activateTool = () => {
-        toolbarService.recordInteraction({
-          groupId: 'WindowLevel',
-          itemId: 'WindowLevel',
-          interactionType: 'tool',
-          commands: [
-            {
-              commandName: 'setToolActive',
-              commandOptions: {
-                toolName: 'WindowLevel',
-              },
-              context: 'CORNERSTONE',
-            },
-          ],
-        });
-
-        // We don't need to reset the active tool whenever a viewport is getting
-        // added to the toolGroup.
-        unsubscribe();
-      };
-
-      // Since we only have one viewport for the basic cs3d mode and it has
-      // only one hanging protocol, we can just use the first viewport
-      ({ unsubscribe } = toolGroupService.subscribe(
-        toolGroupService.EVENTS.VIEWPORT_ADDED,
-        activateTool
-      ));
-
-      toolbarService.init(extensionManager);
-      toolbarService.addButtons(toolbarButtons);
+      toolbarService.addButtons([...toolbarButtons, ...moreTools]);
       toolbarService.createButtonSection('primary', [
         'MeasurementTools',
         'Zoom',
-        'WindowLevel',
         'Pan',
+        'TrackballRotate',
+        'WindowLevel',
         'Capture',
         'Layout',
-        'MPR',
         'Crosshairs',
         'MoreTools',
+      ]);
+
+      customizationService.addModeCustomizations([
+        {
+          id: 'segmentation.panel',
+          disableEditing: true,
+        },
       ]);
 
       // // ActivatePanel event trigger for when a segmentation or measurement is added.
@@ -158,18 +131,21 @@ function modeFactory({ modeConfiguration }) {
       //   ]),
       // ];
     },
-    onModeExit: ({ servicesManager }) => {
+    onModeExit: ({ servicesManager }: withAppTypes) => {
       const {
         toolGroupService,
         syncGroupService,
-        toolbarService,
         segmentationService,
         cornerstoneViewportService,
+        uiDialogService,
+        uiModalService,
       } = servicesManager.services;
 
       _activatePanelTriggersSubscriptions.forEach(sub => sub.unsubscribe());
       _activatePanelTriggersSubscriptions = [];
 
+      uiDialogService.dismissAll();
+      uiModalService.hide();
       toolGroupService.destroy();
       syncGroupService.destroy();
       segmentationService.destroy();
