@@ -32,14 +32,19 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
     finished,
     finishedWithApply, // данные можем показать, но чтобы обновить рабочий стол, нужно обновить экран
     error,
+    null
   }
-  const [processingState, setProcessingState] = useState(AIState.loading);
+  const [processingState, setProcessingState] = useState(AIState.null);
   const [buttonClicked, setButtonClicked] = useState(false);
   const [seriesData, setSeriesData] = useState([{
       title: '',
       value: '',
     }]);
   const [wasProcessing, setWasProcessing] = useState(false);
+  const StudyInstanceUID =
+      DisplaySetService.activeDisplaySets[0].StudyInstanceUID;
+  const currentZFluData = `ZFluID: ${StudyInstanceUID}`
+  const zFluResults = sessionStorage.getItem(currentZFluData)
   const timer = null || number;
 
   // function checkStatus()
@@ -126,6 +131,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
             .lastIndexOf(true);
           if (lastIndex == -1) {
             setProcessingState(AIState.undefined);
+            sessionStorage.setItem(currentZFluData, JSON.stringify([]));
             return;
           }
           const element = response.data[lastIndex];
@@ -155,6 +161,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
             console.log("processed array")
             console.log(array)
             setSeriesData(array);
+            sessionStorage.setItem(currentZFluData, JSON.stringify(array));
             console.log('------- isWasProcessed');
             console.log(wasProcessing);
             if (wasProcessing) {
@@ -178,8 +185,6 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   };
 
   function getSeriesData() {
-    const StudyInstanceUID =
-      DisplaySetService.activeDisplaySets[0].StudyInstanceUID;
     const datasource = extensionManager.getActiveDataSource()[0];
     datasource.retrieve.series.metadata({
       StudyInstanceUID,
@@ -188,7 +193,15 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   }
 
   useEffect(() => {
-    _retrieveData();
+    if (!zFluResults){
+      setProcessingState(AIState.loading)
+      _retrieveData();
+    } else {
+      const storedData = sessionStorage.getItem(currentZFluData);
+      const diases = storedData ? JSON.parse(storedData) : [];
+      setSeriesData(diases);
+      diases.length > 0 ? setProcessingState(AIState.finished) : setProcessingState(AIState.undefined);
+    }
     return () => {
       isMounted.current = false;
     };
