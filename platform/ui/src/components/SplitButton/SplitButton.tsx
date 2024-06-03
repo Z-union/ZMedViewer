@@ -127,9 +127,13 @@ const SplitButton = ({
 
   const [state, setState] = useState({
     primary: _primary,
-    items: getSplitButtonItems(_items).filter(item =>
-      isRadio && !isAction ? item.id !== _primary.id : true
-    ),
+    items: getSplitButtonItems(_items)
+      .map(item => {
+        return { ...item, title: t(item.title) };
+      })
+      .filter(item => {
+        return isRadio && !isAction ? item.id !== _primary.id : true;
+      }),
     isHovering: false,
     isExpanded: false,
   });

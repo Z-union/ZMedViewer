@@ -1,14 +1,18 @@
 {
+  "About ZMed Viewer": "About ZMed Viewer",
   "Browser": "Browser",
   "Build Number": "Build Number",
+  "Commit Hash": "Commit Hash",
+  "Data Citation": "Data Citation",
+  "Important Links": "Important Links",
   "Latest Master Commits": "Latest Master Commits",
   "More details": "More details",
   "Name": "Name",
-  "ZMed Viewer - About": "ZMed Viewer - About",
   "OS": "OS",
   "Report an issue": "Report an issue",
   "Repository URL": "Repository URL",
   "Value": "Value",
   "Version Information": "Version Information",
+  "Version number": "Version number",
   "Visit the forum": "Visit the forum"
 }

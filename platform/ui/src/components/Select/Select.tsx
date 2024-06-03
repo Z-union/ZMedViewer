@@ -92,6 +92,15 @@ const Select = ({
       components={_components}
       placeholder={placeholder}
       options={options}
+      styles={
+        id === 'languages' && {
+          menuList: provided => ({
+            ...provided,
+            maxHeight: '160px',
+            overflow: 'auto',
+          }),
+        }
+      }
       value={value && Array.isArray(value) ? selectedOptions : value}
       onChange={(selectedOptions, { action }) => {
         const newSelection = !selectedOptions.length

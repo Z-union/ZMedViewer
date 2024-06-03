@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { VariableSizeList as List } from 'react-window';
+import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import debounce from 'lodash.debounce';
 
@@ -14,6 +15,7 @@ const rowStyle = {
 };
 
 function ColumnHeaders({ tagRef, vrRef, keywordRef, valueRef }) {
+  const { t } = useTranslation('StudyList');
   return (
     <div
       className={classNames(
@@ -27,7 +29,7 @@ function ColumnHeaders({ tagRef, vrRef, keywordRef, valueRef }) {
           className="flex flex-col flex-1 text-white text-lg pl-1 select-none"
         >
           <span className="flex flex-row items-center focus:outline-none">
-            Tag
+            {t('Tag')}
           </span>
         </label>
       </div>
@@ -37,7 +39,7 @@ function ColumnHeaders({ tagRef, vrRef, keywordRef, valueRef }) {
           className="flex flex-col flex-1 text-white text-lg pl-1 select-none"
         >
           <span className="flex flex-row items-center focus:outline-none">
-            VR
+            {t('VR')}
           </span>
         </label>
       </div>
@@ -47,7 +49,7 @@ function ColumnHeaders({ tagRef, vrRef, keywordRef, valueRef }) {
           className="flex flex-col flex-1 text-white text-lg pl-1 select-none"
         >
           <span className="flex flex-row items-center focus:outline-none">
-            Keyword
+            {t('Keyword')}
           </span>
         </label>
       </div>
@@ -57,7 +59,7 @@ function ColumnHeaders({ tagRef, vrRef, keywordRef, valueRef }) {
           className="flex flex-col flex-1 text-white text-lg pl-1 select-none"
         >
           <span className="flex flex-row items-center focus:outline-none">
-            Value
+            {t('Value')}
           </span>
         </label>
       </div>

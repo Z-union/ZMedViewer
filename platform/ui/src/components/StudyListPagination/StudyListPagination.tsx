@@ -32,7 +32,6 @@ const StudyListPagination = ({
     setSelectedRange(selectedRange);
     onChangePerPage(selectedRange.value);
   };
-
   return (
     <div className="bg-black py-10">
       <div className="container m-auto relative px-8">
@@ -46,6 +45,9 @@ const StudyListPagination = ({
               isMulti={false}
               isClearable={false}
               isSearchable={false}
+              placeholder={
+                selectedRange ? String(selectedRange) : ranges[0].label
+              }
               closeMenuOnSelect={false}
               hideSelectedOptions={true}
               onChange={onSelectedRange}
