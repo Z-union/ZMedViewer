@@ -130,7 +130,7 @@ const InputGroup = ({
             <div
               key={inputMeta.name}
               className={classnames(
-                'pl-4 first:pl-12',
+                'pl-2 first:pl-12',
                 getGridWidthClass(inputMeta.gridCol)
               )}
             >

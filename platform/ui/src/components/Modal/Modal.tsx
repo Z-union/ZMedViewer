@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import { useModal } from '../../contextProviders';
-
+import { useTranslation } from 'react-i18next';
 import Icon from '../Icon';
 import Typography from '../Typography';
 
@@ -21,6 +21,7 @@ const Modal = ({
   children,
   shouldCloseOnOverlayClick,
 }) => {
+  const { t } = useTranslation('HeaderModal');
   const { hide } = useModal();
 
   const handleClose = () => {
@@ -37,7 +38,7 @@ const Modal = ({
             className="flex grow !leading-[1.2]"
             data-cy="modal-header"
           >
-            {title}
+            {t(title)}
           </Typography>
           {closeButton && (
             <Icon

@@ -78,7 +78,7 @@ function ViewerLayout({
     });
   };
 
-  const { t } = useTranslation();
+  const { t } = useTranslation('Buttons');
   const { show, hide } = useModal();
 
   const [showLoadingIndicator, setShowLoadingIndicator] = useState(
@@ -105,7 +105,7 @@ function ViewerLayout({
     {
       title: t('Header:Preferences'),
       icon: 'settings',
-      onClick: () =>
+      onClick: () => {
         show({
           title: t('UserPreferencesModal:User Preferences'),
           content: UserPreferences,
@@ -130,7 +130,8 @@ function ViewerLayout({
             onReset: () => hotkeysManager.restoreDefaultBindings(),
             hotkeysModule: hotkeys,
           },
-        }),
+        });
+      },
     },
   ];
 

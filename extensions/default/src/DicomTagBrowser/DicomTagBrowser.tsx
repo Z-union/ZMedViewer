@@ -3,6 +3,7 @@ import moment from 'moment';
 import React, { useState, useMemo, useEffect } from 'react';
 import { classes } from '@ohif/core';
 import { InputRange, Select, Typography, InputFilterText } from '@ohif/ui';
+import { useTranslation } from 'react-i18next';
 import debounce from 'lodash.debounce';
 
 import DicomTagTable from './DicomTagTable';
@@ -13,6 +14,7 @@ const { DicomMetaDictionary } = dcmjs.data;
 const { nameMap } = DicomMetaDictionary;
 
 const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
+  const { t } = useTranslation('StudyList');
   // The column indices that are to be excluded during a filter of the table.
   // At present the column indices are:
   // 0: DICOM tag
@@ -113,7 +115,7 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
       <div className="flex flex-row mb-6 items-center pl-1">
         <div className="flex flex-row items-center w-1/2">
           <Typography variant="subtitle" className="mr-4">
-            Series
+            {t('Series')}
           </Typography>
           <div className="grow mr-8">
             <Select
@@ -131,7 +133,7 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
         <div className="flex flex-row items-center w-1/2">
           {showInstanceList && (
             <Typography variant="subtitle" className="mr-4">
-              Instance Number
+              {t('Instance Number')}
             </Typography>
           )}
           {showInstanceList && (
@@ -157,7 +159,7 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
       <div className="flex flex-row my-3 w-1/2">
         <InputFilterText
           className="block w-full mr-8"
-          placeholder="Search metadata..."
+          placeholder={t('Search metadata...')}
           onDebounceChange={setFilterValue}
         ></InputFilterText>
       </div>

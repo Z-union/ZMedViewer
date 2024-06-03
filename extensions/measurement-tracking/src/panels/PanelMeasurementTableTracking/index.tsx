@@ -12,6 +12,7 @@ import { DicomMetadataStore, utils } from '@ohif/core';
 import { useDebounce } from '@hooks';
 import ActionButtons from './ActionButtons';
 import { useTrackedMeasurements } from '../../getContextModule';
+import { useTranslation } from 'react-i18next';
 import debounce from 'lodash.debounce';
 
 const { downloadCSVReport } = utils;
@@ -25,6 +26,7 @@ const DISPLAY_STUDY_SUMMARY_INITIAL_VALUE = {
 };
 
 function PanelMeasurementTableTracking({ servicesManager, extensionManager }) {
+  const { t } = useTranslation('MeasurementTable');
   const [viewportGrid, viewportGridService] = useViewportGrid();
   const [measurementChangeTimestamp, setMeasurementsUpdated] = useState(
     Date.now().toString()
@@ -61,7 +63,8 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }) {
       _mapMeasurementToDisplay(
         m,
         measurementService.VALUE_TYPES,
-        displaySetService
+        displaySetService,
+        t
       )
     );
     setDisplayMeasurements(mappedMeasurements);
@@ -189,7 +192,7 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }) {
       showOverlay: true,
       content: Dialog,
       contentProps: {
-        title: 'Annotation',
+        title: t('Annotation'),
         noCloseButton: true,
         value: { label: measurement.label || '' },
         body: ({ value, setValue }) => {
@@ -205,7 +208,7 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }) {
           };
           return (
             <Input
-              label="Enter your annotation"
+              label={t('Enter your annotation')}
               labelClassName="text-white grow text-[14px] leading-[1.2]"
               autoFocus
               id="annotation"
@@ -218,8 +221,8 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }) {
           );
         },
         actions: [
-          { id: 'cancel', text: 'Cancel', type: ButtonEnums.type.secondary },
-          { id: 'save', text: 'Save', type: ButtonEnums.type.primary },
+          { id: 'cancel', text: t('Cancel'), type: ButtonEnums.type.secondary },
+          { id: 'save', text: t('Save'), type: ButtonEnums.type.primary },
         ],
         onSubmit: onSubmitHandler,
       },
@@ -306,7 +309,7 @@ PanelMeasurementTableTracking.propTypes = {
 };
 
 // TODO: This could be a measurementService mapper
-function _mapMeasurementToDisplay(measurement, types, displaySetService) {
+function _mapMeasurementToDisplay(measurement, types, displaySetService, t) {
   const { referenceStudyUID, referenceSeriesUID, SOPInstanceUID } = measurement;
 
   // TODO: We don't deal with multiframe well yet, would need to update
@@ -339,7 +342,8 @@ function _mapMeasurementToDisplay(measurement, types, displaySetService) {
   } = measurement;
 
   const firstSite = findingSites?.[0];
-  const label = baseLabel || finding?.text || firstSite?.text || '(empty)';
+  const defaultLabel = t('empty');
+  const label = baseLabel || finding?.text || firstSite?.text || defaultLabel;
   let displayText = baseDisplayText || [];
   if (findingSites) {
     const siteText = [];

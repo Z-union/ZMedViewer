@@ -179,7 +179,7 @@ const SidePanel = ({
             <Tooltip
               position={side === 'left' ? 'right' : 'left'}
               key={index}
-              content={`${childComponent.label}`}
+              content={`${t(childComponent.label)}`}
               className={classnames(
                 'flex items-center',
                 side === 'left' ? 'justify-end ' : 'justify-start '
@@ -241,7 +241,7 @@ const SidePanel = ({
               border="none"
               rounded="none"
               className="flex flex-row flex-static items-center px-3 relative w-full"
-              name={tabs.length === 1 ? `${tabs[activeTabIndex].name}` : ''}
+              name={tabs.length === 1 ? `${t(tabs[activeTabIndex].name)}` : ''}
             >
               <Icon
                 name={openStateIconName[side]}
@@ -265,7 +265,8 @@ const SidePanel = ({
               nextRef,
               tabs,
               activeTabIndex,
-              updateActiveTabIndex
+              updateActiveTabIndex,
+              t
             )}
           {/** carousel navigation with the arrows */}
           {/** only show carousel nav if tabs are more than 3 tabs */}
@@ -323,7 +324,8 @@ function _getMoreThanOneTabLayout(
   nextRef: React.MutableRefObject<undefined>,
   tabs: any,
   activeTabIndex: any,
-  updateActiveTabIndex
+  updateActiveTabIndex,
+  t
 ) {
   return (
     <div
@@ -377,7 +379,7 @@ function _getMoreThanOneTabLayout(
                   />
                 </span>
                 <span className="text-[10px] select-none font-medium whitespace-nowrap mt-[5px]">
-                  {obj.label}
+                  {t(obj.label)}
                 </span>
               </div>
             </SwiperSlide>

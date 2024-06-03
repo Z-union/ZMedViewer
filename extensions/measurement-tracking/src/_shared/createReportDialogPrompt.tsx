@@ -2,6 +2,7 @@
 import React from 'react';
 import { ButtonEnums, Dialog, Input } from '@ohif/ui';
 import RESPONSE from './PROMPT_RESPONSES';
+import i18n from 'i18next';
 
 export default function createReportDialogPrompt(uiDialogService) {
   return new Promise(function(resolve, reject) {
@@ -45,13 +46,21 @@ export default function createReportDialogPrompt(uiDialogService) {
       useLastPosition: false,
       showOverlay: true,
       contentProps: {
-        title: 'Create Report',
+        title: i18n.t('MeasurementTable:Create Report'),
         value: { label: '' },
         noCloseButton: true,
         onClose: _handleClose,
         actions: [
-          { id: 'cancel', text: 'Cancel', type: ButtonEnums.type.secondary },
-          { id: 'save', text: 'Save', type: ButtonEnums.type.primary },
+          {
+            id: 'cancel',
+            text: i18n.t('MeasurementTable:Cancel'),
+            type: ButtonEnums.type.secondary,
+          },
+          {
+            id: 'save',
+            text: i18n.t('MeasurementTable:Save'),
+            type: ButtonEnums.type.primary,
+          },
         ],
         // TODO: Should be on button press...
         onSubmit: _handleFormSubmit,
@@ -69,7 +78,7 @@ export default function createReportDialogPrompt(uiDialogService) {
           return (
             <div className="">
               <Input
-                label="Enter the report name"
+                label={i18n.t('MeasurementTable:Enter the report name')}
                 labelClassName="text-white grow leading-[1.2] text-[14px]"
                 autoFocus
                 className="bg-black border-primary-main grow"

@@ -6,13 +6,15 @@
   "Measurements": "Measurements",
   "More": "More",
   "Next": "Next",
-  "NoStudyDate": "No Study Date",
+  "NoStudyDate": "No study date",
   "Play": "Play",
   "Previous": "Previous",
   "Reset": "Reset",
-  "RowsPerPage": "rows per page",
+  "RowsPerPage": "Rows per page",
   "Series": "Series",
   "Show": "Show",
   "Stop": "Stop",
-  "StudyDate": "Study Date"
+  "StudyDate": "Study date",
+  "Study report RU": "Study report RU",
+  "Study report ENG": "Study report ENG"
 }

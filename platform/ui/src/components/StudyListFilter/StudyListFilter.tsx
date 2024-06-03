@@ -46,7 +46,7 @@ const StudyListFilter = ({
                     onClick={onUploadClick}
                   >
                     <Icon name="icon-upload"></Icon>
-                    <span>Upload</span>
+                    <span>{t('Upload')}</span>
                   </div>
                 )}
               </div>
@@ -67,16 +67,17 @@ const StudyListFilter = ({
                 )}
                 <Typography
                   variant="h6"
-                  className="mr-2"
-                  data-cy={'num-studies'}
-                >
-                  {numOfStudies}
-                </Typography>
-                <Typography
-                  variant="h6"
                   className="self-end pb-1 text-primary-light"
                 >
                   {t('Studies')}
+                </Typography>
+                <span className='w-2'/>
+                <Typography
+                  variant="h6"
+                  className="mr-2"
+                  data-cy={'num-studies'}
+                >
+                  {numOfStudies > 100 ? '>100' : ` ${numOfStudies}`}
                 </Typography>
               </div>
             </div>

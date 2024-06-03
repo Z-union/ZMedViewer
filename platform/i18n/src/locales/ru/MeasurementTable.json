@@ -1,0 +1,19 @@
+{
+  "Annotation": "$t(HeaderModal:Annotation)",
+  "Cancel": "$t(Buttons:Cancel)",
+  "Create Report": "Создать отчет",
+  "Criteria nonconformities": "Несоблюдение критериев",
+  "Delete": "Удалить",
+  "Description": "Описание",
+  "empty": "Без названия",
+  "Enter the report name": "Введите название отчета",
+  "Enter your annotation": "Введите название аннотации",
+  "Export": "Экспорт",
+  "MAX": "MAX",
+  "Measurements": "Измерения",
+  "No tracked measurements": "Сохраненные измерения не найдены",
+  "NonTargets": "NonTargets",
+  "Relabel": "Переименовать",
+  "Save": "$t(Buttons:Save)",
+  "Targets": "Цели"
+}

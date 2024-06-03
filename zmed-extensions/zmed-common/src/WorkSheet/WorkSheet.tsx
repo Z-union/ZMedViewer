@@ -55,7 +55,7 @@ function WorkSheet({
 }) {
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const { show, hide } = useModal();
-  const { t } = useTranslation();
+  const { t } = useTranslation('StudyList');
   // ~ Modes
   const [appConfig] = useAppConfig();
   // ~ Filters
@@ -381,7 +381,7 @@ function WorkSheet({
                       endIcon={<Icon name="launch-arrow" />} // launch-arrow | launch-info
                       onClick={() => {}}
                     >
-                      {t(`Modes:${mode.displayName}`)}
+                      {t(`${mode.displayName}`)}
                     </LegacyButton>
                   </Link>
                 )
@@ -456,10 +456,11 @@ function WorkSheet({
   const { customizationService } = servicesManager.services;
   const { component: dicomUploadComponent } =
     customizationService.get('dicomUploadComponent') ?? {};
+  let uploadTitle = t("Upload files")
   const uploadProps =
     dicomUploadComponent && dataSource.getConfig()?.dicomUploadEnabled
       ? {
-          title: 'Upload files',
+          title: uploadTitle,
           closeButton: true,
           shouldCloseOnEsc: false,
           shouldCloseOnOverlayClick: false,
