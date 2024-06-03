@@ -124,6 +124,10 @@ import iconMPR from './../../assets/icons/icon-mpr-alt.svg';
 import checkboxDefault from './../../assets/icons/checkbox-default.svg';
 import checkboxActive from './../../assets/icons/checkbox-active.svg';
 import referenceLines from './../../assets/icons/reference-lines.svg';
+import zmedLogo from './../../assets/icons/zmed-logo.svg';
+import zmedWhiteLogoWithText from './../../assets/icons/zmed-white-logo-with-text.svg';
+import zmedWhiteLogoWithoutText from './../../assets/icons/zmed-white-logo-without-text.svg';
+import zmedBlackLogoWithText from './../../assets/icons/zmed-black-logo-with-text.svg';
 
 /** Old OHIF */
 import oldTrash from './../../assets/icons/old-trash.svg';
@@ -207,6 +211,10 @@ const ICONS = {
   'notifications-error': notificationsError,
   'notifications-success': notificationsSuccess,
   'notifications-warning': notificationsWarning,
+  'zmed-logo': zmedLogo,
+  'zmed-white-logo-with-text': zmedWhiteLogoWithText,
+  'zmed-white-logo-without-text': zmedWhiteLogoWithoutText,
+  'zmed-black-logo-with-text': zmedBlackLogoWithText,
 
   /** Tools */
   'tool-zoom': toolZoom,
