@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { ExtensionManager, MODULE_TYPES } from '@ohif/core';
 //
@@ -105,6 +105,10 @@ function DataSourceWrapper(props) {
 
   const [data, setData] = useState(DEFAULT_DATA);
   const [isLoading, setIsLoading] = useState(false);
+  const [pages, setPages] = useState(null);
+  const [size, setSize] = useState(null);
+  const [total, setTotal] = useState(null);
+  const cache = useRef(new Map());
 
   /**
    * The effect to initialize the data source whenever it changes. Similar to
@@ -150,21 +154,30 @@ function DataSourceWrapper(props) {
     );
 
     // 204: no content
-    async function getData() {
+    const getData = async () => {
       setIsLoading(true);
 
-      const studies = await dataSource.query.studies.search(queryFilterValues);
-
-      setData({
-        studies: studies || [],
-        total: studies.length,
-        resultsPerPage: queryFilterValues.resultsPerPage,
-        pageNumber: queryFilterValues.pageNumber,
-        location,
-      });
-
+      const updateState = ({ studies = [], pages, size, total }) => {
+        setPages(pages);
+        setSize(size);
+        setTotal(total);
+        setData({ studies, total, ...queryFilterValues, location });
+      };
+    
+      if (data.location === 'Not a valid location, causes first load to occur') cache.current.clear();
+      const queryKey = JSON.stringify(queryFilterValues);
+    
+      if (cache.current.has(queryKey)) { //Данные из кэша
+        const cachedData = cache.current.get(queryKey);
+        updateState(cachedData);
+      } else {                           //Данные из сетевого запроса
+        const data = await dataSource.query.studies.search(queryFilterValues);
+        cache.current.set(queryKey, data);
+        updateState(data);
+      }
+    
       setIsLoading(false);
-    }
+    };
 
     try {
       // Cache invalidation :thinking:
@@ -217,6 +230,8 @@ function DataSourceWrapper(props) {
       dataTotal={data.total}
       dataSource={dataSource}
       isLoadingData={isLoading}
+      pages={pages}
+      size={size}
       // To refresh the data, simply reset it to DEFAULT_DATA which invalidates it and triggers a new query to fetch the data.
       onRefresh={() => setData(DEFAULT_DATA)}
     />
@@ -258,9 +273,6 @@ function _getQueryFilterValues(query, queryLimit) {
     // Rarely supported server-side
     sortBy: query.get('sortBy'),
     sortDirection: query.get('sortDirection'),
-    // Offset...
-    offset:
-      Math.floor((pageNumber * resultsPerPage) / queryLimit) * (queryLimit - 1),
     config: query.get('configUrl'),
     me: true
   };

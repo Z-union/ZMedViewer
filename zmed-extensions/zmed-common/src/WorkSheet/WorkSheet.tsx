@@ -43,6 +43,8 @@ const seriesInStudiesMap = new Map();
  */
 function WorkSheet({
   data: studies,
+  pages,
+  size,
   dataTotal: studiesTotal,
   isLoadingData,
   dataSource,
@@ -66,7 +68,8 @@ function WorkSheet({
     ...queryFilterValues,
   });
 
-  const debouncedFilterValues = useDebounce(filterValues, 200);
+  const debouncedFilterValues = useDebounce(filterValues, 20);
+  // Пока что большой Debounce не требуется за счет использования кэширования
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
 
   sessionStorage.setItem('pageNumber', pageNumber);
@@ -128,17 +131,6 @@ function WorkSheet({
   };
 
   const onPageNumberChange = newPageNumber => {
-    const oldPageNumber = filterValues.pageNumber;
-    const rollingPageNumberMod = Math.floor(101 / filterValues.resultsPerPage);
-    const rollingPageNumber = oldPageNumber % rollingPageNumberMod;
-    const isNextPage = newPageNumber > oldPageNumber;
-    const hasNextPage =
-      Math.max(rollingPageNumber, 1) * resultsPerPage < numOfStudies;
-
-    if (isNextPage && !hasNextPage) {
-      return;
-    }
-
     setFilterValues({ ...filterValues, pageNumber: newPageNumber });
   };
 
@@ -502,7 +494,7 @@ function WorkSheet({
       />
       <div className="overflow-y-auto ohif-scrollbar flex flex-col grow">
         <StudyListFilter
-          numOfStudies={pageNumber * resultsPerPage > 100 ? 101 : numOfStudies}
+          numOfStudies={numOfStudies}
           filtersMeta={filtersMeta}
           filterValues={{ ...filterValues, ...defaultSortValues }}
           onChange={setFilterValues}
@@ -518,7 +510,7 @@ function WorkSheet({
         {hasStudies ? (
           <div className="grow flex flex-col">
             <StudyListTable
-              tableDataSource={tableDataSource.slice(offset, offsetAndTake)}
+              tableDataSource={tableDataSource}
               numOfStudies={numOfStudies}
               querying={querying}
               filtersMeta={filtersMeta}
@@ -529,6 +521,7 @@ function WorkSheet({
                 onChangePerPage={onResultsPerPageChange}
                 currentPage={pageNumber}
                 perPage={resultsPerPage}
+                pages={pages}
               />
             </div>
           </div>

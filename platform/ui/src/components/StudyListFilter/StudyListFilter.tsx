@@ -95,15 +95,6 @@ const StudyListFilter = ({
             isSortingEnabled={isSortingEnabled}
           />
         </div>
-        {numOfStudies > 100 && (
-          <div className="container m-auto">
-            <div className="py-1 text-base text-center rounded-b bg-primary-main">
-              <p className="text-white">
-                {t('NumOfStudiesHiggerThan100Message')}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </React.Fragment>
   );

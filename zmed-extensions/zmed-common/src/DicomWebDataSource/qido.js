@@ -179,7 +179,7 @@ function mapParams(params, options = {}) {
     StudyDescription: withWildcard(params.studyDescription),
     ModalitiesInStudy: params.modalitiesInStudy,
     // Other
-    limit: params.limit || 101,
+    limit: params.size || 25,
     offset: params.offset || 0,
     fuzzymatching: options.supportsFuzzyMatching === true,
     includefield: commaSeparatedFields, // serverSupportsQIDOIncludeField ? commaSeparatedFields : 'all',
