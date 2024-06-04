@@ -1,4 +1,25 @@
 import { api } from 'dicomweb-client';
+import fixMultipart from './fixMultipart';
+
+const { DICOMwebClient } = api;
+
+const anyDicomwebClient = DICOMwebClient as any;
+
+// Ugly over-ride, but the internals aren't otherwise accessible.
+if (!anyDicomwebClient._orig_buildMultipartAcceptHeaderFieldValue) {
+  anyDicomwebClient._orig_buildMultipartAcceptHeaderFieldValue =
+    anyDicomwebClient._buildMultipartAcceptHeaderFieldValue;
+  anyDicomwebClient._buildMultipartAcceptHeaderFieldValue = function (mediaTypes, acceptableTypes) {
+    if (mediaTypes.length === 1 && mediaTypes[0].mediaType.endsWith('/*')) {
+      return '*/*';
+    } else {
+      return anyDicomwebClient._orig_buildMultipartAcceptHeaderFieldValue(
+        mediaTypes,
+        acceptableTypes
+      );
+    }
+  };
+}
 
 /**
  * An implementation of the static wado client, that fetches data from
@@ -7,6 +28,7 @@ import { api } from 'dicomweb-client';
  * performing searches doesn't work.  This version fixes the query issue
  * by manually implementing a query option.
  */
+
 export default class StaticWadoClient extends api.DICOMwebClient {
   static studyFilterKeys = {
     studyinstanceuid: '0020000D',
@@ -24,9 +46,50 @@ export default class StaticWadoClient extends api.DICOMwebClient {
     modality: '00080060',
   };
 
-  constructor(qidoConfig) {
-    super(qidoConfig);
-    this.staticWado = qidoConfig.staticWado;
+  protected config;
+  protected staticWado;
+
+  constructor(config) {
+    super(config);
+    this.staticWado = config.staticWado;
+    this.config = config;
+  }
+
+  /**
+   * Handle improperly specified multipart/related return type.
+   * Note if the response is SUPPOSED to be multipart encoded already, then this
+   * will double-decode it.
+   *
+   * @param options
+   * @returns De-multiparted response data.
+   *
+   */
+  public retrieveBulkData(options): Promise<any[]> {
+    const shouldFixMultipart = this.config.fixBulkdataMultipart !== false;
+    const useOptions = {
+      ...options,
+    };
+    if (this.staticWado) {
+      useOptions.mediaTypes = [{ mediaType: 'application/*' }];
+    }
+    return super
+      .retrieveBulkData(useOptions)
+      .then(result => (shouldFixMultipart ? fixMultipart(result) : result));
+  }
+
+  /**
+   * Retrieves instance frames using the image/* media type when configured
+   * to do so (static wado back end).
+   */
+  public retrieveInstanceFrames(options) {
+    if (this.staticWado) {
+      return super.retrieveInstanceFrames({
+        ...options,
+        mediaTypes: [{ mediaType: 'image/*' }],
+      });
+    } else {
+      return super.retrieveInstanceFrames(options);
+    }
   }
 
   /**
@@ -50,14 +113,7 @@ export default class StaticWadoClient extends api.DICOMwebClient {
     const lowerParams = this.toLowerParams(queryParams);
     const filtered = searchResult.filter(study => {
       for (const key of Object.keys(StaticWadoClient.studyFilterKeys)) {
-        if (
-          !this.filterItem(
-            key,
-            lowerParams,
-            study,
-            StaticWadoClient.studyFilterKeys
-          )
-        ) {
+        if (!this.filterItem(key, lowerParams, study, StaticWadoClient.studyFilterKeys)) {
           return false;
         }
       }
@@ -80,14 +136,7 @@ export default class StaticWadoClient extends api.DICOMwebClient {
 
     const filtered = searchResult.filter(series => {
       for (const key of Object.keys(StaticWadoClient.seriesFilterKeys)) {
-        if (
-          !this.filterItem(
-            key,
-            lowerParams,
-            series,
-            StaticWadoClient.seriesFilterKeys
-          )
-        ) {
+        if (!this.filterItem(key, lowerParams, series, StaticWadoClient.seriesFilterKeys)) {
           return false;
         }
       }
@@ -132,10 +181,7 @@ export default class StaticWadoClient extends api.DICOMwebClient {
       } else if (desired[desired.length - 1] === '*') {
         return actual.indexOf(desired.substring(0, desired.length - 1)) != -1;
       } else if (desired[0] === '*') {
-        return (
-          actual.indexOf(desired.substring(1)) ===
-          actual.length - desired.length + 1
-        );
+        return actual.indexOf(desired.substring(1)) === actual.length - desired.length + 1;
       }
     }
     return desired === actual;
@@ -177,7 +223,7 @@ export default class StaticWadoClient extends api.DICOMwebClient {
     if (!valueElem) {
       return false;
     }
-    if (valueElem.vr == 'DA') {
+    if (valueElem.vr === 'DA' && valueElem.Value?.[0]) {
       return this.compareDateRange(testValue, valueElem.Value[0]);
     }
     const value = valueElem.Value;

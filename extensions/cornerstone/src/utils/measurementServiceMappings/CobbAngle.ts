@@ -1,4 +1,5 @@
 import SUPPORTED_TOOLS from './constants/supportedTools';
+import { getDisplayUnit } from './utils';
 import getSOPInstanceAttributes from './utils/getSOPInstanceAttributes';
 import { utils } from '@ohif/core';
 
@@ -15,7 +16,8 @@ const CobbAngle = {
     csToolsEventDetail,
     displaySetService,
     CornerstoneViewportService,
-    getValueTypeFromToolType
+    getValueTypeFromToolType,
+    customizationService
   ) => {
     const { annotation, viewportId } = csToolsEventDetail;
     const { metadata, data, annotationUID } = annotation;
@@ -32,11 +34,7 @@ const CobbAngle = {
       throw new Error('Tool not supported');
     }
 
-    const {
-      SOPInstanceUID,
-      SeriesInstanceUID,
-      StudyInstanceUID,
-    } = getSOPInstanceAttributes(
+    const { SOPInstanceUID, SeriesInstanceUID, StudyInstanceUID } = getSOPInstanceAttributes(
       referencedImageId,
       CornerstoneViewportService,
       viewportId
@@ -53,22 +51,20 @@ const CobbAngle = {
       displaySet = displaySetService.getDisplaySetsForSeries(SeriesInstanceUID);
     }
 
-    const { points } = data.handles;
+    const { points, textBox } = data.handles;
 
-    const mappedAnnotations = getMappedAnnotations(
-      annotation,
-      displaySetService
-    );
+    const mappedAnnotations = getMappedAnnotations(annotation, displaySetService);
 
-    const displayText = getDisplayText(mappedAnnotations, displaySet);
+    const displayText = getDisplayText(mappedAnnotations, displaySet, customizationService);
     const getReport = () =>
-      _getReport(mappedAnnotations, points, FrameOfReferenceUID);
+      _getReport(mappedAnnotations, points, FrameOfReferenceUID, customizationService);
 
     return {
       uid: annotationUID,
       SOPInstanceUID,
       FrameOfReferenceUID,
       points,
+      textBox,
       metadata,
       referenceSeriesUID: SeriesInstanceUID,
       referenceStudyUID: StudyInstanceUID,
@@ -99,16 +95,11 @@ function getMappedAnnotations(annotation, DisplaySetService) {
     const targetStats = cachedStats[targetId];
 
     if (!referencedImageId) {
-      throw new Error(
-        'Non-acquisition plane measurement mapping not supported'
-      );
+      throw new Error('Non-acquisition plane measurement mapping not supported');
     }
 
-    const {
-      SOPInstanceUID,
-      SeriesInstanceUID,
-      frameNumber,
-    } = getSOPInstanceAttributes(referencedImageId);
+    const { SOPInstanceUID, SeriesInstanceUID, frameNumber } =
+      getSOPInstanceAttributes(referencedImageId);
 
     const displaySet = DisplaySetService.getDisplaySetForSOPInstanceUID(
       SOPInstanceUID,
@@ -138,7 +129,7 @@ This function is used to convert the measurement data to a format that is
 suitable for the report generation (e.g. for the csv report). The report
 returns a list of columns and corresponding values.
 */
-function _getReport(mappedAnnotations, points, FrameOfReferenceUID) {
+function _getReport(mappedAnnotations, points, FrameOfReferenceUID, customizationService) {
   const columns = [];
   const values = [];
 
@@ -171,7 +162,7 @@ function _getReport(mappedAnnotations, points, FrameOfReferenceUID) {
   };
 }
 
-function getDisplayText(mappedAnnotations, displaySet) {
+function getDisplayText(mappedAnnotations, displaySet, customizationService) {
   if (!mappedAnnotations || !mappedAnnotations.length) {
     return '';
   }
@@ -179,17 +170,9 @@ function getDisplayText(mappedAnnotations, displaySet) {
   const displayText = [];
 
   // Area is the same for all series
-  const {
-    angle,
-    unit,
-    SeriesNumber,
-    SOPInstanceUID,
-    frameNumber,
-  } = mappedAnnotations[0];
+  const { angle, unit, SeriesNumber, SOPInstanceUID, frameNumber } = mappedAnnotations[0];
 
-  const instance = displaySet.images.find(
-    image => image.SOPInstanceUID === SOPInstanceUID
-  );
+  const instance = displaySet.images.find(image => image.SOPInstanceUID === SOPInstanceUID);
 
   let InstanceNumber;
   if (instance) {
@@ -203,7 +186,7 @@ function getDisplayText(mappedAnnotations, displaySet) {
   }
   const roundedAngle = utils.roundNumber(angle, 2);
   displayText.push(
-    `${roundedAngle} ${unit} (S: ${SeriesNumber}${instanceText}${frameText})`
+    `${roundedAngle} ${getDisplayUnit(unit)} (S: ${SeriesNumber}${instanceText}${frameText})`
   );
 
   return displayText;

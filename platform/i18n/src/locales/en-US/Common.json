@@ -1,11 +1,14 @@
 {
+  "Back to": "Back to {{location}}",
   "Close": "Close",
   "Image": "Image",
   "Layout": "Layout",
   "LOAD": "LOAD",
   "Measurements": "Measurements",
+  "mm": "mm",
   "More": "More",
   "Next": "Next",
+  "No": "No",
   "NoStudyDate": "No study date",
   "Play": "Play",
   "Previous": "Previous",
@@ -16,5 +19,6 @@
   "Stop": "Stop",
   "StudyDate": "Study date",
   "Study report RU": "Study report RU",
-  "Study report ENG": "Study report ENG"
+  "Study report ENG": "Study report ENG",
+  "Yes": "Yes"
 }

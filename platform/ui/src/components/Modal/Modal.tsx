@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
+import Draggable from 'react-draggable';
 import { useModal } from '../../contextProviders';
 import { useTranslation } from 'react-i18next';
 import Icon from '../Icon';
@@ -20,6 +21,9 @@ const Modal = ({
   onClose,
   children,
   shouldCloseOnOverlayClick,
+  movable = false,
+  containerDimensions = null,
+  contentDimensions = null,
 }) => {
   const { t } = useTranslation('HeaderModal');
   const { hide } = useModal();
@@ -28,44 +32,70 @@ const Modal = ({
     hide();
   };
 
-  const renderHeader = () => {
-    return (
-      title && (
-        <header className="flex items-center px-[20px] py-[13px] bg-primary-dark rounded-tl rounded-tr">
-          <Typography
-            variant="h6"
-            color="primaryLight"
-            className="flex grow !leading-[1.2]"
-            data-cy="modal-header"
-          >
-            {t(title)}
-          </Typography>
-          {closeButton && (
-            <Icon
-              onClick={onClose}
-              name="close"
-              className="cursor-pointer text-primary-active"
-            />
-          )}
-        </header>
-      )
+  const renderHeader = () =>
+    title && (
+      <header className="bg-primary-dark drag-handle flex items-center rounded-tl rounded-tr px-[20px] py-[13px]">
+        <Typography
+          variant="h6"
+          color="primaryLight"
+          className="flex grow !leading-[1.2]"
+          data-cy="modal-header"
+        >
+          {t(title)}
+        </Typography>
+        {closeButton && (
+          <Icon
+            onClick={onClose}
+            name="close"
+            className="text-primary-active cursor-pointer"
+          />
+        )}
+      </header>
     );
-  };
+
+  const modalContent = (
+    <>
+      {renderHeader()}
+      <section
+        className={
+          contentDimensions
+            ? `ohif-scrollbar bg-primary-dark overflow-y-auto ${contentDimensions}`
+            : 'ohif-scrollbar modal-content bg-primary-dark overflow-y-auto rounded-bl rounded-br px-[20px] pt-2 pb-[20px]'
+        }
+      >
+        {children}
+      </section>
+    </>
+  );
 
   return (
     <ReactModal
-      className="relative w-11/12 lg:w-10/12 xl:w-1/2 max-h-full outline-none  text-white"
-      overlayClassName="fixed top-0 left-0 right-0 bottom-0 z-50 bg-overlay flex items-start justify-center py-16"
+      className={
+        containerDimensions
+          ? `relative text-white outline-none ${containerDimensions}`
+          : 'relative max-h-full w-11/12 text-white outline-none lg:w-10/12 xl:w-9/12'
+      }
+      overlayClassName={
+        movable
+          ? 'fixed top-0 left-0 right-0 bottom-0 z-50 flex items-center justify-center py-16 pointer-events-none'
+          : 'fixed top-0 left-0 right-0 bottom-0 z-50 bg-overlay flex items-center justify-center py-16'
+      }
       shouldCloseOnEsc={shouldCloseOnEsc}
       onRequestClose={handleClose}
       isOpen={isOpen}
       title={title}
       shouldCloseOnOverlayClick={shouldCloseOnOverlayClick}
     >
-      {renderHeader()}
-      <section className="ohif-scrollbar modal-content overflow-y-auto px-[20px] pt-2 pb-[20px] rounded-bl rounded-br bg-primary-dark">
-        {children}
-      </section>
+      {movable ? (
+        <Draggable
+          handle=".drag-handle"
+          defaultClassName="bg-primary-dark pointer-events-auto"
+        >
+          <div>{modalContent}</div>
+        </Draggable>
+      ) : (
+        modalContent
+      )}
     </ReactModal>
   );
 };
@@ -73,6 +103,9 @@ const Modal = ({
 Modal.defaultProps = {
   shouldCloseOnEsc: true,
   shouldCloseOnOverlayClick: true,
+  movable: false,
+  containerDimensions: null,
+  contentDimensions: null,
 };
 
 Modal.propTypes = {
@@ -81,12 +114,11 @@ Modal.propTypes = {
   isOpen: PropTypes.bool,
   title: PropTypes.string,
   onClose: PropTypes.func,
-  /** The modal's content */
-  children: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.node),
-    PropTypes.node,
-  ]).isRequired,
+  children: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.node), PropTypes.node]).isRequired,
   shouldCloseOnOverlayClick: PropTypes.bool,
+  movable: PropTypes.bool,
+  containerDimensions: PropTypes.string,
+  contentDimensions: PropTypes.string,
 };
 
 export default Modal;

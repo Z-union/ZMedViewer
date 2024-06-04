@@ -23,6 +23,7 @@ import {
   TooltipClipboard,
   Header,
   useModal,
+  useSessionStorage,
   UserPreferences,
   LoadingIndicatorProgress,
 } from '@ohif/ui';
@@ -31,9 +32,13 @@ import AboutModal from '../components/AboutModal' ;
 
 import i18n from '@ohif/i18n';
 
+import { Types } from '@ohif/ui';
+
 const { sortBySeriesDate } = utils;
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
+
+const PatientInfoVisibility = Types.PatientInfoVisibility;
 
 const seriesInStudiesMap = new Map();
 
@@ -63,16 +68,22 @@ function WorkSheet({
   const navigate = useNavigate();
   const STUDIES_LIMIT = 101;
   const queryFilterValues = _getQueryFilterValues(searchParams);
+  const [sessionQueryFilterValues, updateSessionQueryFilterValues] = useSessionStorage({
+    key: 'queryFilterValues',
+    defaultValue: queryFilterValues,
+    // ToDo: useSessionStorage currently uses an unload listener to clear the filters from session storage
+    // so on systems that do not support unload events a user will NOT be able to alter any existing filter
+    // in the URL, load the page and have it apply.
+    clearOnUnload: true,
+  });
   const [filterValues, _setFilterValues] = useState({
     ...defaultFilterValues,
-    ...queryFilterValues,
+    ...sessionQueryFilterValues,
   });
 
   const debouncedFilterValues = useDebounce(filterValues, 20);
   // Пока что большой Debounce не требуется за счет использования кэширования
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
-
-  sessionStorage.setItem('pageNumber', pageNumber);
 
   /*
    * The default sort value keep the filters synchronized with runtime conditional sorting
@@ -127,6 +138,7 @@ function WorkSheet({
       val.pageNumber = 1;
     }
     _setFilterValues(val);
+    updateSessionQueryFilterValues(val);
     setExpandedRows([]);
   };
 
@@ -341,10 +353,11 @@ function WorkSheet({
 
               const modalitiesToCheck = modalities.replaceAll('/', '\\');
 
-              const isValidMode = mode.isValidMode({
+              const isValidModeCheck = mode.isValidMode({
                 modalities: modalitiesToCheck,
                 study,
               });
+              const isValidMode = isValidModeCheck === !! isValidModeCheck;
               // TODO: Modes need a default/target route? We mostly support a single one for now.
               // We should also be using the route path, but currently are not
               // mode.routeName
@@ -491,6 +504,8 @@ function WorkSheet({
         menuOptions={menuOptions}
         isReturnEnabled={false}
         WhiteLabeling={appConfig.whiteLabeling}
+        showPatientInfo={PatientInfoVisibility.DISABLED}
+        servicesManager={servicesManager}
       />
       <div className="overflow-y-auto ohif-scrollbar flex flex-col grow">
         <StudyListFilter

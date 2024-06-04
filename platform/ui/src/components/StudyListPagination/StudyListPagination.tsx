@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 
 import LegacyButton from '../LegacyButton';
-import ButtonGroup from '../ButtonGroup';
+import LegacyButtonGroup from '../LegacyButtonGroup';
 import Typography from '../Typography';
 import Select from '../Select';
 
@@ -26,21 +26,19 @@ const StudyListPagination = ({
     { value: '50', label: '50' },
     { value: '100', label: '100' },
   ];
-  const [selectedRange, setSelectedRange] = useState(
-    ranges.find(r => r.value === perPage)
-  );
+  const [selectedRange, setSelectedRange] = useState(ranges.find(r => r.value === perPage));
   const onSelectedRange = selectedRange => {
     setSelectedRange(selectedRange);
     onChangePerPage(selectedRange.value);
   };
   return (
     <div className="bg-black py-10">
-      <div className="container m-auto relative px-8">
+      <div className="container relative m-auto px-8">
         <div className="flex justify-between">
           <div className="flex items-center">
             <Select
               id="rows-per-page"
-              className="relative mr-3 w-24 border-primary-main"
+              className="border-primary-main relative mr-3 w-24"
               options={ranges}
               value={selectedRange}
               isMulti={false}
@@ -53,17 +51,15 @@ const StudyListPagination = ({
               hideSelectedOptions={true}
               onChange={onSelectedRange}
             />
-            <Typography className="text-base opacity-60">
-              {t('ResultsPerPage')}
-            </Typography>
+            <Typography className="text-base opacity-60">{t('Results per page')}</Typography>
           </div>
           <div className="">
             <div className="flex items-center">
-              <Typography className="opacity-60 mr-4 text-base">
+              <Typography className="mr-4 text-base opacity-60">
                 {t('Page')} {currentPage}
               </Typography>
-              {/* TODO Revisit design of ButtonGroup later - for now use LegacyButton for its children.*/}
-              <ButtonGroup>
+              {/* TODO Revisit design of LegacyButtonGroup later - for now use LegacyButton for its children.*/}
+              <LegacyButtonGroup>
                 <LegacyButton
                   size="initial"
                   className="px-4 py-2 text-base"
@@ -97,7 +93,7 @@ const StudyListPagination = ({
                 >
                   {t('Next')}
                 </LegacyButton>
-              </ButtonGroup>
+              </LegacyButtonGroup>
             </div>
           </div>
         </div>

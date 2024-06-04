@@ -26,9 +26,7 @@ function DicomUpload({
 
   const onDrop = useCallback(async acceptedFiles => {
     onStarted();
-    setDicomFileUploaderArr(
-      acceptedFiles.map(file => new DicomFileUploader(file, dataSource))
-    );
+    setDicomFileUploaderArr(acceptedFiles.map(file => new DicomFileUploader(file, dataSource)));
   }, []);
 
   const getDropZoneComponent = (): ReactElement => {
@@ -42,10 +40,13 @@ function DicomUpload({
         {({ getRootProps }) => (
           <div
             {...getRootProps()}
-            className="m-5 dicom-upload-drop-area-border-dash flex flex-col items-center justify-center h-full"
+            className="dicom-upload-drop-area-border-dash m-5 flex h-full flex-col items-center justify-center"
           >
             <div className="flex gap-3">
-              <Dropzone onDrop={onDrop} noDrag>
+              <Dropzone
+                onDrop={onDrop}
+                noDrag
+              >
                 {({ getRootProps, getInputProps }) => (
                   <div {...getRootProps()}>
                     <Button disabled={false} onClick={() => {}}>
@@ -55,7 +56,10 @@ function DicomUpload({
                   </div>
                 )}
               </Dropzone>
-              <Dropzone onDrop={onDrop} noDrag>
+              <Dropzone
+                onDrop={onDrop}
+                noDrag
+              >
                 {({ getRootProps, getInputProps }) => (
                   <div {...getRootProps()}>
                     <Button
@@ -94,9 +98,7 @@ function DicomUpload({
           />
         </div>
       ) : (
-        <div className={classNames('h-[480px]', baseClassNames)}>
-          {getDropZoneComponent()}
-        </div>
+        <div className={classNames('h-[480px]', baseClassNames)}>{getDropZoneComponent()}</div>
       )}
     </>
   );

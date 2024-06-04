@@ -7,7 +7,11 @@ import Icon from '../Icon';
 
 const Link = ({ href, children, showIcon = false }) => {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer">
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       <Typography
         variant="subtitle"
         component="p"
@@ -16,7 +20,10 @@ const Link = ({ href, children, showIcon = false }) => {
       >
         {children}
         {!!showIcon && (
-          <Icon name="external-link" className="w-5 ml-2 text-white" />
+          <Icon
+            name="external-link"
+            className="ml-2 w-5 text-white"
+          />
         )}
       </Typography>
     </a>
@@ -52,7 +59,7 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
   const browser = `${name[0].toUpperCase()}${name.substr(1)} ${version}`;
 
   const renderRowTitle = title => (
-    <div className="pb-3 mb-3 border-b-2 border-black">
+    <div className="mb-3 border-b-2 border-black pb-3">
       <Typography
         variant="inherit"
         color="primaryLight"
@@ -84,20 +91,20 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
         </span>
       </div>
 
-      {renderRowTitle('Version Information')}
+      {renderRowTitle(t('Version information'))}
       <div className="flex flex-col">
         <Row
-          title="Repository URL"
+          title={t('Repository URL')}
           value="https://github.com/OHIF/Viewers/"
           link="https://github.com/OHIF/Viewers/"
         />
         <Row
-          title="Data Citation"
+          title={t('Data citation')}
           value="https://github.com/OHIF/Viewers/blob/master/DATACITATION.md"
           link="https://github.com/OHIF/Viewers/blob/master/DATACITATION.md"
         />
         {/* <Row
-          title="Last Master Commits"
+          title={t('Last master commits')}
           value="https://github.com/OHIF/Viewers/"
           link="https://github.com/OHIF/Viewers/"
         /> */}

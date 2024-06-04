@@ -14,7 +14,7 @@ function LoadingIndicatorProgress({ className, textBlock, progress }) {
   return (
     <div
       className={classNames(
-        'absolute z-50 top-0 left-0 flex flex-col items-center justify-center space-y-5',
+        'absolute top-0 left-0 z-50 flex flex-col items-center justify-center space-y-5',
         className
       )}
     >

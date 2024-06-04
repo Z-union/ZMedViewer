@@ -23,10 +23,8 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
   // 3: Value
   const excludedColumnIndicesForFilter: Set<number> = new Set([1]);
 
-  const [
-    selectedDisplaySetInstanceUID,
-    setSelectedDisplaySetInstanceUID,
-  ] = useState(displaySetInstanceUID);
+  const [selectedDisplaySetInstanceUID, setSelectedDisplaySetInstanceUID] =
+    useState(displaySetInstanceUID);
   const [instanceNumber, setInstanceNumber] = useState(1);
   const [filterValue, setFilterValue] = useState('');
 
@@ -117,20 +115,18 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
           <Typography variant="subtitle" className="mr-4">
             {t('Series')}
           </Typography>
-          <div className="grow mr-8">
+          <div className="mr-8 grow">
             <Select
               id="display-set-selector"
               isClearable={false}
               onChange={onSelectChange}
               options={displaySetList}
-              value={displaySetList.find(
-                ds => ds.value === selectedDisplaySetInstanceUID
-              )}
+              value={displaySetList.find(ds => ds.value === selectedDisplaySetInstanceUID)}
               className="text-white"
             />
           </div>
         </div>
-        <div className="flex flex-row items-center w-1/2">
+        <div className="flex w-1/2 flex-row items-center">
           {showInstanceList && (
             <Typography variant="subtitle" className="mr-4">
               {t('Instance Number')}
@@ -155,8 +151,8 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
           )}
         </div>
       </div>
-      <div className="w-full h-1 bg-black"></div>
-      <div className="flex flex-row my-3 w-1/2">
+      <div className="h-1 w-full bg-black"></div>
+      <div className="my-3 flex w-1/2 flex-row">
         <InputFilterText
           className="block w-full mr-8"
           placeholder={t('Search metadata...')}
@@ -173,24 +169,14 @@ function getFormattedRowsFromTags(tags, metadata) {
 
   tags.forEach(tagInfo => {
     if (tagInfo.vr === 'SQ') {
-      rows.push([
-        `${tagInfo.tagIndent}${tagInfo.tag}`,
-        tagInfo.vr,
-        tagInfo.keyword,
-        '',
-      ]);
+      rows.push([`${tagInfo.tagIndent}${tagInfo.tag}`, tagInfo.vr, tagInfo.keyword, '']);
 
       const { values } = tagInfo;
 
       values.forEach((item, index) => {
         const formatedRowsFromTags = getFormattedRowsFromTags(item, metadata);
 
-        rows.push([
-          `${item[0].tagIndent}(FFFE,E000)`,
-          '',
-          `Item #${index}`,
-          '',
-        ]);
+        rows.push([`${item[0].tagIndent}(FFFE,E000)`, '', `Item #${index}`, '']);
 
         rows.push(...formatedRowsFromTags);
       });
@@ -201,17 +187,10 @@ function getFormattedRowsFromTags(tags, metadata) {
           const originalTagInfo = metadata[tag];
           tagInfo.vr = originalTagInfo.vr;
         } catch (error) {
-          console.error(
-            `Failed to parse value representation for tag '${tagInfo.keyword}'`
-          );
+          console.error(`Failed to parse value representation for tag '${tagInfo.keyword}'`);
         }
       }
-      rows.push([
-        `${tagInfo.tagIndent}${tagInfo.tag}`,
-        tagInfo.vr,
-        tagInfo.keyword,
-        tagInfo.value,
-      ]);
+      rows.push([`${tagInfo.tagIndent}${tagInfo.tag}`, tagInfo.vr, tagInfo.keyword, tagInfo.value]);
     }
   });
 
