@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 // import { useState } from 'react-usestateref'
 import PropTypes, { number } from 'prop-types';
-import classnames from 'classnames';
 import {
   Button,
   Icon,
   LoadingIndicator,
   LoadingIndicatorProgress,
 } from '@ohif/ui';
+import { useTranslation } from 'react-i18next';
 import StudyItem from './StudyItem';
 import axios from 'axios';
 import './PanelAI.css';
@@ -16,6 +16,7 @@ import configuration from './../config';
 let Modalities = ['DX', 'CR']
 
 export default function PanelAI({ servicesManager, commandsManager, extensionManager }) {
+  const { t } = useTranslation('Buttons');
   const isMounted = React.useRef(true);
   const {
     DisplaySetService,
@@ -31,14 +32,19 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
     finished,
     finishedWithApply, // данные можем показать, но чтобы обновить рабочий стол, нужно обновить экран
     error,
+    null
   }
-  const [processingState, setProcessingState] = useState(AIState.loading);
+  const [processingState, setProcessingState] = useState(AIState.null);
   const [buttonClicked, setButtonClicked] = useState(false);
   const [seriesData, setSeriesData] = useState([{
-    title: '',
-    value: '',
-  }]);
+      title: '',
+      value: '',
+    }]);
   const [wasProcessing, setWasProcessing] = useState(false);
+  const StudyInstanceUID =
+      DisplaySetService.activeDisplaySets[0].StudyInstanceUID;
+  const currentZFluData = `ZFluID: ${StudyInstanceUID}`
+  const zFluResults = sessionStorage.getItem(currentZFluData)
   const timer = null || number;
 
   // function checkStatus()
@@ -125,6 +131,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
             .lastIndexOf(true);
           if (lastIndex == -1) {
             setProcessingState(AIState.undefined);
+            sessionStorage.setItem(currentZFluData, JSON.stringify([]));
             return;
           }
           const element = response.data[lastIndex];
@@ -154,6 +161,7 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
             console.log("processed array")
             console.log(array)
             setSeriesData(array);
+            sessionStorage.setItem(currentZFluData, JSON.stringify(array));
             console.log('------- isWasProcessed');
             console.log(wasProcessing);
             if (wasProcessing) {
@@ -177,8 +185,6 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   };
 
   function getSeriesData() {
-    const StudyInstanceUID =
-      DisplaySetService.activeDisplaySets[0].StudyInstanceUID;
     const datasource = extensionManager.getActiveDataSource()[0];
     datasource.retrieve.series.metadata({
       StudyInstanceUID,
@@ -187,7 +193,15 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   }
 
   useEffect(() => {
-    _retrieveData();
+    if (!zFluResults){
+      setProcessingState(AIState.loading)
+      _retrieveData();
+    } else {
+      const storedData = sessionStorage.getItem(currentZFluData);
+      const diases = storedData ? JSON.parse(storedData) : [];
+      setSeriesData(diases);
+      diases.length > 0 ? setProcessingState(AIState.finished) : setProcessingState(AIState.undefined);
+    }
     return () => {
       isMounted.current = false;
     };
@@ -210,21 +224,19 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
       case AIState.undefined:
         // ["default","primary","primaryActive","secondary","white","black","inherit","light","translucent"].
         return (
-          <div>
-            <Button
-              size="initial"
-              className="px-2 py-2 mt-2 text-base text-white"
-              color="primaryActive"
-              variant="outlined"
-              fullWidth={true}
-              border="primaryActive"
-              onClick={() => {
-                _handleStudyClick();
-              }}
-            >
-              Analyze
-            </Button>
-          </div>
+          <Button
+            size="initial"
+            className="px-2 py-2 text-base text-white"
+            color="primaryActive"
+            variant="outlined"
+            fullWidth={true}
+            border="primaryActive"
+            onClick={() => {
+              _handleStudyClick();
+            }}
+          >
+            {t('Analyze')}
+          </Button>
         );
       case AIState.loading:
         return (
@@ -235,28 +247,26 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
       case AIState.finished:
       case AIState.finishedWithApply:
         return (
-          <div className="flex flex-col">
+          <div>
             {seriesData.map((item) => (
               <StudyItem key={item.title}
                 title={item.title ?? "Unknown"}
                 value={item.value.toString() ?? "Undefined"}
               />
             ))}
-            <div>
-              <Button
-                size="initial"
-                className="px-2 py-2 mt-2 text-base text-white"
-                color="light"
-                variant="outlined"
-                fullWidth={true}
-                border="primaryActive"
-                onClick={() => {
-                  _handleStudyClick();
-                }}
-              >
-                Analyze again
-              </Button>
-            </div>
+            <Button
+              size="initial"
+              className="px-2 py-2 text-base text-white"
+              color="light"
+              variant="outlined"
+              fullWidth={true}
+              border="primaryActive"
+              onClick={() => {
+                _handleStudyClick();
+              }}
+            >
+              {t('AnalyzeAgain')}
+            </Button>
           </div>
         );
       case AIState.error:
@@ -271,13 +281,9 @@ export default function PanelAI({ servicesManager, commandsManager, extensionMan
   }
   return (
     <React.Fragment>
-      <div
-        className={classnames('flex flex-col mr-1 justify-center', {
-          'align-center h-screen': processingState === AIState.loading,
-          'mt-4': processingState !== AIState.loading,
-        })}
-      >
-        <div className="flex justify-center">
+      <div className="pt-5"></div>
+      <div className="flex flex-col flex-1">
+        <div className="flex flexRow flex-center">
           {renderState(processingState)}
         </div>
       </div>

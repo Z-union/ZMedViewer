@@ -18,10 +18,7 @@ function LoadingIndicatorProgress({ className, textBlock, progress }) {
         className
       )}
     >
-      <Icon
-        name="loading-ohif-mark"
-        className="h-12 w-12 text-white"
-      />
+      <Icon name="zmed-logo" className="text-white w-16 h-16" />
       <div className="w-48">
         <ProgressLoadingBar progress={progress} />
       </div>

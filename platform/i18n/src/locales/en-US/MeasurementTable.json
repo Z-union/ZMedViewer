@@ -1,12 +1,22 @@
 {
+  "Annotation": "$t(HeaderModal:Annotation)",
+  "Cancel": "$t(Buttons:Cancel)",
+  "Create Report": "Create Report",
   "Criteria nonconformities": "Criteria nonconformities",
   "Delete": "Delete",
   "Description": "Description",
+  "Enter the report name": "Enter the report name",
+  "Enter your annotation": "Enter your annotation",
+  "Export": "Export",
   "MAX": "MAX",
+  "Measurements": "Measurements",
+  "No tracked measurements": "No tracked measurements",
   "Measurements": "Measurements",
   "No, do not ask again": "No, do not ask again",
   "NonTargets": "NonTargets",
   "Relabel": "Relabel",
+  "Save": "$t(Buttons:Save)",
   "Targets": "Targets",
+  "empty": "empty",
   "Track measurements for this series?": "Track measurements for this series?"
 }

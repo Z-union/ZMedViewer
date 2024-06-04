@@ -29,10 +29,10 @@ const renderYearsOptions = () => {
 };
 
 const DateRange = props => {
+  const { t } = useTranslation('DatePicker');
   const { id, onChange, startDate, endDate } = props;
   const [focusedInput, setFocusedInput] = useState(null);
   const renderYearsOptionsCallback = useCallback(renderYearsOptions, []);
-  const { t } = useTranslation('DatePicker');
   const today = moment();
   const lastWeek = moment().subtract(7, 'day');
   const lastMonth = moment().subtract(1, 'month');
@@ -71,7 +71,7 @@ const DateRange = props => {
                 })
               }
             >
-              {text}
+              {t(text)}
             </button>
           );
         })}

@@ -1,0 +1,17 @@
+{
+  "Cancel": "$t(Buttons:Cancel)",
+  "Dismiss Aspect": "Разблокировать соотношение сторон",
+  "Download": "$t(Buttons:Download)",
+  "File Name": "Имя файла",
+  "File Type": "Тип файла",
+  "Image height (px)": "Высота изображения (пикс.)",
+  "Image preview": "Предварительный просмотр изображения",
+  "Image width (px)": "Ширина изображения (пикс.)",
+  "Keep Aspect": "Заблокировать соотношение сторон",
+  "loadingPreview": "Loading Image Preview...",
+  "Please specify the dimensions, filename, and desired type for the output image.": "Укажите размер, имя файла и желаемый тип выходного изображения",
+  "Show Annotations": "Показать примечания",
+  "The file name cannot be empty.": "Имя файла не может быть пустым",
+  "The minimum valid height is 100px.": "Минимальная высота 100 пикселей",
+  "The minimum valid width is 100px.": "Минимальная ширина 100 пискселей"
+}

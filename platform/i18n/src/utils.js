@@ -39,7 +39,7 @@ const languagesMap = {
   'pt-BR': 'Portuguese (Brazil)',
   'pt-PT': 'Portuguese (Portugal)',
   ro: 'Romanian',
-  ru: 'Russian',
+  ru: 'Русский',
   sk: 'Slovak',
   sl: 'Slovenian',
   sr: 'Serbian',

@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import detect from 'browser-detect';
 import { useTranslation } from 'react-i18next';
-
 import Typography from '../Typography';
 import Icon from '../Icon';
 
@@ -32,14 +31,11 @@ const Link = ({ href, children, showIcon = false }) => {
 };
 
 const Row = ({ title, value, link }) => {
+  const { t } = useTranslation('AboutModal');
   return (
-    <div className="mb-4 flex">
-      <Typography
-        variant="subtitle"
-        component="p"
-        className="w-48 text-white"
-      >
-        {title}
+    <div className="flex mb-4">
+      <Typography variant="subtitle" component="p" className="w-48 text-white">
+        {t(title)}
       </Typography>
 
       {link ? (
@@ -58,9 +54,9 @@ const Row = ({ title, value, link }) => {
 };
 
 const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
+  const { t } = useTranslation('AboutModal');
   const { os, version, name } = detect();
   const browser = `${name[0].toUpperCase()}${name.substr(1)} ${version}`;
-  const { t } = useTranslation('AboutModal');
 
   const renderRowTitle = title => (
     <div className="mb-3 border-b-2 border-black pb-3">
@@ -69,19 +65,16 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
         color="primaryLight"
         className="text-[16px] font-semibold !leading-[1.2]"
       >
-        {title}
+        {t(title)}
       </Typography>
     </div>
   );
   return (
     <div>
-      {renderRowTitle(t('Important links'))}
-      <div className="mb-8 flex">
-        <Link
-          href="https://community.ohif.org/"
-          showIcon={true}
-        >
-            {t('Visit the forum')}
+      {renderRowTitle(t('Important Links'))}
+      <div className="flex mb-8">
+        <Link href="https://community.ohif.org/" showIcon={true}>
+          {t('Visit the forum')}
         </Link>
         <span className="ml-4">
           <Link
@@ -92,11 +85,8 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
           </Link>
         </span>
         <span className="ml-4">
-          <Link
-            href="https://ohif.org/"
-            showIcon={true}
-          >
-          {t('More details')}
+          <Link href="https://ohif.org/" showIcon={true}>
+            {t('More details')}
           </Link>
         </span>
       </div>
@@ -118,30 +108,11 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
           value="https://github.com/OHIF/Viewers/"
           link="https://github.com/OHIF/Viewers/"
         /> */}
-        <Row
-          title={t('Version number')}
-          value={versionNumber}
-        />
-        {buildNumber && (
-          <Row
-            title={t('Build number')}
-            value={buildNumber}
-          />
-        )}
-        {commitHash && (
-          <Row
-            title={t('Commit hash')}
-            value={commitHash}
-          />
-        )}
-        <Row
-          title={t('Browser')}
-          value={browser}
-        />
-        <Row
-          title={t('OS')}
-          value={os}
-        />
+        <Row title={t('Version number')} value={versionNumber} />
+        {buildNumber && <Row title={t('Build number')} value={buildNumber} />}
+        {commitHash && <Row title={t('Commit Hash')} value={commitHash} />}
+        <Row title={t('Browser')} value={browser} />
+        <Row title={t('OS')} value={os} />
       </div>
     </div>
   );

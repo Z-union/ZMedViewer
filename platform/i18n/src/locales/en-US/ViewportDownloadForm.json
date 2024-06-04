@@ -1,4 +1,7 @@
 {
+  "Cancel": "$t(Buttons:Cancel)",
+  "Dismiss Aspect": "Dismiss Aspect",
+  "Download": "$t(Buttons:Download)",
   "emptyFilenameError": "The file name cannot be empty.",
   "fileType": "File Type",
   "filename": "File Name",

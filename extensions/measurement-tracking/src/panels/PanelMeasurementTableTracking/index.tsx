@@ -5,8 +5,8 @@ import { DicomMetadataStore, utils } from '@ohif/core';
 import { useDebounce } from '@hooks';
 import { useAppConfig } from '@state';
 import { useTrackedMeasurements } from '../../getContextModule';
-import debounce from 'lodash.debounce';
 import { useTranslation } from 'react-i18next';
+import debounce from 'lodash.debounce';
 
 const { downloadCSVReport } = utils;
 const { formatDate } = utils;
@@ -41,7 +41,12 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }: wi
     );
 
     const mappedMeasurements = filteredMeasurements.map(m =>
-      _mapMeasurementToDisplay(m, measurementService.VALUE_TYPES, displaySetService)
+      _mapMeasurementToDisplay(
+        m,
+        measurementService.VALUE_TYPES,
+        displaySetService,
+        t
+      )
     );
     setDisplayMeasurements(mappedMeasurements);
     // eslint-ignore-next-line
@@ -240,7 +245,7 @@ PanelMeasurementTableTracking.propTypes = {
 };
 
 // TODO: This could be a measurementService mapper
-function _mapMeasurementToDisplay(measurement, types, displaySetService) {
+function _mapMeasurementToDisplay(measurement, types, displaySetService, t) {
   const { referenceStudyUID, referenceSeriesUID, SOPInstanceUID } = measurement;
 
   // TODO: We don't deal with multiframe well yet, would need to update
@@ -269,7 +274,8 @@ function _mapMeasurementToDisplay(measurement, types, displaySetService) {
   } = measurement;
 
   const firstSite = findingSites?.[0];
-  const label = baseLabel || finding?.text || firstSite?.text || '(empty)';
+  const defaultLabel = t('empty');
+  const label = baseLabel || finding?.text || firstSite?.text || defaultLabel;
   let displayText = baseDisplayText || [];
   if (findingSites) {
     const siteText = [];

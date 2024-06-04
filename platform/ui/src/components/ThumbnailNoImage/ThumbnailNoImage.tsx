@@ -6,6 +6,7 @@ import Icon from '../Icon';
 import Tooltip from '../Tooltip';
 import Typography from '../Typography';
 import DisplaySetMessageListTooltip from '../DisplaySetMessageListTooltip';
+import { useTranslation } from 'react-i18next';
 
 const ThumbnailNoImage = ({
   displaySetInstanceUID,
@@ -22,6 +23,7 @@ const ThumbnailNoImage = ({
   isActive,
   isHydratedForDerivedDisplaySet,
 }) => {
+  const { t } = useTranslation('Common');
   const [collectedProps, drag, dragPreview] = useDrag({
     type: 'displayset',
     item: { ...dragData },
@@ -100,7 +102,9 @@ const ThumbnailNoImage = ({
                 onClick={onReject}
               />
             )}
-            <div className="ml-4 break-all text-base text-white">{description}</div>
+            <div className="ml-4 text-base text-white break-all">
+              {t(description)}
+            </div>
           </div>
         </div>
       </div>

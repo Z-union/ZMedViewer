@@ -3,6 +3,7 @@ import moment from 'moment';
 import React, { useState, useMemo, useEffect } from 'react';
 import { classes } from '@ohif/core';
 import { InputRange, Select, Typography, InputFilterText } from '@ohif/ui';
+import { useTranslation } from 'react-i18next';
 import debounce from 'lodash.debounce';
 
 import DicomTagTable from './DicomTagTable';
@@ -13,6 +14,7 @@ const { DicomMetaDictionary } = dcmjs.data;
 const { nameMap } = DicomMetaDictionary;
 
 const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
+  const { t } = useTranslation('StudyList');
   // The column indices that are to be excluded during a filter of the table.
   // At present the column indices are:
   // 0: DICOM tag
@@ -108,13 +110,10 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
 
   return (
     <div className="dicom-tag-browser-content">
-      <div className="mb-6 flex flex-row items-center pl-1">
-        <div className="flex w-1/2 flex-row items-center">
-          <Typography
-            variant="subtitle"
-            className="mr-4"
-          >
-            Series
+      <div className="flex flex-row mb-6 items-center pl-1">
+        <div className="flex flex-row items-center w-1/2">
+          <Typography variant="subtitle" className="mr-4">
+            {t('Series')}
           </Typography>
           <div className="mr-8 grow">
             <Select
@@ -129,11 +128,8 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
         </div>
         <div className="flex w-1/2 flex-row items-center">
           {showInstanceList && (
-            <Typography
-              variant="subtitle"
-              className="mr-4"
-            >
-              Instance Number
+            <Typography variant="subtitle" className="mr-4">
+              {t('Instance Number')}
             </Typography>
           )}
           {showInstanceList && (
@@ -158,8 +154,8 @@ const DicomTagBrowser = ({ displaySets, displaySetInstanceUID }) => {
       <div className="h-1 w-full bg-black"></div>
       <div className="my-3 flex w-1/2 flex-row">
         <InputFilterText
-          className="mr-8 block w-full"
-          placeholder="Search metadata..."
+          className="block w-full mr-8"
+          placeholder={t('Search metadata...')}
           onDebounceChange={setFilterValue}
         ></InputFilterText>
       </div>

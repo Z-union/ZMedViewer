@@ -39,7 +39,7 @@ const ViewportDownloadForm = ({
   maximumSize,
   canvasClass,
 }) => {
-  const { t } = useTranslation('Modals');
+  const { t } = useTranslation('ViewportDownloadForm');
 
   const [filename, setFilename] = useState(DEFAULT_FILENAME);
   const [fileType, setFileType] = useState(['jpg']);
@@ -145,9 +145,9 @@ const ViewportDownloadForm = ({
   };
 
   const error_messages = {
-    width: 'The minimum valid width is 100px.',
-    height: 'The minimum valid height is 100px.',
-    filename: 'The file name cannot be empty.',
+    width: t('The minimum valid width is 100px.'),
+    height: t('The minimum valid height is 100px.'),
+    filename: t('The file name cannot be empty.'),
   };
 
   const renderErrorHandler = errorType => {
@@ -308,7 +308,7 @@ const ViewportDownloadForm = ({
             <div className="mt-8 flex items-center">
               <Tooltip
                 position="right"
-                content={keepAspect ? 'Dismiss Aspect' : 'Keep Aspect'}
+                content={keepAspect ? t('Dismiss Aspect') : t('Keep Aspect')}
               >
                 <IconButton
                   onClick={onKeepAspectToggle}

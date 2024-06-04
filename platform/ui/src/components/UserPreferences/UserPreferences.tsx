@@ -90,6 +90,7 @@ const UserPreferences = ({
             {t('Language')}
           </Typography>
           <Select
+            id={'languages'}
             isClearable={false}
             onChange={onLanguageChangeHandler}
             options={availableLanguages}

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import ReactModal from 'react-modal';
 import Draggable from 'react-draggable';
 import { useModal } from '../../contextProviders';
-
+import { useTranslation } from 'react-i18next';
 import Icon from '../Icon';
 import Typography from '../Typography';
 
@@ -25,6 +25,7 @@ const Modal = ({
   containerDimensions = null,
   contentDimensions = null,
 }) => {
+  const { t } = useTranslation('HeaderModal');
   const { hide } = useModal();
 
   const handleClose = () => {
@@ -40,7 +41,7 @@ const Modal = ({
           className="flex grow !leading-[1.2]"
           data-cy="modal-header"
         >
-          {title}
+          {t(title)}
         </Typography>
         {closeButton && (
           <Icon

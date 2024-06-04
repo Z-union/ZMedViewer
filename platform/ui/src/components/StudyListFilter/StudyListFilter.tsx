@@ -17,6 +17,7 @@ const StudyListFilter = ({
   onUploadClick,
   getDataSourceConfigurationComponent,
 }) => {
+  console.log(numOfStudies);
   const { t } = useTranslation('StudyList');
   const { sortBy, sortDirection } = filterValues;
   const filterSorting = { sortBy, sortDirection };
@@ -71,14 +72,14 @@ const StudyListFilter = ({
                   variant="h6"
                   className="text-primary-light"
                 >
-                  {`${t('Number of studies')}: `}
+                  {`${t('Studies')}`}
                 </Typography>
                 <Typography
                   variant="h6"
                   className="mr-2"
                   data-cy={'num-studies'}
                 >
-                  {numOfStudies > 100 ? '>100' : numOfStudies}
+                  {numOfStudies}
                 </Typography>
               </div>
             </div>
@@ -96,13 +97,6 @@ const StudyListFilter = ({
             isSortingEnabled={isSortingEnabled}
           />
         </div>
-        {numOfStudies > 100 && (
-          <div className="container m-auto">
-            <div className="bg-primary-main rounded-b py-1 text-center text-base">
-              <p className="text-white">{t('Filter list to 100 studies or less to enable sorting')}</p>
-            </div>
-          </div>
-        )}
       </div>
     </React.Fragment>
   );

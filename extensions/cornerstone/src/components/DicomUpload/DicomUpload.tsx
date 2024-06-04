@@ -3,6 +3,7 @@ import { ReactElement } from 'react';
 import Dropzone from 'react-dropzone';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import DicomFileUploader from '../../utils/DicomFileUploader';
 import DicomUploadProgress from './DicomUploadProgress';
 import { Button, ButtonEnums } from '@ohif/ui';
@@ -14,7 +15,12 @@ type DicomUploadProps = {
   onStarted: () => void;
 };
 
-function DicomUpload({ dataSource, onComplete, onStarted }: DicomUploadProps): ReactElement {
+function DicomUpload({
+  dataSource,
+  onComplete,
+  onStarted,
+}: DicomUploadProps): ReactElement {
+  const { t } = useTranslation('UploadModal');
   const baseClassNames = 'min-h-[480px] flex flex-col bg-black select-none';
   const [dicomFileUploaderArr, setDicomFileUploaderArr] = useState([]);
 
@@ -43,11 +49,8 @@ function DicomUpload({ dataSource, onComplete, onStarted }: DicomUploadProps): R
               >
                 {({ getRootProps, getInputProps }) => (
                   <div {...getRootProps()}>
-                    <Button
-                      disabled={false}
-                      onClick={() => {}}
-                    >
-                      {'Add files'}
+                    <Button disabled={false} onClick={() => {}}>
+                      {t('Add files')}
                       <input {...getInputProps()} />
                     </Button>
                   </div>
@@ -64,7 +67,7 @@ function DicomUpload({ dataSource, onComplete, onStarted }: DicomUploadProps): R
                       disabled={false}
                       onClick={() => {}}
                     >
-                      {'Add folder'}
+                      {t('Add folder')}
                       <input
                         {...getInputProps()}
                         webkitdirectory="true"
@@ -75,8 +78,10 @@ function DicomUpload({ dataSource, onComplete, onStarted }: DicomUploadProps): R
                 )}
               </Dropzone>
             </div>
-            <div className="pt-5">or drag images or folders here</div>
-            <div className="text-aqua-pale pt-3 text-lg">(DICOM files supported)</div>
+            <div className="pt-5">{t('or drag images or folders here')}</div>
+            <div className="pt-3 text-aqua-pale text-lg">
+              {t('DICOM files supported')}
+            </div>
           </div>
         )}
       </Dropzone>

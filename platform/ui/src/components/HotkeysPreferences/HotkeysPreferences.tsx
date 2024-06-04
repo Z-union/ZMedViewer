@@ -30,7 +30,7 @@ const HotkeysPreferences = ({
   const splitedHotkeys = splitHotkeyDefinitionsAndCreateTuples(visibleHotkeys);
 
   if (!Object.keys(hotkeyDefinitions).length) {
-    return t('No hotkeys found');
+    return t('No hotkey definitions');
   }
 
   const onHotkeyChangeHandler = (id, definition) => {
@@ -88,7 +88,7 @@ const HotkeysPreferences = ({
                             isFirst && 'mt-5'
                           )}
                         >
-                          {definition.label}
+                          {t(definition.label)}
                         </Typography>
                       </div>
                       <div className="flex flex-col">

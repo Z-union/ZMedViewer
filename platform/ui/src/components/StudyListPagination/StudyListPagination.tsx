@@ -7,7 +7,13 @@ import LegacyButtonGroup from '../LegacyButtonGroup';
 import Typography from '../Typography';
 import Select from '../Select';
 
-const StudyListPagination = ({ onChangePage, currentPage, perPage, onChangePerPage }) => {
+const StudyListPagination = ({
+  onChangePage,
+  currentPage,
+  perPage,
+  onChangePerPage,
+  pages
+}) => {
   const { t } = useTranslation('StudyList');
 
   const navigateToPage = page => {
@@ -25,7 +31,6 @@ const StudyListPagination = ({ onChangePage, currentPage, perPage, onChangePerPa
     setSelectedRange(selectedRange);
     onChangePerPage(selectedRange.value);
   };
-
   return (
     <div className="bg-black py-10">
       <div className="container relative m-auto px-8">
@@ -39,6 +44,9 @@ const StudyListPagination = ({ onChangePage, currentPage, perPage, onChangePerPa
               isMulti={false}
               isClearable={false}
               isSearchable={false}
+              placeholder={
+                selectedRange ? String(selectedRange) : ranges[0].label
+              }
               closeMenuOnSelect={false}
               hideSelectedOptions={true}
               onChange={onSelectedRange}
@@ -58,6 +66,7 @@ const StudyListPagination = ({ onChangePage, currentPage, perPage, onChangePerPa
                   color="translucent"
                   border="primary"
                   variant="outlined"
+                  disabled={currentPage === 1}
                   onClick={() => navigateToPage(1)}
                 >
                   {`<<`}
@@ -68,6 +77,7 @@ const StudyListPagination = ({ onChangePage, currentPage, perPage, onChangePerPa
                   color="translucent"
                   border="primary"
                   variant="outlined"
+                  disabled={currentPage === 1}
                   onClick={() => navigateToPage(currentPage - 1)}
                 >
                   {t('Previous')}
@@ -78,6 +88,7 @@ const StudyListPagination = ({ onChangePage, currentPage, perPage, onChangePerPa
                   color="translucent"
                   border="primary"
                   variant="outlined"
+                  disabled={pages === currentPage}
                   onClick={() => navigateToPage(currentPage + 1)}
                 >
                   {t('Next')}
@@ -96,6 +107,7 @@ StudyListPagination.propTypes = {
   currentPage: PropTypes.number.isRequired,
   perPage: PropTypes.number.isRequired,
   onChangePerPage: PropTypes.func.isRequired,
+  pages: PropTypes.number,
 };
 
 export default StudyListPagination;
