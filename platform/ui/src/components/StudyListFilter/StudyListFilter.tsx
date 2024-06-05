@@ -17,7 +17,6 @@ const StudyListFilter = ({
   onUploadClick,
   getDataSourceConfigurationComponent,
 }) => {
-  console.log(numOfStudies);
   const { t } = useTranslation('StudyList');
   const { sortBy, sortDirection } = filterValues;
   const filterSorting = { sortBy, sortDirection };
@@ -70,7 +69,7 @@ const StudyListFilter = ({
                 )}
                 <Typography
                   variant="h6"
-                  className="text-primary-light"
+                  className="text-primary-light mr-2"
                 >
                   {`${t('Studies')}`}
                 </Typography>
@@ -79,7 +78,7 @@ const StudyListFilter = ({
                   className="mr-2"
                   data-cy={'num-studies'}
                 >
-                  {numOfStudies}
+                  {numOfStudies ?? 0}
                 </Typography>
               </div>
             </div>

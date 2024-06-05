@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 import type { withAppTypes } from '@ohif/core/types';
-import { ErrorBoundary, UserPreferences, AboutModal, Header, useModal } from '@ohif/ui';
+import { ErrorBoundary, UserPreferences, Header, useModal } from '@ohif/ui';
 import i18n from '@ohif/i18n';
 import { hotkeys } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
+
+import AboutModal from '../components/AboutModal';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
@@ -56,9 +58,8 @@ function ViewerHeader({
       onClick: () =>
         show({
           content: AboutModal,
-          title: t('AboutModal:About OHIF Viewer'),
+          title: 'About ZMed Viewer',
           contentProps: { versionNumber, commitHash },
-          containerDimensions: 'max-w-4xl max-h-4xl',
         }),
     },
     {

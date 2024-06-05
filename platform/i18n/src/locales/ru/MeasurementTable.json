@@ -11,9 +11,11 @@
   "Export": "Экспорт",
   "MAX": "MAX",
   "Measurements": "Измерения",
+  "No, do not ask again": "Нет, не спрашивать снова",
   "No tracked measurements": "Сохраненные измерения не найдены",
   "NonTargets": "NonTargets",
   "Relabel": "Переименовать",
   "Save": "$t(Buttons:Save)",
-  "Targets": "Цели"
+  "Targets": "Цели",
+  "Track measurements for this series?": "Отслеживать измерения для этого исследования?"
 }
