@@ -21,7 +21,7 @@
   "Previous Stage": "Предыдущий этап",
   "Reset": "$t(Buttons:Reset) изображения",
   "ResetDefaultMessage": "Preferences successfully reset to default. <br /> You must <strong>Save</strong> to perform this action.",
-  "Reset to Defaults": "$t(Buttons:Reset to Defaults)",
+  "Reset to defaults": "$t(Buttons:Reset to Defaults)",
   "Rotate Left": "Повернуть против часовой стрелки",
   "Rotate Right": "$t(Buttons:Rotate Right)",
   "Save": "$t(Buttons:Save)",

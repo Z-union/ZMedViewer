@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import detect from 'browser-detect';
+import { useTranslation } from 'react-i18next';
 
 import {
   Icon,
@@ -48,6 +49,7 @@ const Row = ({ title, value, link }) => {
 };
 
 const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
+  const { t } = useTranslation('AboutModal');
   const { os, version, name } = detect();
   const browser = `${name[0].toUpperCase()}${name.substr(1)} ${version}`;
 
@@ -58,7 +60,7 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
         color="primaryLight"
         className="text-[16px] font-semibold !leading-[1.2]"
       >
-        {title}
+        {t(title)}
       </Typography>
     </div>
   );
@@ -68,18 +70,18 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
       <div className="flex mb-8">
         <span className="ml-4">
           <Link href="https://z-union.ru/" showIcon={true}>
-            More details
+            {t("More details")}
           </Link>
         </span>
       </div>
 
       {renderRowTitle('Version Information')}
       <div className="flex flex-col">
-        <Row title="Version number" value={versionNumber} />
-        {buildNumber && <Row title="Build number" value={buildNumber} />}
-        {commitHash && <Row title="Commit Hash" value={commitHash} />}
-        <Row title="Browser" value={browser} />
-        <Row title="OS" value={os} />
+        <Row title={t("Version number")} value={versionNumber} />
+        {buildNumber && <Row title={t("Build number")} value={buildNumber} />}
+        {commitHash && <Row title={t("Commit Hash")} value={commitHash} />}
+        <Row title={t("Browser")} value={browser} />
+        <Row title={t("OS")} value={os} />
       </div>
     </div>
   );

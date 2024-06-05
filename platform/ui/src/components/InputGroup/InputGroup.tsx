@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import getGridWidthClass from '../../utils/getGridWidthClass';
+import { useTranslation } from 'react-i18next';
 
 import InputText from '../InputText';
 import InputDateRange from '../InputDateRange';
@@ -17,6 +18,7 @@ const InputGroup = ({
   isSortingEnabled,
 }) => {
   const { sortBy, sortDirection } = sorting;
+  const { t } = useTranslation('StudyList');
 
   const handleFilterLabelClick = name => {
     if (isSortingEnabled) {
@@ -36,7 +38,7 @@ const InputGroup = ({
     }
   };
 
-  const renderFieldInputComponent = ({ name, displayName, inputProps, isSortable, inputType }) => {
+  const renderFieldInputComponent = ({ name, displayName, inputProps, isSortable, inputType }, t) => {
     const _isSortable = isSortable && isSortingEnabled;
     const _sortDirection = sortBy !== name ? 'none' : sortDirection;
 
@@ -67,7 +69,7 @@ const InputGroup = ({
           <InputText
             id={name}
             key={name}
-            label={displayName}
+            label={t(displayName)}
             isSortable={_isSortable}
             sortDirection={_sortDirection}
             onLabelClick={onLabelClick}
@@ -80,7 +82,7 @@ const InputGroup = ({
           <InputMultiSelect
             id={name}
             key={name}
-            label={displayName}
+            label={t(displayName)}
             isSortable={_isSortable}
             sortDirection={_sortDirection}
             onLabelClick={onLabelClick}
@@ -94,7 +96,7 @@ const InputGroup = ({
           <InputDateRange
             id={name}
             key={name}
-            label={displayName}
+            label={t(displayName)}
             isSortable={_isSortable}
             sortDirection={_sortDirection}
             onLabelClick={onLabelClick}
@@ -106,7 +108,7 @@ const InputGroup = ({
         return (
           <InputLabelWrapper
             key={name}
-            label={displayName}
+            label={t(displayName)}
             isSortable={_isSortable}
             sortDirection={_sortDirection}
             onLabelClick={onLabelClick}
@@ -128,7 +130,7 @@ const InputGroup = ({
                 getGridWidthClass(inputMeta.gridCol)
               )}
             >
-              {renderFieldInputComponent(inputMeta)}
+              {renderFieldInputComponent(inputMeta, t)}
             </div>
           );
         })}

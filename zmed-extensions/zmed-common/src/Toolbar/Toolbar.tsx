@@ -21,7 +21,6 @@ export function Toolbar({ servicesManager }) {
         }
 
         const { id, Component, componentProps } = toolDef;
-        console.log(toolDef);
         const tool = (
           <Component
             key={id}

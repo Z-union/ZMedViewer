@@ -10,10 +10,14 @@ import MeasurementTable from './MeasurementTable.json';
 import SidePanel from './SidePanel.json';
 import StudyBrowser from './StudyBrowser.json';
 import StudyList from './StudyList.json';
+import PatientInfo from './PatientInfo.json';
+import SegmentationTable from './SegmentationTable.json';
+import StudyItem from './StudyItem.json';
 import UserPreferencesModal from './UserPreferencesModal.json';
 import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
 import UploadModal from './UploadModal.json';
+import ThumbnailTracked from './ThumbnailTracked.json';
 
 export default {
   ru: {
@@ -29,9 +33,13 @@ export default {
     SidePanel,
     StudyBrowser,
     StudyList,
+    PatientInfo,
+    SegmentationTable,
+    StudyItem,
     UserPreferencesModal,
     ViewportDownloadForm,
     Messages,
-    UploadModal
+    UploadModal,
+    ThumbnailTracked
   },
 };
