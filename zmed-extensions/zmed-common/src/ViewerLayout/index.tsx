@@ -8,7 +8,7 @@ import {
 import { HangingProtocolService, CommandsManager } from '@ohif/core';
 import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
-import SidePanelWithServices from '../Components/SidePanelWithServices';
+import SidePanelWithServices from '../components/SidePanelWithServices';
 
 function ViewerLayout({
   // From Extension Module Params
