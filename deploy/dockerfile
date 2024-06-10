@@ -45,7 +45,7 @@ COPY yarn.lock /usr/src/app/yarn.lock
 ADD . /usr/src/app/
 RUN yarn config set workspaces-experimental true
 RUN yarn install
-RUN yarn run build
+RUN yarn run build:dev
 
 # Stage 2: Bundle the built application into a Docker container
 # which runs openresty (nginx) using Alpine Linux
