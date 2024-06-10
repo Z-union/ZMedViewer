@@ -2,7 +2,7 @@
 # - https://docs.docker.com/compose/compose-file
 # - https://eclipsesource.com/blogs/2018/01/11/authenticating-reverse-proxy-with-keycloak/
 
-version: '3'
+version: '3.5'
 
 services:
   # Exposed server that's handling incoming web requests
@@ -50,7 +50,7 @@ services:
 
   # LINK: https://hub.docker.com/r/jboss/keycloak
   zmed_keycloak:
-    image: quay.io/keycloak/keycloak:latest
+    image: quay.io/keycloak/keycloak:6.0.1
     hostname: zmed_keycloak
     container_name: zmed_keycloak
     volumes:
