@@ -24,15 +24,17 @@
 
 # Stage 1: Build the application
 FROM node:18.16.1-slim as builder
+ARG ZVIEWER_HOST
+ARG ZVIEWER_APP_CONFIG
 
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y build-essential python3
 
-ENV APP_CONFIG=config/zmed.js
+ENV APP_CONFIG=${ZVIEWER_APP_CONFIG}
 ENV HTML_TEMPLATE=zmed-index.html
-ENV PUBLIC_URL=https://dev.app.zmed.z-union.ru/
+ENV PUBLIC_URL=https://${ZVIEWER_HOST}/
 ENV QUICK_BUILD true
 
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
@@ -49,6 +51,8 @@ RUN yarn run build
 # which runs openresty (nginx) using Alpine Linux
 # LINK: https://hub.docker.com/r/openresty/openresty
 FROM openresty/openresty:alpine-fat
+
+#sed -i 's/{ZVIEWER_HOST}/${ZVIEWER_HOST}/g' /usr/local/openresty/nginx/conf/nginx.conf
 
 RUN mkdir /var/log/nginx
 #RUN apk add --no-cache openssl
