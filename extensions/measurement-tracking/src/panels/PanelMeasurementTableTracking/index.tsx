@@ -166,14 +166,18 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }: wi
   };
 
   const displayMeasurementsWithoutFindings = displayMeasurements.filter(
-    dm => dm.measurementType !== measurementService.VALUE_TYPES.POINT
+    dm => dm.measurementType !== measurementService.VALUE_TYPES.POINT && dm.referencedImageId
   );
   const additionalFindings = displayMeasurements.filter(
-    dm => dm.measurementType === measurementService.VALUE_TYPES.POINT
+    dm => dm.measurementType === measurementService.VALUE_TYPES.POINT && dm.referencedImageId
   );
 
+  const nonAcquisitionMeasurements = displayMeasurements.filter(dm => dm.referencedImageId == null);
+
   const disabled =
-    additionalFindings.length === 0 && displayMeasurementsWithoutFindings.length === 0;
+    additionalFindings.length === 0 &&
+    displayMeasurementsWithoutFindings.length === 0 &&
+    nonAcquisitionMeasurements.length === 0;
 
   return (
     <>
@@ -205,6 +209,15 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }: wi
             onEdit={onMeasurementItemEditHandler}
           />
         )}
+        {nonAcquisitionMeasurements.length !== 0 && (
+          <MeasurementTable
+            title="Non-tracked"
+            data={nonAcquisitionMeasurements}
+            servicesManager={servicesManager}
+            onClick={jumpToImage}
+            onEdit={onMeasurementItemEditHandler}
+          />
+        )}
       </div>
       {!appConfig?.disableEditing && (
         <div className="flex justify-center p-4">
@@ -212,7 +225,7 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }: wi
             t={t}
             actions={[
               {
-                label: 'Export',
+                label: 'Download CSV',
                 onClick: exportReport,
               },
               {
@@ -271,6 +284,7 @@ function _mapMeasurementToDisplay(measurement, types, displaySetService, t) {
     selected,
     findingSites,
     finding,
+    referencedImageId,
   } = measurement;
 
   const firstSite = findingSites?.[0];
@@ -300,6 +314,7 @@ function _mapMeasurementToDisplay(measurement, types, displaySetService, t) {
     isActive: selected,
     finding,
     findingSites,
+    referencedImageId,
   };
 }
 

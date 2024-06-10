@@ -6,10 +6,10 @@ import { annotation as CsAnnotation } from '@cornerstonejs/tools';
 import MeasurementItem from './MeasurementItem';
 
 const MeasurementTable = ({
-  data,
+  data = [],
   title,
-  onClick,
-  onEdit,
+  onClick = () => {},
+  onEdit = () => {},
   onDelete,
   servicesManager,
 }: withAppTypes) => {
@@ -70,12 +70,6 @@ const MeasurementTable = ({
       </div>
     </div>
   );
-};
-
-MeasurementTable.defaultProps = {
-  data: [],
-  onClick: () => {},
-  onEdit: () => {},
 };
 
 MeasurementTable.propTypes = {

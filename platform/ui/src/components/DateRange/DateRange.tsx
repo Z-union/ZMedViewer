@@ -30,7 +30,7 @@ const renderYearsOptions = () => {
 
 const DateRange = props => {
   const { t } = useTranslation('DatePicker');
-  const { id, onChange, startDate, endDate } = props;
+  const { id = '', onChange, startDate = null, endDate = null } = props;
   const [focusedInput, setFocusedInput] = useState(null);
   const renderYearsOptionsCallback = useCallback(renderYearsOptions, []);
   const today = moment();
@@ -163,12 +163,6 @@ const DateRange = props => {
       anchorDirection="left"
     />
   );
-};
-
-DateRange.defaultProps = {
-  id: '',
-  startDate: null,
-  endDate: null,
 };
 
 DateRange.propTypes = {
