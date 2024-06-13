@@ -37,7 +37,7 @@ ENV PATH /usr/src/app/node_modules/.bin:$PATH
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 
-COPY ["package.json", "yarn.lock", "./"]
+COPY ["package.json", "yarn.lock", "preinstall.js", "./"]
 COPY extensions /usr/src/app/extensions
 COPY zmed-extensions /usr/src/app/zmed-extensions
 COPY modes /usr/src/app/modes
