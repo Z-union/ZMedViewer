@@ -21,66 +21,16 @@
 # * OpenResty is functionally identical to Nginx with the addition of Lua out of
 # the box.
 
+
 # Stage 1: Build the application
-FROM node:18.16.1-slim as json-copier
-
-ARG ZVIEWER_HOST
-ARG ZVIEWER_APP_CONFIG
-
-ENV APP_CONFIG=${ZVIEWER_APP_CONFIG}
-ENV HTML_TEMPLATE=zmed-index.html
-ENV PUBLIC_URL=https://${ZVIEWER_HOST}/
-ENV QUICK_BUILD true
-
-ENV PATH /usr/src/app/node_modules/.bin:$PATH
-
-RUN mkdir /usr/src/app
-WORKDIR /usr/src/app
-
-COPY ["package.json", "yarn.lock", "preinstall.js", "./"]
-COPY extensions /usr/src/app/extensions
-COPY zmed-extensions /usr/src/app/zmed-extensions
-COPY modes /usr/src/app/modes
-COPY platform /usr/src/app/platform
-
-# Copy Files
 FROM node:18.16.1-slim as builder
 ARG ZVIEWER_HOST
 ARG ZVIEWER_APP_CONFIG
 
-ENV APP_CONFIG=${ZVIEWER_APP_CONFIG}
-ENV HTML_TEMPLATE=zmed-index.html
-ENV PUBLIC_URL=https://${ZVIEWER_HOST}/
-ENV QUICK_BUILD true
-
-ENV PATH /usr/src/app/node_modules/.bin:$PATH
-RUN apt-get update && apt-get install -y build-essential python3
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 
-COPY --from=json-copier /usr/src/app .
-
-# Run the install before copying the rest of the files
-RUN yarn config set workspaces-experimental true
-RUN yarn install --frozen-lockfile --verbose
-
-COPY . .
-
-# To restore workspaces symlinks
-RUN yarn install --frozen-lockfile --verbose
-
-ENV PATH /usr/src/app/node_modules/.bin:$PATH
-ENV QUICK_BUILD true
-# ENV GENERATE_SOURCEMAP=false
-# ENV REACT_APP_CONFIG=config/default.js
-
-RUN yarn run build
-
-# Stage 3: Bundle the built application into a Docker container
-# which runs Nginx using Alpine Linux
-FROM openresty/openresty:alpine-fat as final
-ARG ZVIEWER_HOST
-ARG ZVIEWER_APP_CONFIG
+RUN apt-get update && apt-get install -y build-essential python3
 
 ENV APP_CONFIG=${ZVIEWER_APP_CONFIG}
 ENV HTML_TEMPLATE=zmed-index.html
@@ -88,6 +38,22 @@ ENV PUBLIC_URL=https://${ZVIEWER_HOST}/
 ENV QUICK_BUILD true
 
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
+
+COPY package.json /usr/src/app/package.json
+COPY yarn.lock /usr/src/app/yarn.lock
+
+ADD . /usr/src/app/
+RUN yarn config set workspaces-experimental true
+RUN yarn install
+RUN yarn run build:dev
+
+# Stage 2: Bundle the built application into a Docker container
+# which runs openresty (nginx) using Alpine Linux
+# LINK: https://hub.docker.com/r/openresty/openresty
+FROM openresty/openresty:alpine-fat
+
+#sed -i 's/{ZVIEWER_HOST}/${ZVIEWER_HOST}/g' /usr/local/openresty/nginx/conf/nginx.conf
+
 RUN mkdir /var/log/nginx
 #RUN apk add --no-cache openssl
 RUN apk add --no-cache openssl-dev
@@ -101,77 +67,12 @@ RUN luarocks install lua-resty-jwt
 RUN luarocks install lua-resty-session
 RUN luarocks install lua-resty-http
 # !!!
+#RUN luarocks install lua-resty-openidc
+#RUN luarocks install luacrypto
 
-#RUN apk add --no-cache bash
-ENV PORT=80
-# RUN rm /etc/nginx/conf.d/default.conf
-USER nginx
-# COPY --chown=nginx:nginx .docker/Viewer-v3.x /usr/src
-# RUN chmod 777 /usr/src/entrypoint.sh
-COPY --from=builder /usr/src/app/platform/app/dist /usr/share/nginx/html
-# In entrypoint.sh, app-config.js might be overwritten, so chmod it to be writeable.
-# The nginx user cannot chmod it, so change to root.
-USER root
-RUN chmod 666 /usr/share/nginx/html/app-config.js
-# USER nginx
-# CMD ["nginx", "-g", "daemon off;"]
-
+# Copy build output to image
+# COPY --from=builder /usr/src/app/build /var/www/html
+# COPY --from=builder /usr/src/app/platform/viewer/dist /var/www/html
 COPY --from=builder /usr/src/app/platform/app/dist /var/www/html
 
-# ENTRYPOINT ["/usr/src/entrypoint.sh"]
-CMD ["/usr/local/openresty/nginx/sbin/nginx", "-g", "daemon off;"]
-
-
-
-
-# RUN apt-get update && apt-get install -y build-essential python3
-
-# ENV APP_CONFIG=${ZVIEWER_APP_CONFIG}
-# ENV HTML_TEMPLATE=zmed-index.html
-# ENV PUBLIC_URL=https://${ZVIEWER_HOST}/
-# ENV QUICK_BUILD true
-
-# ENV PATH /usr/src/app/node_modules/.bin:$PATH
-
-# COPY ["package.json", "yarn.lock", "preinstall.js", "./"]
-# COPY extensions /usr/src/app/extensions
-# COPY zmed-extensions /usr/src/app/zmed-extensions
-# COPY modes /usr/src/app/modes
-# COPY platform /usr/src/app/platform
-# # COPY package.json /usr/src/app/package.json
-# # COPY yarn.lock /usr/src/app/yarn.lock
-
-# ADD . /usr/src/app/
-# RUN yarn config set workspaces-experimental true
-# RUN yarn install --frozen-lockfile --verbose
-# RUN yarn run build:dev
-
-# # Stage 2: Bundle the built application into a Docker container
-# # which runs openresty (nginx) using Alpine Linux
-# # LINK: https://hub.docker.com/r/openresty/openresty
-# FROM openresty/openresty:alpine-fat
-
-# #sed -i 's/{ZVIEWER_HOST}/${ZVIEWER_HOST}/g' /usr/local/openresty/nginx/conf/nginx.conf
-
-# RUN mkdir /var/log/nginx
-# #RUN apk add --no-cache openssl
-# RUN apk add --no-cache openssl-dev
-# RUN apk add --no-cache git
-# RUN apk add --no-cache gcc
-# # !!!
-# RUN luarocks install lua-resty-openidc
-
-# #
-# RUN luarocks install lua-resty-jwt
-# RUN luarocks install lua-resty-session
-# RUN luarocks install lua-resty-http
-# # !!!
-# #RUN luarocks install lua-resty-openidc
-# #RUN luarocks install luacrypto
-
-# # Copy build output to image
-# # COPY --from=builder /usr/src/app/build /var/www/html
-# # COPY --from=builder /usr/src/app/platform/viewer/dist /var/www/html
-# COPY --from=builder /usr/src/app/platform/app/dist /var/www/html
-
-# ENTRYPOINT ["/usr/local/openresty/nginx/sbin/nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/usr/local/openresty/nginx/sbin/nginx", "-g", "daemon off;"]
