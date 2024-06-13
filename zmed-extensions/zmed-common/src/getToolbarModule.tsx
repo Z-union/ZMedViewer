@@ -2,7 +2,7 @@ import ToolbarDivider from './Toolbar/ToolbarDivider';
 import ToolbarLayoutSelectorWithServices from './Toolbar/ToolbarLayoutSelector';
 import ToolbarSplitButtonWithServices from './Toolbar/ToolbarSplitButtonWithServices';
 import ToolbarButtonGroupWithServices from './Toolbar/ToolbarButtonGroupWithServices';
-import ProgressDropdownWithService from './components/ProgressDropdownWithService';
+import { ProgressDropdownWithService } from './components/ProgressDropdownWithService';
 import { ToolbarButton } from '@ohif/ui';
 import type { withAppTypes } from '@ohif/core/types';
 

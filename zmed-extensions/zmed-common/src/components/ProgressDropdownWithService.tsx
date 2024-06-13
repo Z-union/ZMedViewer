@@ -10,7 +10,7 @@ const workflowStepsToDropdownOptions = (steps = []) =>
     completed: false,
   }));
 
-function ProgressDropdownWithService({ servicesManager }: withAppTypes): ReactElement {
+export function ProgressDropdownWithService({ servicesManager }: withAppTypes): ReactElement {
   const { workflowStepsService } = servicesManager.services;
   const [activeStepId, setActiveStepId] = useState(workflowStepsService.activeWorkflowStep?.id);
 
@@ -92,13 +92,11 @@ function ProgressDropdownWithService({ servicesManager }: withAppTypes): ReactEl
     };
   }, [servicesManager, workflowStepsService]);
 
-  return (
-    <ProgressDropdown
-      options={dropdownOptions}
-      value={activeStepId}
-      onChange={handleDropdownChange}
-    />
+  return (<div>1234</div>
+    // <ProgressDropdown
+    // options={dropdownOptions}
+    // value={activeStepId}
+    // onChange={handleDropdownChange}
+    // />
   );
 }
-
-export default ProgressDropdownWithService;

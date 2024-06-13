@@ -114,7 +114,7 @@ window.config = {
     {
       // ~ REQUIRED
       // Authorization Server URL
-      authority: '/auth/realms/ohif',
+      authority: 'https://dev-zview.z-union.ru/auth/realms/ohif',
       client_id: 'ohif-viewer',
       redirect_uri: 'https://dev-zview.z-union.ru/callback', // `OHIFStandaloneViewer.js`
       // "Authorization Code Flow"
