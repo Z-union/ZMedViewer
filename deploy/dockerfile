@@ -39,13 +39,18 @@ ENV QUICK_BUILD true
 
 ENV PATH /usr/src/app/node_modules/.bin:$PATH
 
-COPY package.json /usr/src/app/package.json
-COPY yarn.lock /usr/src/app/yarn.lock
+COPY ["package.json", "yarn.lock", "preinstall.js", "./"]
+COPY extensions /usr/src/app/extensions
+COPY zmed-extensions /usr/src/app/zmed-extensions
+COPY modes /usr/src/app/modes
+COPY platform /usr/src/app/platform
+# COPY package.json /usr/src/app/package.json
+# COPY yarn.lock /usr/src/app/yarn.lock
 
 ADD . /usr/src/app/
 RUN yarn config set workspaces-experimental true
-RUN yarn install
-RUN yarn run build:dev
+RUN yarn install --frozen-lockfile --verbose
+RUN yarn run build
 
 # Stage 2: Bundle the built application into a Docker container
 # which runs openresty (nginx) using Alpine Linux
