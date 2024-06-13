@@ -45,6 +45,15 @@ COPY platform /usr/src/app/platform
 
 # Copy Files
 FROM node:18.16.1-slim as builder
+ARG ZVIEWER_HOST
+ARG ZVIEWER_APP_CONFIG
+
+ENV APP_CONFIG=${ZVIEWER_APP_CONFIG}
+ENV HTML_TEMPLATE=zmed-index.html
+ENV PUBLIC_URL=https://${ZVIEWER_HOST}/
+ENV QUICK_BUILD true
+
+ENV PATH /usr/src/app/node_modules/.bin:$PATH
 RUN apt-get update && apt-get install -y build-essential python3
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
@@ -70,6 +79,15 @@ RUN yarn run build
 # Stage 3: Bundle the built application into a Docker container
 # which runs Nginx using Alpine Linux
 FROM openresty/openresty:alpine-fat as final
+ARG ZVIEWER_HOST
+ARG ZVIEWER_APP_CONFIG
+
+ENV APP_CONFIG=${ZVIEWER_APP_CONFIG}
+ENV HTML_TEMPLATE=zmed-index.html
+ENV PUBLIC_URL=https://${ZVIEWER_HOST}/
+ENV QUICK_BUILD true
+
+ENV PATH /usr/src/app/node_modules/.bin:$PATH
 RUN mkdir /var/log/nginx
 #RUN apk add --no-cache openssl
 RUN apk add --no-cache openssl-dev
