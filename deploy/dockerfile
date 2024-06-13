@@ -100,7 +100,7 @@ RUN chmod 666 /usr/share/nginx/html/app-config.js
 
 COPY --from=builder /usr/src/app/platform/app/dist /var/www/html
 
-ENTRYPOINT ["/usr/src/entrypoint.sh"]
+# ENTRYPOINT ["/usr/src/entrypoint.sh"]
 CMD ["/usr/local/openresty/nginx/sbin/nginx", "-g", "daemon off;"]
 
 
