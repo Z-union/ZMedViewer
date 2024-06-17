@@ -1,4 +1,5 @@
 {
+  "4D PT/CT": "4D (PT/CT)",
   "AccessionNumber": "Номер выборки",
   "Basic Viewer": "Базовый Viewer",
   "ClearFilters": "Очистить фильтры",
@@ -16,8 +17,9 @@
   "Page": "Страница",
   "PatientName": "Имя пациента",
   "Previous": "< $t(Common:Previous)",
-  "ResultsPerPage": "Количество результатов на страницу",
+  "Results per page": "Количество результатов на страницу",
   "Search metadata...": "Поиск по тегам...",
+  "Segmentation": "Сегментация",
   "Series": "Серии",
   "Studies": "Количество исследований:",
   "StudyDate": "Дата исследования",

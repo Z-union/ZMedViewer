@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
+import { useTranslation } from 'react-i18next';
 
 const TableCell = ({
   children,
@@ -13,6 +14,7 @@ const TableCell = ({
   align = 'left',
   style = {},
 }) => {
+  const { t } = useTranslation('StudyList');
   const classes = {
     align: {
       left: 'text-left',
@@ -37,7 +39,7 @@ const TableCell = ({
       )}
       style={style}
     >
-      {children}
+      {t(children)}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { format, parse, isValid } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -30,6 +31,8 @@ export function DatePickerWithRange({
     endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : ''
   );
   const [openEnd, setOpenEnd] = React.useState(false);
+
+  const { t } = useTranslation('DatePicker');
 
   const handleStartSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
@@ -85,7 +88,7 @@ export function DatePickerWithRange({
             <input
               id={`${id}-start`}
               type="text"
-              placeholder="Start date"
+              placeholder={t('Start date')}
               autoComplete="off"
               value={start}
               onChange={e => handleInputChange(e, 'start')}
@@ -122,7 +125,7 @@ export function DatePickerWithRange({
             <input
               id={`${id}-end`}
               type="text"
-              placeholder="End date"
+              placeholder={t('End date')}
               autoComplete="off"
               value={end}
               onChange={e => handleInputChange(e, 'end')}
