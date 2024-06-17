@@ -102,7 +102,7 @@ window.config = {
     console.warn(error.status);
 
     // Could use services manager here to bring up a dialog/modal if needed.
-    console.warn('test, navigate to https://dev.app.zmed.z-union.ru/');
+    console.warn('test, navigate to https://zview.z-union.ru/');
   },
   zmedtools: {
     covidURL: 'https://zview.z-union.ru/zmedtools/',
