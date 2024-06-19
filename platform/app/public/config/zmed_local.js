@@ -42,9 +42,9 @@ window.config = {
       configuration: {
         friendlyName: 'Orthanc Server',
         name: 'Orthanc',
-        wadoUriRoot: 'https://zview.z-union.ru/pacs/wado',
-        qidoRoot: 'https://zview.z-union.ru/pacs/dicom-web',
-        wadoRoot: 'https://zview.z-union.ru/pacs/dicom-web',
+        wadoUriRoot: 'https://dev-zview.z-union.ru/pacs/wado',
+        qidoRoot: 'https://dev-zview.z-union.ru/pacs/dicom-web',
+        wadoRoot: 'https://dev-zview.z-union.ru/pacs/dicom-web',
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
@@ -68,9 +68,9 @@ window.config = {
     //   configuration: {
     //     friendlyName: 'Orthanc Server',
     //     name: 'Orthanc',
-    //     wadoUriRoot: 'https://zview.z-union.ru/pacs/wado',
-    //     qidoRoot: 'https://zview.z-union.ru/pacs/dicom-web',
-    //     wadoRoot: 'https://zview.z-union.ru/pacs/dicom-web',
+    //     wadoUriRoot: 'https://dev-zview.z-union.ru/pacs/wado',
+    //     qidoRoot: 'https://dev-zview.z-union.ru/pacs/dicom-web',
+    //     wadoRoot: 'https://dev-zview.z-union.ru/pacs/dicom-web',
     //     qidoSupportsIncludeField: false,
     //     imageRendering: 'wadors',
     //     thumbnailRendering: 'wadors',
@@ -102,21 +102,21 @@ window.config = {
     console.warn(error.status);
 
     // Could use services manager here to bring up a dialog/modal if needed.
-    console.warn('test, navigate to https://zview.z-union.ru/');
+    console.warn('test, navigate to https://dev-zview.z-union.ru/');
   },
   zmedtools: {
-    covidURL: 'https://zview.z-union.ru/zmedtools/',
-    mammoURL: 'https://zview.z-union.ru/zmedtools/',
-    innpolisURL: 'https://zview.z-union.ru/zmedtools/',
+    covidURL: 'https://dev-zview.z-union.ru/zmedtools/',
+    mammoURL: 'https://dev-zview.z-union.ru/zmedtools/',
+    innpolisURL: 'https://dev-zview.z-union.ru/zmedtools/',
   },
   // This is an array, but we'll only use the first entry for now
   oidc: [
     {
       // ~ REQUIRED
       // Authorization Server URL
-      authority: '/auth/realms/ohif',
+      authority: 'http://127.0.0.1:18080/auth/realms/ohif',
       client_id: 'ohif-viewer',
-      redirect_uri: 'https://zview.z-union.ru/callback', // `OHIFStandaloneViewer.js`
+      redirect_uri: 'http://127.0.0.1:3000/callback', // `OHIFStandaloneViewer.js`
       // "Authorization Code Flow"
       // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
       response_type: 'code',
