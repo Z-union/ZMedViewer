@@ -59,6 +59,7 @@ function WorkSheet({
   servicesManager,
 }) {
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
+  const { uiNotificationService } = servicesManager.services;
   const { show, hide } = useModal();
   const { t } = useTranslation('StudyList');
   // ~ Modes
@@ -403,10 +404,36 @@ function WorkSheet({
           </div>
         </StudyListExpandedRow>
       ),
-      onClickRow: () =>
-        setExpandedRows(s =>
-          isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]
-        ),
+      onClickRow: () => {
+        // Переход на исследование сразу при нажатии на него
+        const basicViewerMode = appConfig.loadedModes.find(obj => obj.routeName === 'viewer')
+
+        const modalitiesToCheck = modalities.replaceAll('/', '\\');
+
+        const isValidModeCheck = basicViewerMode.isValidMode({
+          modalities: modalitiesToCheck,
+          study,
+        });
+
+        const isValidMode = isValidModeCheck === !! isValidModeCheck;
+
+        if (!isValidMode) {
+          uiNotificationService.show({
+            title: t('Invalid mode'),
+            message: t('Cannot open the study in basic Viewer'),
+            type: 'error',
+          });
+          return;
+        }
+
+        isValidMode && navigate(
+          `/${basicViewerMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`
+        )},
+
+        // Открытие окна с выбором мода (пока мод 1, можно отключить)
+        // setExpandedRows(s =>
+        //   isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]
+        // ),
       isExpanded,
     };
   });
