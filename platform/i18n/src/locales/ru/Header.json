@@ -1,6 +1,7 @@
 {
   "About": "Информация",
   "Back to Viewer": "Обратно к вьюверу",
+  "Delete": "$t(Buttons:Delete)",
   "INVESTIGATIONAL USE ONLY": "ТОЛЬКО ДЛЯ ИССЛЕДОВАТЕЛЬСКИХ ЦЕЛЕЙ",
   "Logout": "Выйти",
   "Options": "Опции",

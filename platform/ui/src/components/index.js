@@ -2,6 +2,7 @@ import AboutModal from './AboutModal';
 import Button from './Button';
 import ButtonGroup from './ButtonGroup';
 import { ButtonEnums } from './Button';
+import ConfirmContent from './ConfirmContent';
 import ContextMenu from './ContextMenu';
 import CinePlayer from './CinePlayer';
 import DateRange from './DateRange';
@@ -108,6 +109,7 @@ export {
   Button,
   ButtonGroup,
   ButtonEnums,
+  ConfirmContent,
   CheckBox,
   CinePlayer,
   ContextMenu,

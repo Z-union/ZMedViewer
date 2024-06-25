@@ -25,10 +25,10 @@ export function DatePickerWithRange({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & DatePickerWithRangeProps) {
   const [start, setStart] = React.useState<string>(
-    startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : ''
+    startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : ''
   );
   const [end, setEnd] = React.useState<string>(
-    endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : ''
+    endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : ''
   );
   const [openEnd, setOpenEnd] = React.useState(false);
 
@@ -36,23 +36,23 @@ export function DatePickerWithRange({
 
   const handleStartSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const formattedDate = format(selectedDate, 'dd.MM.yyyy');
       setStart(formattedDate);
       setOpenEnd(true);
       onChange({
         startDate: format(selectedDate, 'yyyyMMdd'),
-        endDate: end.replace(/-/g, ''),
+        endDate: end ? format(parse(end, 'dd.MM.yyyy', new Date()), 'yyyyMMdd') : '',
       });
     }
   };
 
   const handleEndSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const formattedDate = format(selectedDate, 'dd.MM.yyyy');
       setEnd(formattedDate);
       setOpenEnd(false);
       onChange({
-        startDate: start.replace(/-/g, ''),
+        startDate: start ? format(parse(start, 'dd.MM.yyyy', new Date()), 'yyyyMMdd') : '',
         endDate: format(selectedDate, 'yyyyMMdd'),
       });
     }
@@ -60,7 +60,7 @@ export function DatePickerWithRange({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'start' | 'end') => {
     const value = e.target.value;
-    const date = parse(value, 'yyyy-MM-dd', new Date());
+    const date = parse(value, 'dd.MM.yyyy', new Date());
     if (type === 'start') {
       setStart(value);
       if (isValid(date)) {
@@ -75,8 +75,8 @@ export function DatePickerWithRange({
   };
 
   React.useEffect(() => {
-    setStart(startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : '');
-    setEnd(endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : '');
+    setStart(startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : '');
+    setEnd(endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : '');
   }, [startDate, endDate]);
 
   return (
@@ -107,8 +107,8 @@ export function DatePickerWithRange({
           <Calendar
             initialFocus
             mode="single"
-            defaultMonth={start ? parse(start, 'yyyy-MM-dd', new Date()) : new Date()}
-            selected={start ? parse(start, 'yyyy-MM-dd', new Date()) : undefined}
+            defaultMonth={start ? parse(start, 'dd.MM.yyyy', new Date()) : new Date()}
+            selected={start ? parse(start, 'dd.MM.yyyy', new Date()) : undefined}
             onSelect={handleStartSelect}
             numberOfMonths={1}
           />
@@ -144,8 +144,8 @@ export function DatePickerWithRange({
           <Calendar
             initialFocus
             mode="single"
-            defaultMonth={start ? parse(start, 'yyyy-MM-dd', new Date()) : new Date()}
-            selected={end ? parse(end, 'yyyy-MM-dd', new Date()) : undefined}
+            defaultMonth={start ? parse(start, 'dd.MM.yyyy', new Date()) : new Date()}
+            selected={end ? parse(end, 'dd.MM.yyyy', new Date()) : undefined}
             onSelect={handleEndSelect}
             numberOfMonths={1}
           />

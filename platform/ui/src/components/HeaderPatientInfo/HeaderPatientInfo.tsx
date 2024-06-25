@@ -5,7 +5,7 @@ import { utils } from '@ohif/core';
 import { useTranslation } from 'react-i18next';
 import { PatientInfoVisibility } from '../../types';
 
-const { formatDate, formatPN } = utils;
+const { formatDateRu, formatPN } = utils;
 
 const formatWithEllipsis = (str, maxLength) => {
   if (str?.length > maxLength) {
@@ -51,7 +51,7 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
       PatientID: instance.PatientID || null,
       PatientName: instance.PatientName ? formatPN(instance.PatientName.Alphabetic) : null,
       PatientSex: instance.PatientSex || null,
-      PatientDOB: formatDate(instance.PatientBirthDate) || null,
+      PatientDOB: formatDateRu(instance.PatientBirthDate) || null,
     });
     checkMixedPatients(instance.PatientID || null);
   };

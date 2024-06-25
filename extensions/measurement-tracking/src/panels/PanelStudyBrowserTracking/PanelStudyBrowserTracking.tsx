@@ -6,7 +6,7 @@ import { utils } from '@ohif/core';
 import { StudyBrowser, useImageViewer, useViewportGrid, Dialog, ButtonEnums } from '@ohif/ui';
 import { useTrackedMeasurements } from '../../getContextModule';
 
-const { formatDate } = utils;
+const { formatDateRu } = utils;
 
 /**
  *
@@ -102,7 +102,7 @@ function PanelStudyBrowserTracking({
       const actuallyMappedStudies = mappedStudies.map(qidoStudy => {
         return {
           studyInstanceUid: qidoStudy.StudyInstanceUID,
-          date: formatDate(qidoStudy.StudyDate) || t('NoStudyDate'),
+          date: formatDateRu(qidoStudy.StudyDate) || t('NoStudyDate'),
           description: qidoStudy.StudyDescription,
           modalities: qidoStudy.ModalitiesInStudy,
           numInstances: qidoStudy.NumInstances,
@@ -487,7 +487,7 @@ function _mapDisplaySets(
         description: ds.SeriesDescription,
         seriesNumber: ds.SeriesNumber,
         modality: ds.Modality,
-        seriesDate: formatDate(ds.SeriesDate),
+        seriesDate: formatDateRu(ds.SeriesDate),
         numInstances: ds.numImageFrames,
         countIcon: ds.countIcon,
         messages: ds.messages,

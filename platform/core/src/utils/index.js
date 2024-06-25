@@ -13,6 +13,7 @@ import hotkeys from './hotkeys';
 import Queue from './Queue';
 import isDicomUid from './isDicomUid';
 import formatDate from './formatDate';
+import formatDateRu from './formatDateRu';
 import formatPN from './formatPN';
 import generateAcceptHeader from './generateAcceptHeader';
 import resolveObjectPath from './resolveObjectPath';
@@ -55,6 +56,7 @@ const utils = {
   seriesSortCriteria,
   writeScript,
   formatDate,
+  formatDateRu,
   formatPN,
   b64toBlob,
   urlUtil,
@@ -88,6 +90,7 @@ export {
   absoluteUrl,
   sortBy,
   formatDate,
+  formatDateRu,
   writeScript,
   b64toBlob,
   urlUtil,
