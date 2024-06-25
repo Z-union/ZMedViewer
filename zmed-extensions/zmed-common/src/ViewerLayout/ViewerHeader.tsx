@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 import type { withAppTypes } from '@ohif/core/types';
-import { ErrorBoundary, UserPreferences, Header, useModal } from '@ohif/ui';
+import { ConfirmContent, ErrorBoundary, UserPreferences, Header, useModal } from '@ohif/ui';
 import i18n from '@ohif/i18n';
 import { hotkeys } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
@@ -20,6 +20,41 @@ function ViewerHeader({
 }: withAppTypes) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const dataSourceName = extensionManager.defaultDataSourceName;
+  const dataSource = extensionManager.getDataSources(dataSourceName)?.[0];
+  const studyInstanceUID = new URLSearchParams(window.location.search).get('StudyInstanceUIDs');
+
+  const { uiModalService } = servicesManager.services;
+
+  const handleClickYes = async (e) => {
+    e.preventDefault();
+    await dataSource.query.studies.delete(studyInstanceUID);
+    onClickReturnButton();
+    uiModalService.hide();
+  }
+
+  const handleClickNo = async (e) => {
+    e.preventDefault();
+    uiModalService.hide();
+  }
+
+  const onClickDelete = (e) => {
+      e.preventDefault();
+      uiModalService.show({
+        title: t('StudyList:Delete study'),
+        containerDimensions: 'w-80',
+        content: () => {
+          return (
+              <ConfirmContent
+                labelContent={t('StudyList:Are you sure you wish to delete this study?')}
+                handleClickYes={handleClickYes}
+                handleClickNo={handleClickNo}
+              />
+          );
+        }
+      });
+  }
 
   const onClickReturnButton = () => {
     const { pathname } = location;
@@ -114,6 +149,7 @@ function ViewerHeader({
       showPatientInfo={appConfig.showPatientInfo}
       servicesManager={servicesManager}
       appConfig={appConfig}
+      onClickDelete={onClickDelete}
     >
       <ErrorBoundary context="Primary Toolbar">
         <div className="relative flex justify-center gap-[4px]">

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { format, parse, isValid } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -24,32 +25,34 @@ export function DatePickerWithRange({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & DatePickerWithRangeProps) {
   const [start, setStart] = React.useState<string>(
-    startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : ''
+    startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : ''
   );
   const [end, setEnd] = React.useState<string>(
-    endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : ''
+    endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : ''
   );
   const [openEnd, setOpenEnd] = React.useState(false);
 
+  const { t } = useTranslation('DatePicker');
+
   const handleStartSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const formattedDate = format(selectedDate, 'dd.MM.yyyy');
       setStart(formattedDate);
       setOpenEnd(true);
       onChange({
         startDate: format(selectedDate, 'yyyyMMdd'),
-        endDate: end.replace(/-/g, ''),
+        endDate: end ? format(parse(end, 'dd.MM.yyyy', new Date()), 'yyyyMMdd') : '',
       });
     }
   };
 
   const handleEndSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const formattedDate = format(selectedDate, 'dd.MM.yyyy');
       setEnd(formattedDate);
       setOpenEnd(false);
       onChange({
-        startDate: start.replace(/-/g, ''),
+        startDate: start ? format(parse(start, 'dd.MM.yyyy', new Date()), 'yyyyMMdd') : '',
         endDate: format(selectedDate, 'yyyyMMdd'),
       });
     }
@@ -57,7 +60,7 @@ export function DatePickerWithRange({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'start' | 'end') => {
     const value = e.target.value;
-    const date = parse(value, 'yyyy-MM-dd', new Date());
+    const date = parse(value, 'dd.MM.yyyy', new Date());
     if (type === 'start') {
       setStart(value);
       if (isValid(date)) {
@@ -72,8 +75,8 @@ export function DatePickerWithRange({
   };
 
   React.useEffect(() => {
-    setStart(startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : '');
-    setEnd(endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : '');
+    setStart(startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : '');
+    setEnd(endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'dd.MM.yyyy') : '');
   }, [startDate, endDate]);
 
   return (
@@ -85,7 +88,7 @@ export function DatePickerWithRange({
             <input
               id={`${id}-start`}
               type="text"
-              placeholder="Start date"
+              placeholder={t('Start date')}
               autoComplete="off"
               value={start}
               onChange={e => handleInputChange(e, 'start')}
@@ -104,8 +107,8 @@ export function DatePickerWithRange({
           <Calendar
             initialFocus
             mode="single"
-            defaultMonth={start ? parse(start, 'yyyy-MM-dd', new Date()) : new Date()}
-            selected={start ? parse(start, 'yyyy-MM-dd', new Date()) : undefined}
+            defaultMonth={start ? parse(start, 'dd.MM.yyyy', new Date()) : new Date()}
+            selected={start ? parse(start, 'dd.MM.yyyy', new Date()) : undefined}
             onSelect={handleStartSelect}
             numberOfMonths={1}
           />
@@ -122,7 +125,7 @@ export function DatePickerWithRange({
             <input
               id={`${id}-end`}
               type="text"
-              placeholder="End date"
+              placeholder={t('End date')}
               autoComplete="off"
               value={end}
               onChange={e => handleInputChange(e, 'end')}
@@ -141,8 +144,8 @@ export function DatePickerWithRange({
           <Calendar
             initialFocus
             mode="single"
-            defaultMonth={start ? parse(start, 'yyyy-MM-dd', new Date()) : new Date()}
-            selected={end ? parse(end, 'yyyy-MM-dd', new Date()) : undefined}
+            defaultMonth={start ? parse(start, 'dd.MM.yyyy', new Date()) : new Date()}
+            selected={end ? parse(end, 'dd.MM.yyyy', new Date()) : undefined}
             onSelect={handleEndSelect}
             numberOfMonths={1}
           />

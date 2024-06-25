@@ -1,5 +1,6 @@
 import React, { ReactElement, memo, useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import DicomFileUploader, {
   DicomFileUploaderProgressEvent,
   EVENTS,
@@ -18,6 +19,8 @@ const DicomUploadProgressItem = memo(
     const [percentComplete, setPercentComplete] = useState(dicomFileUploader.getPercentComplete());
     const [failedReason, setFailedReason] = useState('');
     const [status, setStatus] = useState(dicomFileUploader.getStatus());
+
+    const { t } = useTranslation('UploadModal');
 
     const isComplete = useCallback(() => {
       return (
@@ -79,7 +82,7 @@ const DicomUploadProgressItem = memo(
               {dicomFileUploader.getFileName()}
             </div>
           </div>
-          {failedReason && <div className="pl-10">{failedReason}</div>}
+          {failedReason && <div className="pl-10">{t(failedReason)}</div>}
         </div>
         <div className="flex w-24 items-center">
           {!isComplete() && (

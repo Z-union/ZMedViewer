@@ -31,7 +31,7 @@ export function formatNumberPrecision(number, precision = 0) {
  * @param {string} strFormat
  * @returns {string} formatted date.
  */
-export function formatDICOMDate(date, strFormat = 'MMM D, YYYY') {
+export function formatDICOMDate(date, strFormat = 'DD.MM.YYYY') {
   return moment(date, 'YYYYMMDD').format(strFormat);
 }
 

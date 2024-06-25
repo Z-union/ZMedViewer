@@ -1,5 +1,6 @@
 import React, { useCallback, useContext } from 'react';
 import { MenuContext, MenuProps } from './Menu';
+import { useTranslation } from 'react-i18next';
 import Icon from '../Icon';
 
 export interface SubMenuProps extends MenuProps {
@@ -10,6 +11,8 @@ export interface SubMenuProps extends MenuProps {
 
 const SubMenu = (props: SubMenuProps) => {
   const { showSubMenu } = useContext(MenuContext);
+
+  const { t } = useTranslation('Buttons');
 
   const onClickHandler = useCallback(() => {
     showSubMenu(props);
@@ -29,7 +32,7 @@ const SubMenu = (props: SubMenuProps) => {
           className="mr-2"
         ></Icon>
       )}
-      <div className="mr-auto">{props.itemLabel}</div>
+      <div className="mr-auto">{t(props.itemLabel)}</div>
       <Icon name="content-next"></Icon>
     </div>
   );

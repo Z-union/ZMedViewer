@@ -2,5 +2,26 @@
   "Add files": "Добавить файлы",
   "Add folder": "Добавить папки",
   "DICOM files supported": "(Формат DICOM поддерживается)",
-  "or drag images or folders here": "Или перетащите файлы/папки сюда"
+  "or drag images or folders here": "Или перетащите файлы/папки сюда",
+  "files": "файлов",
+  "file": "файл",
+  "completed": "загружено",
+  "Close": "$t(Buttons:Close)",
+  "of": "из",
+  " files completed.": " файлов загружено.",
+  "Remaining less than": "Осталось менее",
+  "Cancel All Uploads": "Отменить все загрузки",
+  "second": "секунды",
+  "minute": "минуты",
+  "hour": "часа",
+  "seconds": "секунд",
+  "minutes": "минут",
+  "hours": "часов",
+  "request failed": "Запрос отклонён",
+  "Completed with": "Завершено с",
+  "error": "ошибкой",
+  "errors": "ошибками",
+  "Completed!": "Файлы загружены!"
+
+
 }

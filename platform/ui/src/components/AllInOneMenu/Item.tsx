@@ -1,4 +1,5 @@
 import React, { ReactNode, useCallback, useContext } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MenuContext } from './Menu';
 
 type ItemProps = {
@@ -22,6 +23,8 @@ const Item = ({
 }: ItemProps) => {
   const { hideMenu } = useContext(MenuContext);
 
+  const { t } = useTranslation('Buttons');
+
   const onClickHandler = useCallback(() => {
     hideMenu();
     onClick?.();
@@ -35,8 +38,10 @@ const Item = ({
       onMouseLeave={onMouseLeave}
     >
       {icon && <div className="pr-2">{icon}</div>}
-      <span>{label}</span>
-      {secondaryLabel != null && <span className="text-aqua-pale ml-[1ch]">{secondaryLabel}</span>}
+      <span>{t(label)}</span>
+      {secondaryLabel != null && (
+        <span className="text-aqua-pale ml-[1ch]">{t(secondaryLabel)}</span>
+      )}
       {rightIcon && <div className="ml-auto">{rightIcon}</div>}
     </div>
   );

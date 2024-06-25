@@ -135,6 +135,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
           var results = [];
           let response = null;
+          let date = new Map();
 
           qidoDicomWebClient.headers = headers;
 
@@ -142,20 +143,22 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             var head = headers;
             head['Content-Type'] = 'application/json';
             const params = {
-              page: origParams.pageNumber, 
-              size: origParams.resultsPerPage, 
+              page: origParams.pageNumber,
+              size: origParams.resultsPerPage,
             };
             var config = {
               method: 'get',
-              url: dicomWebConfig.personalAccountUri + '/me/studies/',
+              url: dicomWebConfig.personalAccountUri + '/api/v2/study/',
               headers: head,
               params
             };
 
+            let studies;
             response = await axios(config);
             if (response.status == 200) {
-              const studies = response.data.items.map(el => {
-                return el.study_id;
+              studies = response.data.items.map(el => {
+              date[el.study_instance_uid] = el.uploaded_at;
+              return el.study_instance_uid;
               });
               if (studies.length > 0) {
                 origParams.studyInstanceUid = studies;
@@ -189,13 +192,44 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             );
             return processResults(results);
           }
+          const finalStudies = processResults(results)
+
+          finalStudies.forEach(el => {
+            const studyUid = el['studyInstanceUid'];
+            el['uploadedAt'] = date[studyUid]
+          })
 
           return {
-            studies: processResults(results),
+            studies: finalStudies,
             pages: response.data.pages,
             size: response.data.size,
             total: response.data.total,
           };
+        },
+        delete: async function (studyInstanceUid) {
+          const headers = getAuthrorizationHeader();
+
+          let response = null;
+
+          qidoDicomWebClient.headers = headers;
+
+          let head = headers;
+          head['Content-Type'] = 'application/json';
+
+          const body = JSON.stringify([
+            {
+              "study_instance_uid": studyInstanceUid,
+            }
+          ]);
+
+          let config = {
+            method: 'delete',
+            url: dicomWebConfig.personalAccountUri + '/api/v2/study/',
+            headers: head,
+            data: body
+          };
+
+          response = await axios(config);
         },
         processResults: processResults.bind(),
       },
@@ -297,6 +331,9 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
     store: {
       dicom: async (dataset, request) => {
+        const blob = new Blob([dataset], { type: 'application/dicom' });
+        const formData = new FormData();
+        formData.append('files', blob, 'filename.dcm');
         wadoDicomWebClient.headers = getAuthrorizationHeader();
         if (dataset instanceof ArrayBuffer) {
           const options = {
@@ -318,11 +355,11 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
               headers['Content-Type'] = 'application/json';
               const json = JSON.stringify({
-                study_id: instanceUid,
+                study_instance_uid: instanceUid,
               });
               return axios.post(
-                dicomWebConfig.personalAccountUri + '/study/',
-                json,
+                dicomWebConfig.personalAccountUri + '/api/v2/study/',
+                formData,
                 { headers }
               );
             });
@@ -359,10 +396,10 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
               headers['Content-Type'] = 'application/json';
               const json = JSON.stringify({
-                study_id: studyInfo.data.MainDicomTags.StudyInstanceUID,
+                study_instance_uid: studyInfo.data.MainDicomTags.StudyInstanceUID,
               });
               return axios.post(
-                dicomWebConfig.personalAccountUri + '/study/',
+                dicomWebConfig.personalAccountUri + '/api/v2/study/',
                 json,
                 { headers }
               );

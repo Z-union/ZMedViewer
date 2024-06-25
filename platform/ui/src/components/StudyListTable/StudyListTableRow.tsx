@@ -7,7 +7,8 @@ import Icon from '../Icon';
 
 const StudyListTableRow = props => {
   const { tableData } = props;
-  const { row, expandedContent, onClickRow, isExpanded, dataCY, clickableCY } = tableData;
+  const { row, expandedContent, onClickRow, onClickDelete, isExpanded, dataCY, clickableCY } =
+    tableData;
   return (
     <>
       <tr
@@ -21,7 +22,7 @@ const StudyListTableRow = props => {
         >
           <div
             className={classnames(
-              'w-full transition duration-300',
+              'relative w-full transition duration-300',
               {
                 'border-primary-light hover:border-secondary-light mb-2 overflow-visible rounded border':
                   isExpanded,
@@ -46,35 +47,49 @@ const StudyListTableRow = props => {
                 >
                   {row.map((cell, index) => {
                     const { content, title, gridCol } = cell;
+                    const isLastElement = index === row.length - 1;
                     return (
-                      <td
-                        key={index}
-                        className={classnames(
-                          'truncate px-4 py-2 text-base',
-                          { 'border-secondary-light border-b': !isExpanded },
-                          getGridWidthClass(gridCol) || ''
-                        )}
-                        style={{
-                          maxWidth: 0,
-                        }}
-                        title={title}
-                      >
-                        <div className="flex">
-                          {index === 0 && (
-                            <div>
-                              <Icon
-                                name={isExpanded ? 'chevron-down' : 'chevron-right'}
-                                className="mr-4 inline-flex"
-                              />
-                            </div>
+                      <React.Fragment key={index}>
+                        <td
+                          className={classnames(
+                            'truncate px-4 py-2 text-base',
+                            { 'border-secondary-light border-b': !isExpanded },
+                            getGridWidthClass(gridCol) || ''
                           )}
-                          <div
-                            className={classnames({ 'overflow-hidden': true }, { truncate: true })}
-                          >
-                            {content}
+                          style={{
+                            maxWidth: 0,
+                          }}
+                          title={title}
+                        >
+                          <div className="flex">
+                            {index === 0 && (
+                              <div>
+                                <Icon
+                                  name={isExpanded ? 'chevron-down' : 'chevron-right'}
+                                  className="mr-4 inline-flex"
+                                />
+                              </div>
+                            )}
+                            <div
+                              className={classnames(
+                                { 'overflow-hidden': true },
+                                { truncate: true }
+                              )}
+                            >
+                              {content}
+                            </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                        {isLastElement && (
+                          <td className='absolute right-0 h-full flex items-center justify-center p-2 mr-2 aspect-square'
+                          onClick={e => onClickDelete(e)}
+                          >
+                            <div className='h-full w-full flex items-center justify-center h-20/24 aspect-square hover:bg-black rounded-full'>
+                              <Icon name="close" />
+                            </div>
+                          </td>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tr>
@@ -107,6 +122,7 @@ StudyListTableRow.propTypes = {
     ).isRequired,
     expandedContent: PropTypes.node.isRequired,
     onClickRow: PropTypes.func.isRequired,
+    onClickDelete: PropTypes.func,
     isExpanded: PropTypes.bool.isRequired,
     dataCY: PropTypes.string,
     clickableCY: PropTypes.string,
