@@ -50,7 +50,7 @@ services:
 
   # LINK: https://hub.docker.com/r/jboss/keycloak
   zmed_keycloak:
-    image: quay.io/keycloak/keycloak:6.0.1
+    image: adorsys/keycloak:6.0.1
     hostname: zmed_keycloak
     container_name: zmed_keycloak
     volumes:
