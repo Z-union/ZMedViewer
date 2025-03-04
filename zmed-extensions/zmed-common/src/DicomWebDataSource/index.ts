@@ -151,7 +151,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             };
             const config: AxiosRequestConfig = {
               method: 'get',
-              url: dicomWebConfig.personalAccountUri + '/api/v2/study/',
+              url: dicomWebConfig.personalAccountUri + '/api/studies/',
               headers: head,
               params,
             };
@@ -159,8 +159,8 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             let studies: string[];
             response = await axios(config);
             if (response.status == 200) {
-              studies = response.data.items.map((el) => {
-                date.set(el.study_instance_uid, el.uploaded_at);
+              studies = response.data.studies.map((el) => {
+                date.set(el.study_instance_uid, el.created_at);
                 return el.study_instance_uid;
               });
               if (studies.length > 0) {
@@ -351,7 +351,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
                 'Content-Type': 'application/json',
               };
               return axios.post(
-                dicomWebConfig.personalAccountUri + '/api/v2/study/',
+                dicomWebConfig.personalAccountUri + '/api/studies/',
                 formData,
                 { headers }
               );
