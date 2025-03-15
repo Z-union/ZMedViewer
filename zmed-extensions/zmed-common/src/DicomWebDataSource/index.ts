@@ -227,7 +227,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
           let config: AxiosRequestConfig = {
             method: 'delete',
-            url: dicomWebConfig.personalAccountUri + '/api/v2/study/',
+            url: dicomWebConfig.personalAccountUri + '/api/studies/',//'http://51.250.72.247:5057/api/studies/',
             headers: head,
             data: body,
           };
@@ -343,19 +343,30 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             datasets: [dataset],
             request,
           };
-          return await wadoDicomWebClient
-            .storeInstances(options)
-            .then(function () {
+          // return await wadoDicomWebClient
+          //   .storeInstances(options)
+          //   .then(function () {
+          //     const headers = {
+          //       ...getAuthrorizationHeader(),
+          //       'Content-Type': 'application/json',
+          //     };
+          //     return axios.post(
+          //       'http://51.250.72.247:5057/api/studies/', //dicomWebConfig.personalAccountUri + '/api/studies/',
+          //       formData,
+          //       { headers }
+          //     );
+          //   });
+          return (function () {
               const headers = {
                 ...getAuthrorizationHeader(),
                 'Content-Type': 'application/json',
               };
               return axios.post(
-                dicomWebConfig.personalAccountUri + '/api/studies/',
+                dicomWebConfig.personalAccountUri + '/api/studies/', //'http://51.250.72.247:5057/api/studies/',
                 formData,
                 { headers }
               );
-            });
+            })();
         } else {
           const meta = {
             FileMetaInformationVersion:
@@ -394,7 +405,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
                   studyInfo.data.MainDicomTags.StudyInstanceUID,
               });
               return axios.post(
-                dicomWebConfig.personalAccountUri + '/api/v2/study/',
+                dicomWebConfig.personalAccountUri + '/api/studies/',
                 json,
                 { headers }
               );
