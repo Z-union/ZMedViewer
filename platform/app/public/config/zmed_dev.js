@@ -108,6 +108,7 @@ window.config = {
     covidURL: 'https://dev-zview.z-union.ru/zmedtools/',
     mammoURL: 'https://dev-zview.z-union.ru/zmedtools/',
     innpolisURL: 'https://dev-zview.z-union.ru/zmedtools/',
+    mrURL: 'https://dev-zview.z-union.ru/mrtools/',
   },
   // This is an array, but we'll only use the first entry for now
   oidc: [

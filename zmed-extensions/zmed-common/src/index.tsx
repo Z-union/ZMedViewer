@@ -31,7 +31,8 @@ export default {
     configuration = {},
     appConfig,
   }) => {
-    config.innopolisBaseURL = appConfig.zmedtools.innpolisURL
+    config.innopolisBaseURL = appConfig.zmedtools.innpolisURL;
+    config.mrURL = appConfig.zmedtools.mrURL;
   },
   /**
    * PanelModule should provide a list of panels that will be available in OHIF

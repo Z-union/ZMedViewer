@@ -8,7 +8,8 @@ import axios from 'axios';
 import './PanelAI.css';
 import configuration from './../config';
 
-const Modalities = ['DX', 'CR'];
+const fluModalities = ['DX', 'CR'];
+const mrModalities = ['MR'];
 
 // Определяем состояния задачи (вместо enum используем объект)
 const AIState = {
@@ -20,6 +21,7 @@ const AIState = {
   error: 'error',
   null: 'null',
   unsupported: 'unsupported',
+  MRStudy: 'MRStudy',
 };
 
 export default function PanelAI({
@@ -41,14 +43,62 @@ export default function PanelAI({
   const currentZFluData = `ZFluID: ${StudyInstanceUID}`;
   const zFluResults = sessionStorage.getItem(currentZFluData);
 
-  // Функция запуска задачи (POST-запрос)
+  const handleMRStudyClick = () => {
+    console.log('mrStudyClick');
+    const displaySet = DisplaySetService.getActiveDisplaySets().find(
+      (ds) => ds && 'MR'.includes(ds.Modality)
+    );
+
+    const postData = {
+      study_instance_uid: displaySet.StudyInstanceUID,
+      series_instance_uid: displaySet.SeriesInstanceUID,
+    };
+
+    const urlProcessMRT = configuration.mrURL + 'process_mrt';
+
+    const urlGetDocx = configuration.mrURL + 'create_docx/';
+
+    setProcessingState(AIState.loading);
+
+    axios
+      .post(urlProcessMRT, postData)
+      .then((res) => {
+        console.log(res);
+        const taskId = res.data.task_id;
+        axios
+          .get(urlGetDocx + taskId, { responseType: 'blob' })
+          .then((response) => {
+            const blob = new Blob([response.data], {
+              type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            });
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', `${taskId}_report.docx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+            setProcessingState(AIState.MRStudy);
+          })
+          .catch((err) => {
+            console.warn(err);
+            setProcessingState(AIState.error);
+          });
+      })
+      .catch((err) => {
+        console.warn(err);
+        setProcessingState(AIState.error);
+      });
+  };
+
   const _handleStudyClick = () => {
     setButtonClicked(true);
     setWasProcessing(true);
     setProcessingState(AIState.loading);
 
     const displaySet = DisplaySetService.getActiveDisplaySets().find(
-      (ds) => ds && Modalities.includes(ds.Modality)
+      (ds) => ds && fluModalities.includes(ds.Modality)
     );
 
     if (displaySet) {
@@ -91,128 +141,160 @@ export default function PanelAI({
   // Если передан task_id – используется третий эндпоинт,
   // иначе – опрос по study_uid и series_uid (в монтировании компонента)
   const _retrieveData = (task_id) => {
-    const displaySet = DisplaySetService.getActiveDisplaySets().find(
-      (ds) => ds && Modalities.includes(ds.Modality)
+    const fludisplaySet = DisplaySetService.getActiveDisplaySets().find(
+      (ds) => ds && fluModalities.includes(ds.Modality)
     );
-    const displaySets = DisplaySetService.getActiveDisplaySets().find(
-      (displaySet) => displaySet && Modalities.includes(displaySet.Modality)
+    const fludisplaySets = DisplaySetService.getActiveDisplaySets().find(
+      (displaySet) => displaySet && fluModalities.includes(displaySet.Modality)
     );
 
-    if (displaySets == undefined || displaySets.length == 0) {
-      setProcessingState(AIState.unsupported);
-      return;
-    }
+    const mrdisplaySet = DisplaySetService.getActiveDisplaySets().find(
+      (ds) => ds && mrModalities.includes(ds.Modality)
+    );
+    const mrdisplaySets = DisplaySetService.getActiveDisplaySets().find(
+      (displaySet) => displaySet && mrModalities.includes(displaySet.Modality)
+    );
 
-    let url = '';
-    if (task_id) {
-      // GET по задаче с task_id – используем study_instance_uid и query параметр task_id
-      url =
-        configuration.innopolisBaseURL +
-        `api/tasks/results/${displaySet.StudyInstanceUID}?task_id=${task_id}`;
-    } else {
-      // GET по study_uid и series_uid
-      url =
-        configuration.innopolisBaseURL +
-        `api/tasks/results/${displaySet.StudyInstanceUID}/${displaySet.SeriesInstanceUID}`;
-    }
+    const studyModality =
+      fludisplaySets &&
+      (fludisplaySets != undefined || fludisplaySets.length != 0)
+        ? 'flu'
+        : mrdisplaySets &&
+            (mrdisplaySets != undefined || mrdisplaySets.length != 0)
+          ? 'mr'
+          : 'no';
 
-    axios
-      .get(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          accept: 'application/json',
-        },
-      })
-      .then((response) => {
-        if (!isMounted.current) return;
-
-        // Если опрашиваем по task_id
+    switch (studyModality) {
+      case 'no':
+        setProcessingState(AIState.unsupported);
+        return;
+      case 'mr':
+        console.log(configuration);
+        setProcessingState(AIState.MRStudy);
+        break;
+      case 'flu':
+        let url = '';
         if (task_id) {
-          const element = response.data;
-          if (element.status === 'PENDING' || element.status === 'STARTED') {
-            setProcessingState(AIState.loading);
-            setTimeout(() => {
-              _retrieveData(task_id);
-            }, 1000);
-          } else if (element.status === 'SUCCESS') {
-            let resultData = element.result;
-            try {
-              // Преобразуем строку с одинарными кавычками в корректный JSON
-              resultData = JSON.parse(resultData.replace(/'/g, '"'));
-            } catch (e) {
-              console.error('Ошибка при парсинге результата:', e);
-            }
-            const array = Object.entries(resultData).map(([key, val]) => ({
-              title: key,
-              value: val.probability,
-            }));
-            setSeriesData(array);
-            sessionStorage.setItem(currentZFluData, JSON.stringify(array));
-            setProcessingState(
-              wasProcessing ? AIState.finishedWithApply : AIState.finished
-            );
-          }
+          // GET по задаче с task_id – используем study_instance_uid и query параметр task_id
+          url =
+            configuration.innopolisBaseURL +
+            `api/tasks/results/${fludisplaySet.StudyInstanceUID}?task_id=${task_id}`;
         } else {
-          // Если опрашиваем по study_uid и series_uid
-          // Если нет завершённых задач, API возвращает ошибку 500, а сюда мы не попадём
-          if (Array.isArray(response.data)) {
-            const finishedTasks = response.data.filter(
-              (task) => task.status === 'SUCCESS'
-            );
-            if (finishedTasks.length === 0) {
-              setProcessingState(AIState.notFinishedYet);
-              sessionStorage.setItem(currentZFluData, JSON.stringify([]));
-              return;
-            }
-            const lastTask = finishedTasks[finishedTasks.length - 1];
-            let resultData = lastTask.result;
-            try {
-              resultData = JSON.parse(resultData.replace(/'/g, '"'));
-            } catch (e) {
-              console.error('Ошибка при парсинге результата:', e);
-            }
-            const array = Object.entries(resultData).map(([key, val]) => ({
-              title: key,
-              value: val.probability,
-            }));
-            setSeriesData(array);
-            sessionStorage.setItem(currentZFluData, JSON.stringify(array));
-            setProcessingState(AIState.finished);
-          } else {
-            // Если ответ не массив – обрабатываем как в случае с task_id
-            const element = response.data;
-            if (element.status === 'PENDING' || element.status === 'STARTED') {
-              setProcessingState(AIState.loading);
-              setTimeout(() => {
-                _retrieveData();
-              }, 1000);
-            } else if (element.status === 'SUCCESS') {
-              let resultData = element.result;
-              try {
-                resultData = JSON.parse(resultData.replace(/'/g, '"'));
-              } catch (e) {
-                console.error('Ошибка при парсинге результата:', e);
+          // GET по study_uid и series_uid
+          url =
+            configuration.innopolisBaseURL +
+            `api/tasks/results/${fludisplaySet.StudyInstanceUID}/${fludisplaySet.SeriesInstanceUID}`;
+        }
+
+        axios
+          .get(url, {
+            headers: {
+              'Content-Type': 'application/json',
+              accept: 'application/json',
+            },
+          })
+          .then((response) => {
+            if (!isMounted.current) return;
+
+            // Если опрашиваем по task_id
+            if (task_id) {
+              const element = response.data;
+              if (
+                element.status === 'PENDING' ||
+                element.status === 'STARTED'
+              ) {
+                setProcessingState(AIState.loading);
+                setTimeout(() => {
+                  _retrieveData(task_id);
+                }, 1000);
+              } else if (element.status === 'SUCCESS') {
+                let resultData = element.result;
+                try {
+                  // Преобразуем строку с одинарными кавычками в корректный JSON
+                  resultData = JSON.parse(resultData.replace(/'/g, '"'));
+                } catch (e) {
+                  console.error('Ошибка при парсинге результата:', e);
+                }
+                const array = Object.entries(resultData).map(([key, val]) => ({
+                  title: key,
+                  value: val.probability,
+                }));
+                setSeriesData(array);
+                sessionStorage.setItem(currentZFluData, JSON.stringify(array));
+                setProcessingState(
+                  wasProcessing ? AIState.finishedWithApply : AIState.finished
+                );
               }
-              const array = Object.entries(resultData).map(([key, val]) => ({
-                title: key,
-                value: val.probability,
-              }));
-              setSeriesData(array);
-              sessionStorage.setItem(currentZFluData, JSON.stringify(array));
-              setProcessingState(AIState.finished);
+            } else {
+              // Если опрашиваем по study_uid и series_uid
+              // Если нет завершённых задач, API возвращает ошибку 500, а сюда мы не попадём
+              if (Array.isArray(response.data)) {
+                const finishedTasks = response.data.filter(
+                  (task) => task.status === 'SUCCESS'
+                );
+                if (finishedTasks.length === 0) {
+                  setProcessingState(AIState.notFinishedYet);
+                  sessionStorage.setItem(currentZFluData, JSON.stringify([]));
+                  return;
+                }
+                const lastTask = finishedTasks[finishedTasks.length - 1];
+                let resultData = lastTask.result;
+                try {
+                  resultData = JSON.parse(resultData.replace(/'/g, '"'));
+                } catch (e) {
+                  console.error('Ошибка при парсинге результата:', e);
+                }
+                const array = Object.entries(resultData).map(([key, val]) => ({
+                  title: key,
+                  value: val.probability,
+                }));
+                setSeriesData(array);
+                sessionStorage.setItem(currentZFluData, JSON.stringify(array));
+                setProcessingState(AIState.finished);
+              } else {
+                // Если ответ не массив – обрабатываем как в случае с task_id
+                const element = response.data;
+                if (
+                  element.status === 'PENDING' ||
+                  element.status === 'STARTED'
+                ) {
+                  setProcessingState(AIState.loading);
+                  setTimeout(() => {
+                    _retrieveData();
+                  }, 1000);
+                } else if (element.status === 'SUCCESS') {
+                  let resultData = element.result;
+                  try {
+                    resultData = JSON.parse(resultData.replace(/'/g, '"'));
+                  } catch (e) {
+                    console.error('Ошибка при парсинге результата:', e);
+                  }
+                  const array = Object.entries(resultData).map(
+                    ([key, val]) => ({
+                      title: key,
+                      value: val.probability,
+                    })
+                  );
+                  setSeriesData(array);
+                  sessionStorage.setItem(
+                    currentZFluData,
+                    JSON.stringify(array)
+                  );
+                  setProcessingState(AIState.finished);
+                }
+              }
             }
-          }
-        }
-      })
-      .catch((error) => {
-        // Если при GET-запросе по study_uid и series_uid вернулся error 500 – показываем сообщение, что исследование ещё не обрабатывалось
-        if (error.response && error.response.status === 500) {
-          setProcessingState(AIState.notFinishedYet);
-        } else {
-          console.error(error);
-          setProcessingState(AIState.error);
-        }
-      });
+          })
+          .catch((error) => {
+            // Если при GET-запросе по study_uid и series_uid вернулся error 500 – показываем сообщение, что исследование ещё не обрабатывалось
+            if (error.response && error.response.status === 500) {
+              setProcessingState(AIState.notFinishedYet);
+            } else {
+              console.error(error);
+              setProcessingState(AIState.error);
+            }
+          });
+    }
   };
 
   // Функция обновления данных серии (оставляем логику sessionStorage)
@@ -327,6 +409,22 @@ export default function PanelAI({
               onClick={_handleStudyClick}
             >
               {t('Analyze')}
+            </Button>
+          </div>
+        );
+      case AIState.MRStudy:
+        return (
+          <div className="flex flex-col justify-center w-1 mb-2 text-primary-light">
+            <Button
+              size="initial"
+              className="mt-2 px-2 py-2 text-base text-white"
+              color="primaryActive"
+              variant="outlined"
+              fullWidth
+              border="primaryActive"
+              onClick={handleMRStudyClick}
+            >
+              {t('Generate and download report')}
             </Button>
           </div>
         );

@@ -1,5 +1,6 @@
 let configuration = {
-  innopolisBaseURL: ""
+  innopolisBaseURL: "",
+  mrURL: ""
 };
 
 export default configuration;
