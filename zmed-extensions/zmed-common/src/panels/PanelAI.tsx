@@ -170,7 +170,7 @@ export default function PanelAI({
         return;
       case 'mr':
         console.log(configuration);
-        setProcessingState(AIState.MRStudy);
+        setProcessingState(AIState.unsupported);
         break;
       case 'flu':
         let url = '';

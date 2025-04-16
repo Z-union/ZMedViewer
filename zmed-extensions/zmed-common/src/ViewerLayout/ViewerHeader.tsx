@@ -1,14 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 import type { withAppTypes } from '@ohif/core/types';
-import { ConfirmContent, ErrorBoundary, UserPreferences, Header, useModal } from '@ohif/ui';
+import {
+  ConfirmContent,
+  ErrorBoundary,
+  UserPreferences,
+  Header,
+  useModal,
+} from '@ohif/ui';
 import i18n from '@ohif/i18n';
 import { hotkeys } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
 
 import AboutModal from '../components/AboutModal';
+import configuration from '../config';
+import axios from 'axios';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
@@ -18,43 +26,48 @@ function ViewerHeader({
   servicesManager,
   appConfig,
 }: withAppTypes) {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   const dataSourceName = extensionManager.defaultDataSourceName;
   const dataSource = extensionManager.getDataSources(dataSourceName)?.[0];
-  const studyInstanceUID = new URLSearchParams(window.location.search).get('StudyInstanceUIDs');
+  const studyInstanceUID = new URLSearchParams(window.location.search).get(
+    'StudyInstanceUIDs'
+  );
 
-  const { uiModalService } = servicesManager.services;
+  const { uiModalService, DisplaySetService } = servicesManager.services;
 
   const handleClickYes = async (e) => {
     e.preventDefault();
     await dataSource.query.studies.delete(studyInstanceUID);
     onClickReturnButton();
     uiModalService.hide();
-  }
+  };
 
   const handleClickNo = async (e) => {
     e.preventDefault();
     uiModalService.hide();
-  }
+  };
 
   const onClickDelete = (e) => {
-      e.preventDefault();
-      uiModalService.show({
-        title: t('StudyList:Delete study'),
-        containerDimensions: 'w-80',
-        content: () => {
-          return (
-              <ConfirmContent
-                labelContent={t('StudyList:Are you sure you wish to delete this study?')}
-                handleClickYes={handleClickYes}
-                handleClickNo={handleClickNo}
-              />
-          );
-        }
-      });
-  }
+    e.preventDefault();
+    uiModalService.show({
+      title: t('StudyList:Delete study'),
+      containerDimensions: 'w-80',
+      content: () => {
+        return (
+          <ConfirmContent
+            labelContent={t(
+              'StudyList:Are you sure you wish to delete this study?'
+            )}
+            handleClickYes={handleClickYes}
+            handleClickNo={handleClickNo}
+          />
+        );
+      },
+    });
+  };
 
   const onClickReturnButton = () => {
     const { pathname } = location;
@@ -78,6 +91,74 @@ function ViewerHeader({
       pathname: '/',
       search: decodeURIComponent(searchQuery.toString()),
     });
+  };
+
+  const isMRStudy = () => {
+    const displaySet = DisplaySetService.getActiveDisplaySets().find(
+      (ds) => ds && 'MR'.includes(ds.Modality)
+    );
+
+    console.log(displaySet);
+    console.log(!!displaySet);
+
+    return !!displaySet;
+  };
+
+  const isMr = isMRStudy();
+
+  const handleMRStudyClick = () => {
+    console.log('mrStudyClick');
+    setIsAnalyzing(true);
+    const displaySet = DisplaySetService.getActiveDisplaySets().find(
+      (ds) => ds && 'MR'.includes(ds.Modality)
+    );
+
+    const postData = {
+      study_instance_uid: displaySet.StudyInstanceUID,
+      series_instance_uid: displaySet.SeriesInstanceUID,
+    };
+
+    console.log(displaySet)
+
+    const urlProcessMRT = configuration.mrURL + 'process_mrt';
+
+    const urlGetDocx = configuration.mrURL + 'create_docx/';
+
+    //setProcessingState(AIState.loading);
+
+    axios
+      .post(urlProcessMRT, postData)
+      .then((res) => {
+        console.log(res);
+        const taskId = res.data.task_id;
+        axios
+          .get(urlGetDocx + taskId, { responseType: 'blob' })
+          .then((response) => {
+            const blob = new Blob([response.data], {
+              type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            });
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', `${taskId}_report.docx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(downloadUrl);
+            setIsAnalyzing(false);
+            //setProcessingState(AIState.MRStudy);
+          })
+          .catch((err) => {
+            console.warn(err);
+            setIsAnalyzing(false);
+            //setProcessingState(AIState.error);
+          });
+      })
+      .catch((err) => {
+        console.warn(err);
+        setIsAnalyzing(false);
+        //setProcessingState(AIState.error);
+      });
   };
 
   const { t } = useTranslation();
@@ -106,7 +187,8 @@ function ViewerHeader({
           content: UserPreferences,
           containerDimensions: 'w-[70%] max-w-[900px]',
           contentProps: {
-            hotkeyDefaults: hotkeysManager.getValidHotkeyDefinitions(hotkeyDefaults),
+            hotkeyDefaults:
+              hotkeysManager.getValidHotkeyDefinitions(hotkeyDefaults),
             hotkeyDefinitions,
             currentLanguage: currentLanguage(),
             availableLanguages,
@@ -135,7 +217,9 @@ function ViewerHeader({
       title: t('Header:Logout'),
       icon: 'power-off',
       onClick: async () => {
-        navigate(`/logout?redirect_uri=${encodeURIComponent(window.location.href)}`);
+        navigate(
+          `/logout?redirect_uri=${encodeURIComponent(window.location.href)}`
+        );
       },
     });
   }
@@ -150,6 +234,9 @@ function ViewerHeader({
       servicesManager={servicesManager}
       appConfig={appConfig}
       onClickDelete={onClickDelete}
+      handleMRStudyClick={handleMRStudyClick}
+      isAnalyzing={isAnalyzing}
+      isMRStudy={isMr}
     >
       <ErrorBoundary context="Primary Toolbar">
         <div className="relative flex justify-center gap-[4px]">

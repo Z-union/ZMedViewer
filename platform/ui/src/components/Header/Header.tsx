@@ -12,6 +12,10 @@ import HeaderPatientInfo from '../HeaderPatientInfo';
 import Button from '../Button';
 import { PatientInfoVisibility } from '../../types/PatientInfoVisibility';
 
+function Spinner() {
+  return <div className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />;
+}
+
 function Header({
   children,
   menuOptions,
@@ -24,6 +28,9 @@ function Header({
   Secondary,
   appConfig,
   onClickDelete,
+  handleMRStudyClick,
+  isAnalyzing,
+  isMRStudy,
   ...props
 }: withAppTypes): ReactNode {
   const { t } = useTranslation('Header');
@@ -73,11 +80,30 @@ function Header({
                 servicesManager={servicesManager}
                 appConfig={appConfig}
               />
-              <div className="border-primary-dark mx-1.5 h-[25px] border-r"></div>
+
+              {isMRStudy && (
+                <>
+                  <div className="border-primary-dark mx-1.5 h-[25px] border-r"></div>
+                  <Button
+                    size="small"
+                    className="relative bg-orange-600 hover:bg-orange-500"
+                    onClick={handleMRStudyClick}
+                    disabled={isAnalyzing}
+                  >
+                    <span className="invisible select-none">{t('AI Analysis')}</span>
+
+                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                      {isAnalyzing ? <Spinner /> : <span>{t('AI Analysis')}</span>}
+                    </span>
+                  </Button>
+                </>
+              )}
+              <div className="border-primary-dark mx-1.5 h-[25px] border-r" />
+
               <Button
                 size="small"
                 className="bg-red-600 hover:bg-red-500"
-                onClick={e => {onClickDelete(e)}}
+                onClick={onClickDelete}
               >
                 {t('Delete')}
               </Button>
