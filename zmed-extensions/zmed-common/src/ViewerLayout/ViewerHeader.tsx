@@ -106,59 +106,87 @@ function ViewerHeader({
 
   const isMr = isMRStudy();
 
-  const handleMRStudyClick = () => {
+  const handleMRStudyClick = async () => {
     console.log('mrStudyClick');
     setIsAnalyzing(true);
-    const displaySet = DisplaySetService.getActiveDisplaySets().find(
-      (ds) => ds && 'MR'.includes(ds.Modality)
-    );
 
-    const postData = {
-      study_instance_uid: displaySet.StudyInstanceUID,
-      series_instance_uid: displaySet.SeriesInstanceUID,
-    };
+    try {
+      // 1) Берём текущий DisplaySet с MR-модальностью
+      const displaySet = DisplaySetService.getActiveDisplaySets().find(
+        (ds) => ds && 'MR'.includes(ds.Modality)
+      );
 
-    console.log(displaySet)
+      const postData = {
+        study_instance_uid: displaySet.StudyInstanceUID,
+        series_instance_uid: displaySet.SeriesInstanceUID,
+      };
+      const urlProcessMRT = configuration.mrURL + 'process_mrt';
+      const urlGetDocx = configuration.mrURL + 'create_docx/';
 
-    const urlProcessMRT = configuration.mrURL + 'process_mrt';
+      console.log('postData:', postData);
 
-    const urlGetDocx = configuration.mrURL + 'create_docx/';
+      // 2) Запускаем обработку и сразу получаем task_id
+      const postRes = await axios.post(urlProcessMRT, postData);
+      const taskId = postRes.data.task_id;
+      console.log('Task ID:', taskId);
 
-    //setProcessingState(AIState.loading);
+      // 3) Хелпер для задержки
+      const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
-    axios
-      .post(urlProcessMRT, postData)
-      .then((res) => {
-        console.log(res);
-        const taskId = res.data.task_id;
-        axios
-          .get(urlGetDocx + taskId, { responseType: 'blob' })
-          .then((response) => {
-            const blob = new Blob([response.data], {
-              type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            });
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.setAttribute('download', `${taskId}_report.docx`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(downloadUrl);
-            setIsAnalyzing(false);
-            //setProcessingState(AIState.MRStudy);
-          })
-          .catch((err) => {
-            console.warn(err);
-            setIsAnalyzing(false);
-            //setProcessingState(AIState.error);
+      // 4) Polling: пытаемся скачать blob до 10 раз с интервалом 2 сек
+      let fileBlob = null;
+      for (let attempt = 1; attempt <= 10; attempt++) {
+        try {
+          const getRes = await axios.get(`${urlGetDocx}${taskId}`, {
+            responseType: 'blob',
           });
-      })
-      .catch((err) => {
-        console.warn(err);
-        setIsAnalyzing(false);
-        //setProcessingState(AIState.error);
+          // Проверяем размер — если больше условного минимума, считаем, что файл готов
+          if (getRes.data.size > 1024) {
+            fileBlob = getRes.data;
+            console.log(`Файл готов (попытка ${attempt})`);
+            break;
+          }
+        } catch (err) {
+          // Если 404 — файл ещё не готов, продолжим polling
+          if (err.response?.status !== 404) {
+            throw err;
+          }
+        }
+        console.log(
+          `Файл не готов, повторная попытка ${attempt + 1} через 2 сек…`
+        );
+        await delay(2000);
+      }
+
+      if (!fileBlob) {
+        throw new Error(
+          'Не удалось получить отчёт: файл не появился на сервере.'
+        );
+      }
+
+      // 5) Формируем blob‑URL и скачиваем
+      const blob = new Blob([fileBlob], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.style.display = 'none';
+      link.href = downloadUrl;
+      link.download = `${taskId}_report.docx`;
+      document.body.appendChild(link);
+      link.click();
+
+      // 6) Делаем небольшую задержку, чтобы браузер успел стартовать скачивание
+      setTimeout(() => {
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(link);
+      }, 100);
+    } catch (err) {
+      console.error('Ошибка при скачивании отчёта:', err);
+      // здесь при необходимости можно показать пользователю уведомление об ошибке
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const { t } = useTranslation();
