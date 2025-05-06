@@ -7,5 +7,7 @@
   "Logout": "Выйти",
   "Options": "Опции",
   "Preferences": "Параметры",
-  "Study list": "Список исследований"
+  "Study list": "Список исследований",
+  "Processing error": "Ошибка обработки",
+  "The study does not contain a series with a sagittal slice": "Исследование не содержит серии с сагитальным срезом"
 }

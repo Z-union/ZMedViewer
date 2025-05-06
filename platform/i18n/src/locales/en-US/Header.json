@@ -6,5 +6,7 @@
   "Logout": "Logout",
   "Options": "Options",
   "Preferences": "Preferences",
-  "Study list": "Study list"
+  "Study list": "Study list",
+  "Processing error": "Processing error",
+  "The study does not contain a series with a sagittal slice": "The study does not contain a series with a sagittal slice"
 }

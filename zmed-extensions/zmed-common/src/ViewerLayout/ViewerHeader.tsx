@@ -36,8 +36,12 @@ function ViewerHeader({
     'StudyInstanceUIDs'
   );
 
-  const { uiModalService, DisplaySetService, viewportGridService } =
-    servicesManager.services;
+  const {
+    uiModalService,
+    DisplaySetService,
+    viewportGridService,
+    uiNotificationService,
+  } = servicesManager.services;
 
   const handleClickYes = async (e) => {
     e.preventDefault();
@@ -108,8 +112,15 @@ function ViewerHeader({
   const isMr = isMRStudy();
 
   const handleMRStudyClick = async () => {
-    console.log('mrStudyClick');
     setIsAnalyzing(true);
+
+    uiNotificationService.show({
+      title: t('Header:Processing error'),
+      message: t(
+        'Header:The study does not contain a series with a sagittal slice'
+      ),
+      type: 'error',
+    });
 
     try {
       // 1) Собираем все MR-датасеты, первый датасет тот, кто во Вьюпорте
@@ -216,6 +227,13 @@ function ViewerHeader({
       // 3) Если ни один датасет не сработал — сообщаем об этом в консоль
       if (!success) {
         console.log('Data Error');
+        uiNotificationService.show({
+          title: t('Header:Processing error'),
+          message: t(
+            'Header:The study does not contain a series with a sagittal slice'
+          ),
+          type: 'error',
+        });
       }
     } catch (err) {
       console.error('Ошибка при скачивании отчёта:', err);
