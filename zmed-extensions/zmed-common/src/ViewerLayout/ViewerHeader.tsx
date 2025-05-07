@@ -103,9 +103,6 @@ function ViewerHeader({
       (ds) => ds && 'MR'.includes(ds.Modality)
     );
 
-    console.log(displaySet);
-    console.log(!!displaySet);
-
     return !!displaySet;
   };
 
@@ -113,14 +110,6 @@ function ViewerHeader({
 
   const handleMRStudyClick = async () => {
     setIsAnalyzing(true);
-
-    uiNotificationService.show({
-      title: t('Header:Processing error'),
-      message: t(
-        'Header:The study does not contain a series with a sagittal slice'
-      ),
-      type: 'error',
-    });
 
     try {
       // 1) Собираем все MR-датасеты, первый датасет тот, кто во Вьюпорте
