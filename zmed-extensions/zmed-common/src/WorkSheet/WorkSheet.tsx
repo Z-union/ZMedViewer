@@ -29,7 +29,8 @@ import {
   LoadingIndicatorProgress,
 } from '@ohif/ui';
 
-import AboutModal from '../components/AboutModal' ;
+import AboutModal from '../components/AboutModal';
+import Feedback from '../components/Feedback';
 
 import i18n from '@ohif/i18n';
 
@@ -61,6 +62,7 @@ function WorkSheet({
 }) {
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const { uiNotificationService, uiModalService } = servicesManager.services;
+  const userEmail = servicesManager.services.userAuthenticationService.getUser().profile.preferred_username;
   const { show, hide } = useModal();
   const { t } = useTranslation('StudyList');
   // ~ Modes
@@ -352,13 +354,13 @@ function WorkSheet({
           seriesTableDataSource={
             seriesInStudiesMap.has(studyInstanceUid)
               ? seriesInStudiesMap.get(studyInstanceUid).map(s => {
-                  return {
-                    description: s.description || '(empty)',
-                    seriesNumber: s.seriesNumber ?? '',
-                    modality: s.modality || '',
-                    instances: s.numSeriesInstances || '',
-                  };
-                })
+                return {
+                  description: s.description || '(empty)',
+                  seriesNumber: s.seriesNumber ?? '',
+                  modality: s.modality || '',
+                  instances: s.numSeriesInstances || '',
+                };
+              })
               : []
           }
         >
@@ -372,7 +374,7 @@ function WorkSheet({
                 modalities: modalitiesToCheck,
                 study,
               });
-              const isValidMode = isValidModeCheck === !! isValidModeCheck;
+              const isValidMode = isValidModeCheck === !!isValidModeCheck;
               // TODO: Modes need a default/target route? We mostly support a single one for now.
               // We should also be using the route path, but currently are not
               // mode.routeName
@@ -389,9 +391,8 @@ function WorkSheet({
                   <Link
                     className={isValidMode ? '' : 'cursor-not-allowed'}
                     key={i}
-                    to={`${dataPath ? '../../' : ''}${
-                      mode.routeName
-                    }${dataPath || ''}?${query.toString()}`}
+                    to={`${dataPath ? '../../' : ''}${mode.routeName
+                      }${dataPath || ''}?${query.toString()}`}
                     onClick={event => {
                       // In case any event bubbles up for an invalid mode, prevent the navigation.
                       // For example, the event bubbles up when the icon embedded in the disabled button is clicked.
@@ -399,7 +400,7 @@ function WorkSheet({
                         event.preventDefault();
                       }
                     }}
-                    // to={`${mode.routeName}/dicomweb?StudyInstanceUIDs=${studyInstanceUid}`}
+                  // to={`${mode.routeName}/dicomweb?StudyInstanceUIDs=${studyInstanceUid}`}
                   >
                     {/* TODO revisit the completely rounded style of buttons used for launching a mode from the WorkSheet later - for now use LegacyButton*/}
                     <LegacyButton
@@ -407,7 +408,7 @@ function WorkSheet({
                       variant={isValidMode ? 'contained' : 'disabled'}
                       disabled={!isValidMode}
                       endIcon={<Icon name="launch-arrow" />} // launch-arrow | launch-info
-                      onClick={() => {}}
+                      onClick={() => { }}
                     >
                       {t(`${mode.displayName}`)}
                     </LegacyButton>
@@ -429,7 +430,7 @@ function WorkSheet({
           study,
         });
 
-        const isValidMode = isValidModeCheck === !! isValidModeCheck;
+        const isValidMode = isValidModeCheck === !!isValidModeCheck;
 
         if (!isValidMode) {
           uiNotificationService.show({
@@ -442,12 +443,13 @@ function WorkSheet({
 
         isValidMode && navigate(
           `/${basicViewerMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`
-        )},
+        )
+      },
 
-        // Открытие окна с выбором мода (пока мод 1, можно отключить)
-        // setExpandedRows(s =>
-        //   isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]
-        // ),
+      // Открытие окна с выбором мода (пока мод 1, можно отключить)
+      // setExpandedRows(s =>
+      //   isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]
+      // ),
       isExpanded,
       onClickDelete: (e) => {
         e.stopPropagation();
@@ -456,11 +458,11 @@ function WorkSheet({
           containerDimensions: 'w-80',
           content: () => {
             return (
-                <ConfirmContent
-                  labelContent={t('Are you sure you wish to delete this study?')}
-                  handleClickYes={handleClickYes}
-                  handleClickNo={handleClickNo}
-                />
+              <ConfirmContent
+                labelContent={t('Are you sure you wish to delete this study?')}
+                handleClickYes={handleClickYes}
+                handleClickNo={handleClickNo}
+              />
             );
           }
         });
@@ -530,25 +532,25 @@ function WorkSheet({
   const uploadProps =
     dicomUploadComponent && dataSource.getConfig()?.dicomUploadEnabled
       ? {
-          title: uploadTitle,
-          closeButton: true,
-          shouldCloseOnEsc: false,
-          shouldCloseOnOverlayClick: false,
-          content: dicomUploadComponent.bind(null, {
-            dataSource,
-            onComplete: () => {
-              hide();
-              onRefresh();
-            },
-            onStarted: () => {
-              show({
-                ...uploadProps,
-                // when upload starts, hide the default close button as closing the dialogue must be handled by the upload dialogue itself
-                closeButton: false,
-              });
-            },
-          }),
-        }
+        title: uploadTitle,
+        closeButton: true,
+        shouldCloseOnEsc: false,
+        shouldCloseOnOverlayClick: false,
+        content: dicomUploadComponent.bind(null, {
+          dataSource,
+          onComplete: () => {
+            hide();
+            onRefresh();
+          },
+          onStarted: () => {
+            show({
+              ...uploadProps,
+              // when upload starts, hide the default close button as closing the dialogue must be handled by the upload dialogue itself
+              closeButton: false,
+            });
+          },
+        }),
+      }
       : undefined;
 
   const { component: dataSourceConfigurationComponent } =
@@ -607,6 +609,10 @@ function WorkSheet({
           </div>
         )}
       </div>
+      <Feedback
+        email={userEmail}
+        apiKey='f93c4e9eb0094e9c13317eaa1925cb0a'
+      />
     </div>
   );
 }
