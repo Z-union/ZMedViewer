@@ -100,6 +100,8 @@ const makeDisplaySet = instances => {
     averageSpacingBetweenFrames: averageSpacingBetweenFrames || null,
     isDynamicVolume,
     dynamicVolumeInfo,
+    ViewPosition: instance.ViewPosition || '',
+    ImageLaterality: instance.ImageLaterality || '',
   });
 
   // Sort the images in this series if needed

@@ -458,6 +458,37 @@ function _mapDataSourceStudies(studies) {
   });
 }
 
+// Функция для получения проекции MG из instance
+function _getMGProjection(Modality, ViewPosition, ImageLaterality) {
+  if (!Modality || !Modality.includes('MG')) {
+    return '';
+  }
+
+  const viewPosition = ViewPosition || "";
+  const laterality = ImageLaterality || "";
+
+  let projection = '';
+
+  // Определяем сторону (R/L)
+  if (laterality) {
+    projection += laterality.toUpperCase();
+  }
+
+  // Определяем тип проекции (CC/MLO)
+  if (viewPosition) {
+    const viewPosUpper = viewPosition.toUpperCase();
+    if (viewPosUpper.includes('CC')) {
+      projection += ' CC';
+    } else if (viewPosUpper.includes('MLO')) {
+      projection += ' MLO';
+    } else {
+      projection += ` ${viewPosUpper}`;
+    }
+  }
+
+  return projection.trim();
+}
+
 function _mapDisplaySets(
   displaySets,
   thumbnailImageSrcMap,
@@ -483,9 +514,20 @@ function _mapDisplaySets(
 
       const { displaySetInstanceUID } = ds;
 
+      // Получаем базовое описание
+      let description = ds.SeriesDescription || '';
+
+      // Для MG исследований добавляем проекцию
+      if (ds.Modality === 'MG' && ds.instance) {
+        const projection = _getMGProjection(ds.Modality, ds.ViewPosition, ds.ImageLaterality);
+        if (projection) {
+          description = description ? `${description} (${projection})` : projection;
+        }
+      }
+
       const thumbnailProps = {
         displaySetInstanceUID,
-        description: ds.SeriesDescription,
+        description,
         seriesNumber: ds.SeriesNumber,
         modality: ds.Modality,
         PhotometricInterpretation: ds.PhotometricInterpretation,

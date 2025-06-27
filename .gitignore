@@ -56,3 +56,5 @@ tests/playwright-report/
 /playwright/.cache/
 deploy/certs
 deploy/logs
+
+.cursor

@@ -42,6 +42,7 @@ const OverlayItemComponents = {
   'ohif.overlayItem.windowLevel': VOIOverlayItem,
   'ohif.overlayItem.zoomLevel': ZoomOverlayItem,
   'ohif.overlayItem.instanceNumber': InstanceNumberOverlayItem,
+  'ohif.overlayItem.mammographyProjection': MammographyProjectionOverlayItem,
 };
 
 /**
@@ -261,6 +262,8 @@ function CustomizableViewportOverlay({
         .flat()
     : [];
 
+  const topRightItems = [];
+
   return (
     <ViewportOverlay
       topLeft={
@@ -269,10 +272,19 @@ function CustomizableViewportOverlay({
          */
         getContent(topLeftCustomization, [...topLeftItems], 'topLeftOverlayItem')
       }
-      topRight={getContent(topRightCustomization, [], 'topRightOverlayItem')}
+      topRight={getContent(topRightCustomization, [...topRightItems], 'topRightOverlayItem')}
       bottomLeft={getContent(
         bottomLeftCustomization,
         [
+          ...(instances && instances.some(instance => instance.Modality === 'MG')
+            ? [
+                {
+                  id: 'MammographyProjection',
+                  customizationType: 'ohif.overlayItem.mammographyProjection',
+                  instanceIndex: 0,
+                },
+              ]
+            : []),
           {
             id: 'WindowLevel',
             customizationType: 'ohif.overlayItem.windowLevel',
@@ -444,6 +456,60 @@ function ZoomOverlayItem({ scale, customization }: OverlayItemProps) {
     >
       <span className="mr-1 shrink-0">Zoom:</span>
       <span>{scale.toFixed(2)}x</span>
+    </div>
+  );
+}
+
+/**
+ * Mammography Projection Overlay Item
+ */
+function MammographyProjectionOverlayItem({ instance, customization }: OverlayItemProps) {
+  if (!instance || instance.Modality !== 'MG') {
+    return null;
+  }
+
+  // Извлекаем проекцию из тега 00185101 (View Position)
+  const viewPosition = instance.ViewPosition || "";
+
+  // Извлекаем laterality из тега 00200062 (Laterality)
+  const laterality = instance.ImageLaterality || "";
+
+  // Функция для преобразования проекции в читаемый формат
+  const formatProjection = (viewPos, lat) => {
+    let projection = '';
+
+    // Определяем сторону (R/L)
+    if (lat) {
+      projection += lat.toUpperCase();
+    }
+
+    // Определяем тип проекции (CC/MLO)
+    if (viewPos) {
+      const viewPosUpper = viewPos.toUpperCase();
+      if (viewPosUpper.includes('CC')) {
+        projection += ' CC';
+      } else if (viewPosUpper.includes('MLO')) {
+        projection += ' MLO';
+      } else {
+        projection += ` ${viewPosUpper}`;
+      }
+    }
+
+    return projection.trim();
+  };
+
+  const projectionText = formatProjection(viewPosition, laterality);
+
+  if (!projectionText) {
+    return null;
+  }
+
+  return (
+    <div
+      className="overlay-item flex flex-row"
+      style={{ color: (customization && customization.color) || undefined }}
+    >
+      <span className="mr-1 shrink-0 font-bold text-xl text-white">{projectionText}</span>
     </div>
   );
 }
