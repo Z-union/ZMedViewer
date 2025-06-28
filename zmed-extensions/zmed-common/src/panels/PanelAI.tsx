@@ -7,6 +7,7 @@ import StudyItem from './StudyItem';
 import axios from 'axios';
 import './PanelAI.css';
 import configuration from './../config';
+import { useAppConfig } from '@state';
 
 const fluModalities = ['DX', 'CR'];
 const mrModalities = ['MR'];
@@ -31,6 +32,7 @@ export default function PanelAI({
 }) {
   const { t } = useTranslation('Buttons');
   const isMounted = useRef(true);
+  const [appConfig] = useAppConfig();
   const { DisplaySetService } = servicesManager.services;
 
   const [processingState, setProcessingState] = useState(AIState.null);
@@ -54,9 +56,9 @@ export default function PanelAI({
       series_instance_uid: displaySet.SeriesInstanceUID,
     };
 
-    const urlProcessMRT = configuration.mrURL + 'process_mrt';
+    const urlProcessMRT = appConfig?.zmedtools?.mrURL + 'process_mrt';
 
-    const urlGetDocx = configuration.mrURL + 'create_docx/';
+    const urlGetDocx = appConfig?.zmedtools?.mrURL + 'create_docx/';
 
     setProcessingState(AIState.loading);
 

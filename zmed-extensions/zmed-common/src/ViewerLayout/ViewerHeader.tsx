@@ -109,6 +109,7 @@ function ViewerHeader({
   const isMr = isMRStudy();
 
   const handleMRStudyClick = async () => {
+    console.log('handleMRStudyClick:ViewerHeader');
     setIsAnalyzing(true);
 
     try {
