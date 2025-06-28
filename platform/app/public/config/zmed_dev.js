@@ -109,6 +109,7 @@ window.config = {
     mammoURL: 'https://dev-zview.z-union.ru/zmedtools/',
     innpolisURL: 'https://dev-zview.z-union.ru/zmedtools/',
     mrURL: 'https://dev-zview.z-union.ru/mrtools/',
+    mgURL: 'https://dev-zview.z-union.ru/mgtools/'
   },
   // This is an array, but we'll only use the first entry for now
   oidc: [

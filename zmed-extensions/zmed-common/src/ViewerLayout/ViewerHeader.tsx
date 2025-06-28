@@ -135,8 +135,8 @@ function ViewerHeader({
         mrDisplaySets = allMR;
       }
 
-      const urlProcessMRT = configuration.mrURL + 'process_mrt';
-      const urlGetDocx = configuration.mrURL + 'create_docx/';
+      const urlProcessMRT = appConfig?.zmedtools?.mrURL + 'process_mrt';
+      const urlGetDocx = appConfig?.zmedtools?.mrURL + 'create_docx/';
 
       // Хелпер для polling
       const delay = (ms) => new Promise((res) => setTimeout(res, ms));
