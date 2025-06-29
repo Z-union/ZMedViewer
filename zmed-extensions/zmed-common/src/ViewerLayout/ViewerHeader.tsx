@@ -106,7 +106,70 @@ function ViewerHeader({
     return !!displaySet;
   };
 
+    const isMGStudy = () => {
+    const displaySet = DisplaySetService.getActiveDisplaySets().find(
+      (ds) => ds && 'MG'.includes(ds.Modality)
+    );
+
+    return !!displaySet;
+  };
+
   const isMr = isMRStudy();
+  const isMg = isMGStudy();
+
+  const handleMGStudyClick = async () => {
+    console.log('handleMGStudyClick:ViewerHeader');
+    setIsAnalyzing(true);
+
+    try {
+      // Получаем study_uid
+      const study_uid = DisplaySetService.getActiveDisplaySets()[0]['StudyInstanceUID'];
+
+      const urlPredict = appConfig?.zmedtools?.mgURL + 'predict';
+
+      // Хелпер для polling
+      const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
+      let success = false;
+
+      // Отправляем запрос
+      const postData = {
+        study_instance_uid: study_uid,
+      };
+      const postRes = await axios.post(urlPredict, postData, {
+        responseType: 'blob',
+      });
+
+      // Проверяем статус ответа
+      if (postRes.status === 200) {
+        // Скачиваем файл отчета
+        const reportBlob = postRes.data;
+        const reportUrl = URL.createObjectURL(reportBlob);
+        const link = document.createElement('a');
+        link.href = reportUrl;
+        link.download = `mammography_report_${study_uid}.docx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        success = true;
+      } else {
+        console.error('Ошибка при обработке MG-исследования:', postRes);
+        success = false;
+      }
+    } catch (error) {
+      console.error('Ошибка при обработке MG-исследования:', error);
+    } finally {
+      setIsAnalyzing(false);
+      uiNotificationService.show({
+          title: t('Header:Processing error'),
+          message: t(
+            ''
+          ),
+          type: 'error',
+        });
+    }
+  };
 
   const handleMRStudyClick = async () => {
     console.log('handleMRStudyClick:ViewerHeader');
@@ -306,8 +369,10 @@ function ViewerHeader({
       appConfig={appConfig}
       onClickDelete={onClickDelete}
       handleMRStudyClick={handleMRStudyClick}
+      handleMGStudyClick={handleMGStudyClick}
       isAnalyzing={isAnalyzing}
       isMRStudy={isMr}
+      isMGStudy={isMg}
     >
       <ErrorBoundary context="Primary Toolbar">
         <div className="relative flex justify-center gap-[4px]">
