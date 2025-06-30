@@ -159,8 +159,6 @@ function ViewerHeader({
       }
     } catch (error) {
       console.error('Ошибка при обработке MG-исследования:', error);
-    } finally {
-      setIsAnalyzing(false);
       uiNotificationService.show({
           title: t('Header:Processing error'),
           message: t(
@@ -168,6 +166,8 @@ function ViewerHeader({
           ),
           type: 'error',
         });
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
