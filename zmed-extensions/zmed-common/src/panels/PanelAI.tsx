@@ -33,7 +33,9 @@ export default function PanelAI({
   const { t } = useTranslation('Buttons');
   const isMounted = useRef(true);
   const [appConfig] = useAppConfig();
-  const { DisplaySetService } = servicesManager.services;
+  const { DisplaySetService, userAuthenticationService } = servicesManager.services;
+  const authHeaders = userAuthenticationService.getAuthorizationHeader();
+  console.log(authHeaders);
 
   const [processingState, setProcessingState] = useState(AIState.null);
   const [buttonClicked, setButtonClicked] = useState(false);
@@ -110,6 +112,7 @@ export default function PanelAI({
         dcm_study_uid: displaySet.StudyInstanceUID,
         dcm_series_uid: displaySet.SeriesInstanceUID,
         output_lang: 'ru',
+        study_type: "phlu"
       };
 
       axios
@@ -120,6 +123,7 @@ export default function PanelAI({
             headers: {
               'Content-Type': 'application/json',
               accept: 'application/json',
+              Authorization: authHeaders.Authorization,
             },
           }
         )
@@ -193,6 +197,7 @@ export default function PanelAI({
             headers: {
               'Content-Type': 'application/json',
               accept: 'application/json',
+              Authorization: authHeaders.Authorization,
             },
           })
           .then((response) => {
