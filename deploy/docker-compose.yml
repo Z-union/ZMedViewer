@@ -27,12 +27,14 @@ services:
       - ./certs:/etc/letsencrypt
       - ./certs:/var/www/letsencrypt
     ports:
-      - '6443:443' # SSL
-      - '9080:80' # Web
+      - '127.0.0.1:445:443' # SSL
+      - '127.0.0.1:82:80' # Web
     depends_on:
       - atlas_zmed_keycloak
       # - orthanc
     restart: on-failure
+    networks:
+      - atlas_network
 
   # LINK: https://hub.docker.com/r/jodogne/orthanc-plugins/
   # TODO: Update to use Postgres
@@ -87,6 +89,8 @@ services:
     depends_on:
       - atlas_zmed_postgres
     restart: unless-stopped
+    networks:
+      - atlas_network
 
   # LINK: https://hub.docker.com/_/postgres/
   atlas_zmed_postgres:
@@ -94,7 +98,7 @@ services:
     hostname: atlas_zmed_postgres
     container_name: atlas_zmed_postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - atlas_postgres_data:/var/lib/postgresql/data
     # expose:
     #   - "5433" # Publishes 5433 to other containers but NOT to host machine
     # ports:
@@ -104,7 +108,13 @@ services:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: password
     restart: unless-stopped
+    networks:
+      - atlas_network
 
 volumes:
-  postgres_data:
+  atlas_postgres_data:
     driver: local
+
+networks:
+  atlas_network:
+    driver: bridge
