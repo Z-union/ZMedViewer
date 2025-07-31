@@ -1,13 +1,13 @@
 {
-  "About": "Информация",
   "AI Analysis": "Анализ ИИ",
   "Back to Viewer": "Обратно к вьюверу",
   "Delete": "$t(Buttons:Delete)",
   "INVESTIGATIONAL USE ONLY": "ТОЛЬКО ДЛЯ ИССЛЕДОВАТЕЛЬСКИХ ЦЕЛЕЙ",
   "Logout": "Выйти",
-  "Options": "Опции",
   "Preferences": "Параметры",
   "Study list": "Список исследований",
   "Processing error": "Ошибка обработки",
-  "The study does not contain a series with a sagittal slice": "Исследование не содержит серии с сагитальным срезом"
+  "The study does not contain a series with a sagittal slice": "Исследование не содержит серии с сагитальным срезом",
+  "About": "О программе",
+  "Options": "Настройки"
 }

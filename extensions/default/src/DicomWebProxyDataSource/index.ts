@@ -27,7 +27,7 @@ function createDicomWebProxyApi(dicomWebProxyConfig, servicesManager: AppTypes.S
         }
 
         dicomWebDelegate = createDicomWebApi(
-          data.servers.dicomWeb[0].configuration,
+          data.servers.dicomWeb[0].configuration || data.servers.dicomWeb[0],
           servicesManager
         );
         dicomWebDelegate.initialize({ params, query });
@@ -52,7 +52,7 @@ function createDicomWebProxyApi(dicomWebProxyConfig, servicesManager: AppTypes.S
       },
     },
     store: {
-      dicom: (...args) => dicomWebDelegate.store(...args),
+      dicom: (...args) => dicomWebDelegate.store.dicom(...args),
     },
     deleteStudyMetadataPromise: (...args) => dicomWebDelegate.deleteStudyMetadataPromise(...args),
     getImageIdsForDisplaySet: (...args) => dicomWebDelegate.getImageIdsForDisplaySet(...args),

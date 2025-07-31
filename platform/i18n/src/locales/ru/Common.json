@@ -21,5 +21,7 @@
   "StudyDate": "Дата исследования",
   "Study report ENG": "Отчет на английском",
   "Study report RU": "Отчет на русском",
+  "Back to": "Назад к {{location}}",
+  "mm": "мм",
   "Yes": "Да"
 }

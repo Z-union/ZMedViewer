@@ -1,8 +1,11 @@
 {
-  "Clear dates": "Очистить даты",
   "End date": "До",
   "Last 30 days": "Месяц",
   "Last 7 days": "Неделя",
   "Start date": "От",
+  "Clear dates": "Сброс",
+  "Close": "$t(Common:Close)",
+  "End Date": "Конечная дата",
+  "Start Date": "Начальная дата",
   "Today": "Сегодня"
 }

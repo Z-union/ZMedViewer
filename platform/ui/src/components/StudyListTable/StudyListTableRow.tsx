@@ -2,8 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import getGridWidthClass from '../../utils/getGridWidthClass';
-
-import Icon from '../Icon';
+import { Icons } from '@ohif/ui-next';
 
 const StudyListTableRow = props => {
   const { tableData } = props;
@@ -49,12 +48,27 @@ const StudyListTableRow = props => {
                     const { content, title, gridCol } = cell;
                     const isLastElement = index === row.length - 1;
                     return (
-                      <React.Fragment key={index}>
-                        <td
-                          className={classnames(
-                            'truncate px-4 py-2 text-base',
-                            { 'border-secondary-light border-b': !isExpanded },
-                            getGridWidthClass(gridCol) || ''
+                      <td
+                        key={index}
+                        className={classnames(
+                          'truncate px-4 py-2 text-base',
+                          { 'border-secondary-light border-b': !isExpanded },
+                          getGridWidthClass(gridCol) || ''
+                        )}
+                        style={{
+                          maxWidth: 0,
+                        }}
+                        title={title}
+                      >
+                        <div className="flex">
+                          {index === 0 && (
+                            <div>
+                              {isExpanded ? (
+                                <Icons.ChevronOpen className="-mt-1 mr-4 inline-flex" />
+                              ) : (
+                                <Icons.ChevronClosed className="-mt-1 mr-4 inline-flex rotate-180" />
+                              )}
+                            </div>
                           )}
                           style={{
                             maxWidth: 0,

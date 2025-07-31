@@ -20,8 +20,6 @@
   "Previous Series": "Предыдущая серия",
   "Previous Stage": "Предыдущий этап",
   "Reset": "$t(Buttons:Reset) изображения",
-  "ResetDefaultMessage": "Preferences successfully reset to default. <br /> You must <strong>Save</strong> to perform this action.",
-  "Reset to defaults": "$t(Buttons:Reset to Defaults)",
   "Rotate Left": "Повернуть против часовой стрелки",
   "Rotate Right": "$t(Buttons:Rotate Right)",
   "Save": "$t(Buttons:Save)",
@@ -31,5 +29,8 @@
   "Zoom": "$t(Buttons:Zoom)",
   "Zoom In": "Приблизить",
   "Zoom Out": "Отдалить",
-  "Zoom to Fit": "Подогнать по размеру"
+  "Zoom to Fit": "Подогнать по размеру",
+  "Reset to defaults": "$t(Buttons:Reset to defaults)",
+  "ResetDefaultMessage": "Настройки были сброшены до фабричных. <br /> Вы должны <strong>сохранить изменения</strong>.",
+  "User preferences": "Пользовательские настройки"
 }

@@ -97,5 +97,6 @@
   " Window Presets": "Контрастности",
   "Zoom": "Масштаб",
   "Zoom-in": "Лупа",
-  "ZMed Analyzer": "ZMed ассистент"
+  "ZMed Analyzer": "ZMed ассистент",
+  "Reset to defaults": "$t(Common:Reset) to Defaults"
 }

@@ -1,7 +1,24 @@
 ---
 sidebar_position: 11
 sidebar_label: Playwright Testing
+title: Playwright End-to-End Testing
+summary: Guide to writing and running end-to-end tests for OHIF Viewer using Playwright, covering test configuration, screenshot verification, simulating user interactions, accessing application services, and using the VSCode extension for test recording.
 ---
+
+
+
+:::note
+You might need to run the `bun playwright install ` for the first time if you have not
+:::
+
+# Running the tests
+
+```bash
+#
+# run the tests
+bun test:e2e:ui
+```
+
 
 # Writing PlayWright Tests
 
@@ -9,13 +26,15 @@ Our Playwright tests are written using the Playwright test framework. We use the
 
 In this guide, we will show you how to write Playwright tests for the OHIF Viewer.
 
+
+
 ## Using a specific study and mode
 
 If you would like to use a specific study, you can use the `studyInstanceUID` property to reference the study you would like to visit. for example, if you would like to use the study with StudyInstanceUID `2.16.840.1.114362.1.11972228.22789312658.616067305.306.2` and the mode `Basic Viewer`, you can use the following code snippet:
 
 ```ts
 import { test } from '@playwright/test';
-import { visitStudy, checkForScreenshot, screenShotPaths } from './utils/index';
+import { visitStudy, checkForScreenshot, screenShotPaths } from './utils/index.js';
 
 test.beforeEach(async ({ page }) => {
   const studyInstanceUID = '2.16.840.1.114362.1.11972228.22789312658.616067305.306.2';
@@ -52,7 +71,7 @@ import {
   visitStudy,
   checkForScreenshot,
   screenshotPath,
-} from './utils/index';
+} from './utils/index.js';
 
 test.beforeEach(async ({ page }) => {
   const studyInstanceUID = '2.16.840.1.114362.1.11972228.22789312658.616067305.306.2';
@@ -84,7 +103,7 @@ import {
   checkForScreenshot,
   screenShotPaths,
   simulateDrag,
-} from './utils/index';
+} from './utils/index.js';
 
 test.beforeEach(async ({ page }) => {
   const studyInstanceUID = '2.16.840.1.114362.1.11972228.22789312658.616067305.306.2';
@@ -127,6 +146,21 @@ yarn playwright show-report tests/playwright-report
 ## Serving the viewer manually for development
 
 By default, when you run the tests, it will call the `yarn start` command to serve the viewer first, then run the tests, if you would like to serve the viewer manually, you can use the same command. The viewer will be available at `http://localhost:3000`. This could speed up your development process since playwright will skip this step and use the existing server on port 3000.
+
+## Accessing services, managers, configs and cornerstone in your tests
+
+If you would like to access the cornerstone3D, services, or command managers in your tests, you can use the `page.evaluate` function to access them. For example, if you would like to access the `services` so you can show a UI notifcation using the uiNotifcationService, you can use the following code snippet:
+
+```ts
+  await page.evaluate(({ services }: AppTypes.Test) => {
+    const { uiNotificationService } = services;
+    uiNotificationService.show({
+      title: 'Test',
+      message: 'This is a test',
+      type: 'info',
+    });
+  }, await page.evaluateHandle('window'));
+ ```
 
 ## Playwright VSCode Extension and Recording Tests
 

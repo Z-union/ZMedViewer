@@ -19,6 +19,13 @@ import ViewportDownloadForm from './ViewportDownloadForm.json';
 import Messages from './Messages.json';
 import UploadModal from './UploadModal.json';
 import ThumbnailTracked from './ThumbnailTracked.json';
+import ErrorBoundary from './ErrorBoundary.json';
+import HotkeysValidators from './HotkeysValidators.json';
+import InvestigationalUseDialog from './InvestigationalUseDialog.json';
+import Modes from './Modes.json';
+import TooltipClipboard from './TooltipClipboard.json';
+import TrackedCornerstoneViewport from './TrackedCornerstoneViewport.json';
+import WindowLevelActionMenu from './WindowLevelActionMenu.json';
 
 export default {
   ru: {
@@ -42,6 +49,13 @@ export default {
     ViewportDownloadForm,
     Messages,
     UploadModal,
-    ThumbnailTracked
+    ThumbnailTracked,
+    HotkeysValidators,
+    InvestigationalUseDialog,
+    Modes,
+    TooltipClipboard,
+    TrackedCornerstoneViewport,
+    WindowLevelActionMenu,
+    ErrorBoundary
   },
 };

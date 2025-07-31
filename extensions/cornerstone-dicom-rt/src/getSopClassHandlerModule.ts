@@ -1,4 +1,5 @@
-import { utils } from '@ohif/core';
+import { utils, Types as OhifTypes } from '@ohif/core';
+import i18n from '@ohif/i18n';
 
 import { SOPClassHandlerId } from './id';
 import loadRTStruct from './loadRTStruct';
@@ -30,7 +31,7 @@ function _getDisplaySetsFromSeries(
   const displaySet = {
     Modality: 'RTSTRUCT',
     loading: false,
-    isReconstructable: false, // by default for now since it is a volumetric SEG currently
+    isReconstructable: false,
     displaySetInstanceUID: utils.guid(),
     SeriesDescription,
     SeriesNumber,
@@ -53,6 +54,7 @@ function _getDisplaySetsFromSeries(
     wadoUriRoot,
     wadoUri,
     isOverlayDisplaySet: true,
+    label: SeriesDescription || `${i18n.t('Series')} ${SeriesNumber} - ${i18n.t('RTSTRUCT')}`,
   };
 
   let referencedSeriesSequence = instance.ReferencedSeriesSequence;
@@ -72,29 +74,43 @@ function _getDisplaySetsFromSeries(
   displaySet.referencedImages = instance.ReferencedSeriesSequence.ReferencedInstanceSequence;
   displaySet.referencedSeriesInstanceUID = referencedSeries.SeriesInstanceUID;
 
-  displaySet.getReferenceDisplaySet = () => {
-    const { displaySetService } = servicesManager.services;
-    const referencedDisplaySets = displaySetService.getDisplaySetsForSeries(
-      displaySet.referencedSeriesInstanceUID
+  const { displaySetService } = servicesManager.services;
+  const referencedDisplaySets = displaySetService.getDisplaySetsForSeries(
+    displaySet.referencedSeriesInstanceUID
+  );
+
+  if (!referencedDisplaySets || referencedDisplaySets.length === 0) {
+    // Instead of throwing error, subscribe to display sets added
+    const { unsubscribe } = displaySetService.subscribe(
+      displaySetService.EVENTS.DISPLAY_SETS_ADDED,
+      ({ displaySetsAdded }) => {
+        const addedDisplaySet = displaySetsAdded[0];
+        if (addedDisplaySet.SeriesInstanceUID === displaySet.referencedSeriesInstanceUID) {
+          displaySet.referencedDisplaySetInstanceUID = addedDisplaySet.displaySetInstanceUID;
+          displaySet.isReconstructable = addedDisplaySet.isReconstructable;
+          unsubscribe();
+        }
+      }
     );
-
-    if (!referencedDisplaySets || referencedDisplaySets.length === 0) {
-      throw new Error('Referenced DisplaySet is missing for the RT');
-    }
-
+  } else {
     const referencedDisplaySet = referencedDisplaySets[0];
-
     displaySet.referencedDisplaySetInstanceUID = referencedDisplaySet.displaySetInstanceUID;
+    displaySet.isReconstructable = referencedDisplaySet.isReconstructable;
+  }
 
-    return referencedDisplaySet;
-  };
-
-  displaySet.load = ({ headers }) => _load(displaySet, servicesManager, extensionManager, headers);
+  displaySet.load = ({ headers, createSegmentation = true }) =>
+    _load(displaySet, servicesManager, extensionManager, headers, createSegmentation);
 
   return [displaySet];
 }
 
-function _load(rtDisplaySet, servicesManager: AppTypes.ServicesManager, extensionManager, headers) {
+function _load(
+  rtDisplaySet,
+  servicesManager: AppTypes.ServicesManager,
+  extensionManager,
+  headers,
+  createSegmentation = true
+) {
   const { SOPInstanceUID } = rtDisplaySet;
   const { segmentationService } = servicesManager.services;
   if (
@@ -111,27 +127,26 @@ function _load(rtDisplaySet, servicesManager: AppTypes.ServicesManager, extensio
   // and also return the same promise to any other callers.
   loadPromises[SOPInstanceUID] = new Promise(async (resolve, reject) => {
     if (!rtDisplaySet.structureSet) {
-      const structureSet = await loadRTStruct(
-        extensionManager,
-        rtDisplaySet,
-        rtDisplaySet.getReferenceDisplaySet(),
-        headers
-      );
+      const structureSet = await loadRTStruct(extensionManager, rtDisplaySet, headers);
 
       rtDisplaySet.structureSet = structureSet;
     }
 
-    const suppressEvents = true;
-    segmentationService
-      .createSegmentationForRTDisplaySet(rtDisplaySet, null, suppressEvents)
-      .then(() => {
-        rtDisplaySet.loading = false;
-        resolve();
-      })
-      .catch(error => {
-        rtDisplaySet.loading = false;
-        reject(error);
-      });
+    if (createSegmentation) {
+      segmentationService
+        .createSegmentationForRTDisplaySet(rtDisplaySet)
+        .then(() => {
+          rtDisplaySet.loading = false;
+          resolve();
+        })
+        .catch(error => {
+          rtDisplaySet.loading = false;
+          reject(error);
+        });
+    } else {
+      rtDisplaySet.loading = false;
+      resolve();
+    }
   });
 
   return loadPromises[SOPInstanceUID];
@@ -172,20 +187,14 @@ function _deriveReferencedSeriesSequenceFromFrameOfReferenceSequence(
   return ReferencedSeriesSequence;
 }
 
-function _segmentationExistsInCache(
-  rtDisplaySet,
-  segmentationService: AppTypes.SegmentationService
-) {
+function _segmentationExistsInCache() {
   // Todo: fix this
   return false;
-  // This should be abstracted with the CornerstoneCacheService
-  const rtContourId = rtDisplaySet.displaySetInstanceUID;
-  const contour = segmentationService.getContour(rtContourId);
-
-  return contour !== undefined;
 }
 
-function getSopClassHandlerModule({ servicesManager, extensionManager }) {
+function getSopClassHandlerModule(params: OhifTypes.Extensions.ExtensionParams) {
+  const { servicesManager, extensionManager } = params;
+
   return [
     {
       name: 'dicom-rt',
