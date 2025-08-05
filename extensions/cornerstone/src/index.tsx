@@ -202,5 +202,6 @@ export {
   getEnabledElement,
   ImageOverlayViewerTool,
   getSOPInstanceAttributes,
+  OHIFCornerstoneViewport
 };
 export default cornerstoneExtension;

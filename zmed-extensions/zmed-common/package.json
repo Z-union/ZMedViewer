@@ -29,8 +29,8 @@
   },
   "peerDependencies": {
     "@ohif/core": "^3.0.0",
-    "@ohif/extension-default": "^3.0.0",
     "@ohif/extension-cornerstone": "^3.0.0",
+    "@ohif/extension-default": "^3.0.0",
     "@ohif/i18n": "^1.0.0",
     "prop-types": "^15.6.2",
     "react": "^17.0.2",
@@ -43,9 +43,9 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.20.13",
-    "axios": "^0.26.1",
     "@chatscope/chat-ui-kit-react": "^1.10.1",
-    "@chatscope/use-chat": "^3.1.2"
+    "@chatscope/use-chat": "^3.1.2",
+    "axios": "^0.26.1"
   },
   "devDependencies": {
     "@babel/core": "^7.21.4",
@@ -71,7 +71,7 @@
     "eslint": "^5.0.1",
     "eslint-loader": "^2.0.0",
     "webpack": "^5.50.0",
-    "webpack-merge": "^5.7.3",
-    "webpack-cli": "^4.7.2"
+    "webpack-cli": "^4.7.2",
+    "webpack-merge": "^5.7.3"
   }
 }
