@@ -1,92 +1,35 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
-    <meta name="theme-color" content="#000000" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="application-name" content="ZMed Viewer" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta
-      name="apple-mobile-web-app-title"
-      content="@ohif/app"
-    />
-    <meta
-      name="msapplication-TileColor"
-      content="#fff"
-    />
-    <meta
-      name="msapplication-TileImage"
-      content="<%= PUBLIC_URL %>assets/mstile-144x144.png"
-    />
-    <meta
-      name="msapplication-config"
-      content="<%= PUBLIC_URL %>assets/browserconfig.xml"
-    />
-    <script type="text/javascript">
-      console.time('scriptToView');
-      window.PUBLIC_URL = '<%= PUBLIC_URL %>';
-    </script>
-    <link
-      rel="manifest"
-      href="<%= PUBLIC_URL %>manifest.json"
-    />
 
-    <link
-      rel="shortcut icon"
-      href="<%= PUBLIC_URL %>assets/favicon.ico"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="16x16"
-      href="<%= PUBLIC_URL %>assets/favicon-16x16.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="<%= PUBLIC_URL %>assets/favicon-32x32.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="64x64"
-      href="<%= PUBLIC_URL %>assets/apple-touch-icon-64x64.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="128x128"
-      href="<%= PUBLIC_URL %>assets/apple-touch-icon-128x128.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="256x256"
-      href="<%= PUBLIC_URL %>assets/apple-touch-icon-256x256.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="495x495"
-      href="<%= PUBLIC_URL %>assets/apple-touch-icon-495x495.png"
-    />
-    <link
-      rel="apple-touch-startup-image"
-      sizes="320x460"
-      href="<%= PUBLIC_URL %>assets/apple-touch-startup-image-320x460.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="256x256"
-      href="<%= PUBLIC_URL %>assets/coast-256x256.png"
-    />
-    <!-- <link
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="ZMed Viewer" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="@ohif/app" />
+  <meta name="msapplication-TileColor" content="#fff" />
+  <meta name="msapplication-TileImage" content="<%= PUBLIC_URL %>assets/mstile-144x144.png" />
+  <meta name="msapplication-config" content="<%= PUBLIC_URL %>assets/browserconfig.xml" />
+  <script type="text/javascript">
+    console.time('scriptToView');
+    window.PUBLIC_URL = '<%= PUBLIC_URL %>';
+  </script>
+  <link rel="manifest" href="<%= PUBLIC_URL %>manifest.json" crossorigin="use-credentials" />
+
+  <link rel="shortcut icon" href="<%= PUBLIC_URL %>assets/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="16x16" href="<%= PUBLIC_URL %>assets/favicon-16x16.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="<%= PUBLIC_URL %>assets/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="64x64" href="<%= PUBLIC_URL %>assets/apple-touch-icon-64x64.png" />
+  <link rel="apple-touch-icon" sizes="128x128" href="<%= PUBLIC_URL %>assets/apple-touch-icon-128x128.png" />
+  <link rel="apple-touch-icon" sizes="256x256" href="<%= PUBLIC_URL %>assets/apple-touch-icon-256x256.png" />
+  <link rel="apple-touch-icon" sizes="495x495" href="<%= PUBLIC_URL %>assets/apple-touch-icon-495x495.png" />
+  <link rel="apple-touch-startup-image" sizes="320x460"
+    href="<%= PUBLIC_URL %>assets/apple-touch-startup-image-320x460.png" />
+  <link rel="icon" type="image/png" sizes="256x256" href="<%= PUBLIC_URL %>assets/coast-256x256.png" />
+  <!-- <link
       rel="apple-touch-icon"
       sizes="57x57"
       href="<%= PUBLIC_URL %>assets/apple-touch-icon-57x57.png"
@@ -197,45 +140,24 @@
       sizes="228x228"
       href="<%= PUBLIC_URL %>assets/coast-228x228.png"
     /> -->
-    <link
-      rel="yandex-tableau-widget"
-      href="<%= PUBLIC_URL %>assets/yandex-browser-manifest.json"
-    />
+  <link rel="yandex-tableau-widget" href="<%= PUBLIC_URL %>assets/yandex-browser-manifest.json" />
 
-    <!-- Built with: https://polyfill.io/v3/url-builder/ -->
-    <!-- Targets IE11 -->
-    <!-- <script
+  <!-- Built with: https://polyfill.io/v3/url-builder/ -->
+  <!-- Targets IE11 -->
+  <!-- <script
     src="https://polyfill.io/v3/polyfill.min.js?flags=gated&features=default%2CObject.values%2CArray.prototype.flat%2CObject.entries%2CSymbol%2CArray.prototype.includes%2CString.prototype.repeat%2CArray.prototype.find"></script>!-->
-    <script
-      rel="preload"
-      as="script"
-      type="text/javascript"
-      src="<%= PUBLIC_URL %>app-config.js"
-    ></script>
-    <script
-      rel="preload"
-      as="script"
-      type="module"
-      src="<%= PUBLIC_URL %>init-service-worker.js"
-    ></script>
+  <script rel="preload" as="script" type="text/javascript" src="<%= PUBLIC_URL %>app-config.js"></script>
+  <script rel="preload" as="script" type="module" src="<%= PUBLIC_URL %>init-service-worker.js"></script>
 
-    <title>ZMed Viewer</title>
+  <title>ZMed Viewer</title>
 
-    <!-- WEB FONTS -->
-    <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
-      crossorigin
-    />
-    <link
-      href="https://fonts.googleapis.com/css?family=Inter:100,300,400,500,700&display=swap"
-      rel="stylesheet"
-      rel="preload"
-      as="style"
-    />
+  <!-- WEB FONTS -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css?family=Inter:100,300,400,500,700&display=swap" rel="stylesheet"
+    rel="preload" as="style" />
 
-    <!-- EXTENSIONS -->
-    <!-- <script type="text/javascript" src="path/to/some-extension.js"></script>
+  <!-- EXTENSIONS -->
+  <!-- <script type="text/javascript" src="path/to/some-extension.js"></script>
 
     <script>
       // If configuration file is a JS Object:
@@ -248,12 +170,13 @@
         };
       };
     </script> -->
-  </head>
+</head>
 
-  <body>
-    <noscript> You need to enable JavaScript to run this app. </noscript>
-    <div id="react-portal"></div>
-    <div id="root">
-    </div>
-  </body>
+<body>
+  <noscript> You need to enable JavaScript to run this app. </noscript>
+  <div id="react-portal"></div>
+  <div id="root">
+  </div>
+</body>
+
 </html>
