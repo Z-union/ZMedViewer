@@ -42,8 +42,10 @@ ENV PATH /usr/src/app/node_modules/.bin:$PATH
 COPY package.json /usr/src/app/package.json
 COPY yarn.lock /usr/src/app/yarn.lock
 
-# (ОБЯЗАТЕЛЬНО) Установка нужной версии YARN
+# Устанавливаем конкретную версию Yarn Classic (например, 1.22.19)
 RUN rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg && npm install -g yarn@1.18.0
+
+# Проверка версии
 RUN yarn --version
 
 ADD . /usr/src/app/
