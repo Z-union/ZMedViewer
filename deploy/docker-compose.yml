@@ -35,6 +35,7 @@ services:
     restart: on-failure
     networks:
       - atlas_network
+      - dockers_default
 
   # LINK: https://hub.docker.com/r/jodogne/orthanc-plugins/
   # TODO: Update to use Postgres
@@ -118,3 +119,5 @@ volumes:
 networks:
   atlas_network:
     driver: bridge
+  dockers_default:
+    external: true
