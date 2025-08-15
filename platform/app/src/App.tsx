@@ -1,10 +1,9 @@
 // External
-
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import i18n from '@ohif/i18n';
 import { I18nextProvider } from 'react-i18next';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Compose from './routes/Mode/Compose';
 import {
   ExtensionManager,
@@ -24,13 +23,15 @@ import {
   UserAuthenticationProvider,
   ToolboxProvider,
 } from '@ohif/ui';
-import { ThemeWrapper as ThemeWrapperNext, NotificationProvider } from '@ohif/ui-next';
+import { ThemeWrapper as ThemeWrapperNext /*, NotificationProvider*/ } from '@ohif/ui-next';
+
 // Viewer Project
-// TODO: Should this influence study list?
 import { AppConfigProvider } from '@state';
 import createRoutes from './routes';
 import appInit from './appInit.js';
-import OpenIdConnectRoutes from './utils/OpenIdConnectRoutes';
+
+import authService, { setRouterBasename, setUserAuthService } from './services/AuthService';
+import LoginPage from './routes/LoginPage';
 
 let commandsManager: CommandsManager,
   extensionManager: ExtensionManager,
@@ -38,39 +39,75 @@ let commandsManager: CommandsManager,
   serviceProvidersManager: ServiceProvidersManager,
   hotkeysManager: HotkeysManager;
 
+/** Гард приватных маршрутов */
+function Protected({ children }: { children: React.ReactNode }) {
+  const isAuth = authService.isAuthenticated();
+  const location = useLocation();
+  if (!isAuth) {
+    sessionStorage.setItem('postLoginRedirect', location.pathname + location.search);
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location }}
+      />
+    );
+  }
+  return <>{children}</>;
+}
+
 function App({
   config = {
-    /**
-     * Relative route from domain root that OHIF instance is installed at.
-     * For example:
-     *
-     * Hosted at: https://ohif.org/where-i-host-the/viewer/
-     * Value: `/where-i-host-the/viewer/`
-     * */
     routerBaseName: '/',
-    /**
-     *
-     */
     showLoadingIndicator: true,
     showStudyList: true,
-    oidc: [],
+    oidc: [], // не используем
     extensions: [],
   },
   defaultExtensions = [],
   defaultModes = [],
 }) {
-  const [init, setInit] = useState(null);
-  useEffect(() => {
-    const run = async () => {
-      appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
-    };
+  const [init, setInit] = useState<any>(null);
+  const [isAuth, setIsAuth] = useState(authService.isAuthenticated());
 
-    run();
+  // 1) Инициализация приложения
+  useEffect(() => {
+    appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
   }, []);
 
-  if (!init) {
-    return null;
-  }
+  // 2) Реакция на разлогин из других вкладок
+  useEffect(() => {
+    const onStorage = e => {
+      if ((e.key === 'access_token' || e.key === 'refresh_token') && !e.newValue) {
+        setIsAuth(false);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // 3) Установка basename и перехватчика fetch — ХУК ВСЕГДА ВЫЗЫВАЕТСЯ,
+  //    но внутри выходим, если init ещё нет. Так порядок хуков не меняется.
+  useEffect(() => {
+    if (!init) return;
+    const base = init.appConfig?.routerBasename || '/';
+    setRouterBasename(base);
+    authService.installAuthFetchInterceptor();
+    // ⬇️ первый refresh один раз при заходе, далее таймер из setTokensAndSchedule
+    authService.initializeAutoRefresh({ immediate: true });
+  }, [init]);
+
+  useEffect(() => {
+    if (init) {
+      const { servicesManager } = init;
+      setUserAuthService(servicesManager.services.userAuthenticationService);
+    }
+  }, [init]);
+
+  // До этого места — только хуки. Дальше можно делать условные return.
+  if (!init) return null;
+
+  // ===== ниже обычный рендер =====
 
   // Set above for named export
   commandsManager = init.commandsManager;
@@ -79,14 +116,13 @@ function App({
   serviceProvidersManager = init.serviceProvidersManager;
   hotkeysManager = init.hotkeysManager;
 
-  // Set appConfig
+  // App config
   const appConfigState = init.appConfig;
-  const { routerBasename, modes, dataSources, oidc, showStudyList } = appConfigState;
+  const { routerBasename, modes, dataSources, showStudyList } = appConfigState;
 
-  // get the maximum 3D texture size
+  // GPU cap
   const canvas = document.createElement('canvas');
-  const gl = canvas.getContext('webgl2');
-
+  const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
   const max3DTextureSize = gl.getParameter(gl.MAX_3D_TEXTURE_SIZE);
   appConfigState.max3DTextureSize = max3DTextureSize;
 
@@ -101,7 +137,7 @@ function App({
     customizationService,
   } = servicesManager.services;
 
-  const providers = [
+  const providers: any[] = [
     [AppConfigProvider, { value: appConfigState }],
     [UserAuthenticationProvider, { service: userAuthenticationService }],
     [I18nextProvider, { i18n }],
@@ -111,13 +147,12 @@ function App({
     [ViewportGridProvider, { service: viewportGridService }],
     [ViewportDialogProvider, { service: uiViewportDialogService }],
     [CineProvider, { service: cineService }],
-    // [NotificationProvider, { service: uiNotificationService }],
     [SnackbarProvider, { service: uiNotificationService }],
     [DialogProvider, { service: uiDialogService }],
     [ModalProvider, { service: uiModalService, modal: Modal }],
   ];
 
-  // Loop through and register each of the service providers registered with the ServiceProvidersManager.
+  // провайдеры из менеджера
   const providersFromManager = Object.entries(serviceProvidersManager.providers);
   if (providersFromManager.length > 0) {
     providersFromManager.forEach(([serviceName, provider]) => {
@@ -127,12 +162,9 @@ function App({
 
   const CombinedProviders = ({ children }) => Compose({ components: providers, children });
 
-  let authRoutes = null;
-
-  // Should there be a generic call to init on the extension manager?
   customizationService.init(extensionManager);
 
-  // Use config to create routes
+  // Основные маршруты приложения (OHIF) — рендерим внутри Protected
   const appRoutes = createRoutes({
     modes,
     dataSources,
@@ -144,21 +176,24 @@ function App({
     showStudyList,
   });
 
-  if (oidc) {
-    authRoutes = (
-      <OpenIdConnectRoutes
-        oidc={oidc}
-        routerBasename={routerBasename}
-        userAuthenticationService={userAuthenticationService}
-      />
-    );
-  }
+  const handleLogin = () => setIsAuth(true);
 
   return (
     <CombinedProviders>
       <BrowserRouter basename={routerBasename}>
-        {authRoutes}
-        {appRoutes}
+        <Routes>
+          {/* Публичный маршрут логина */}
+          <Route
+            path="/login"
+            element={<LoginPage onLogin={handleLogin} />}
+          />
+
+          {/* Все приватные маршруты — внутри Protected */}
+          <Route
+            path="*"
+            element={<Protected>{appRoutes}</Protected>}
+          />
+        </Routes>
       </BrowserRouter>
     </CombinedProviders>
   );
@@ -174,11 +209,7 @@ App.propTypes = {
       extensions: PropTypes.array,
     }),
   ]).isRequired,
-  /* Extensions that are "bundled" or "baked-in" to the application.
-   * These would be provided at build time as part of they entry point. */
   defaultExtensions: PropTypes.array,
-  /* Modes that are "bundled" or "baked-in" to the application.
-   * These would be provided at build time as part of they entry point. */
   defaultModes: PropTypes.array,
 };
 

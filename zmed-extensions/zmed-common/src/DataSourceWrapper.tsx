@@ -187,7 +187,7 @@ function DataSourceWrapper(props) {
 
     // 204: no content
     const getData = async () => {
-      setIsLoading(true);
+      setIsLoading(false);
 
       const updateState = ({
         studies = [],
@@ -255,7 +255,7 @@ function DataSourceWrapper(props) {
         (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
       if (isDataInvalid) {
-        getData().catch(() => navigate('/notfoundserver', '_self'));
+        getData()//.catch(() => navigate('/notfoundserver', '_self'));
       }
     } catch (ex) {
       console.warn(ex);

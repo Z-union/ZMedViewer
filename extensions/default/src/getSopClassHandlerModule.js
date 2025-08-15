@@ -100,7 +100,7 @@ const makeDisplaySet = instances => {
     averageSpacingBetweenFrames: averageSpacingBetweenFrames || null,
     isDynamicVolume,
     dynamicVolumeInfo,
-    trueModality: instance.trueModality,
+    //trueModality: instance.trueModality,
   });
 
   // Sort the images in this series if needed

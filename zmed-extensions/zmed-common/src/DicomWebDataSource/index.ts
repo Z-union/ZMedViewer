@@ -31,6 +31,8 @@ import StaticWadoClient from './utils/StaticWadoClient';
 import getDirectURL from '../utils/getDirectURL';
 import { fixBulkDataURI } from './utils/fixBulkDataURI';
 
+import AuthService from '../../../../platform/app/src/services/AuthService';
+
 const { DicomMetaDictionary, DicomDict } = dcmjs.data;
 
 const { naturalizeDataset, denaturalizeDataset } = DicomMetaDictionary;
@@ -41,6 +43,14 @@ const ImplementationVersionName = 'OHIF-VIEWER-2.0.0';
 const EXPLICIT_VR_LITTLE_ENDIAN = '1.2.840.10008.1.2.1';
 
 const metadataProvider = classes.MetadataProvider;
+
+axios.interceptors.request.use((config) => {
+  const auth = AuthService.getAuthorizationHeader();
+  config.headers = { ...(config.headers || {}), ...auth };
+  return config;
+});
+
+type SimpleMessageResponse = { message: string };
 
 /**
  *
@@ -56,8 +66,9 @@ const metadataProvider = classes.MetadataProvider;
  * @param {string|bool} singlepart - indicates of the retrieves can fetch singlepart.  Options are bulkdata, video, image or boolean true
  */
 function createDicomWebApi(dicomWebConfig, servicesManager) {
-  const { userAuthenticationService, customizationService } =
-    servicesManager.services;
+  // ранее использовался userAuthenticationService; теперь берём токен напрямую из AuthService
+  // оставляем customizationService, если он нужен где-то ещё
+  const { customizationService } = servicesManager.services;
   let dicomWebConfigCopy,
     qidoConfig,
     wadoConfig,
@@ -81,18 +92,12 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
       dicomWebConfigCopy = JSON.parse(JSON.stringify(dicomWebConfig));
 
       getAuthrorizationHeader = () => {
-        const xhrRequestHeaders = {};
-        const authHeaders = userAuthenticationService.getAuthorizationHeader();
-        if (authHeaders && authHeaders.Authorization) {
-          xhrRequestHeaders.Authorization = authHeaders.Authorization;
-        }
-        return xhrRequestHeaders;
+        return AuthService.getAuthorizationHeader();
       };
 
       generateWadoHeader = () => {
-        let authorizationHeader = getAuthrorizationHeader();
-        //Generate accept header depending on config params
-        let formattedAcceptHeader = utils.generateAcceptHeader(
+        const authorizationHeader = getAuthrorizationHeader();
+        const formattedAcceptHeader = utils.generateAcceptHeader(
           dicomWebConfig.acceptHeader,
           dicomWebConfig.requestTransferSyntaxUID,
           dicomWebConfig.omitQuotationForMultipartRequest
@@ -108,7 +113,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
         url: dicomWebConfig.qidoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: userAuthenticationService.getAuthorizationHeader(),
+        headers: AuthService.getAuthorizationHeader(),
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
       };
 
@@ -116,7 +121,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
         url: dicomWebConfig.wadoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: userAuthenticationService.getAuthorizationHeader(),
+        headers: AuthService.getAuthorizationHeader(),
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
       };
 
@@ -148,7 +153,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           const projections = new Map();
 
           if (origParams.me) {
-            const head = headers;
+            const head = { ...headers };
             head['Content-Type'] = 'application/json';
             const basicParams = {
               page: origParams.pageNumber,
@@ -158,7 +163,10 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             const newParams = {};
             const config: AxiosRequestConfig = {
               method: 'get',
-              url: dicomWebConfig.personalAccountUri + '/study/',
+              url:
+                dicomWebConfig.domain +
+                dicomWebConfig.personalAccountUri +
+                '/study/',
               headers: head,
               params,
               paramsSerializer: (params) => {
@@ -176,7 +184,10 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
                   encodeURIComponent(biRadsCategories);
               }
 
-              config['url'] = dicomWebConfig.personalAccountUri + '/study/search';
+              config['url'] =
+                dicomWebConfig.domain +
+                dicomWebConfig.personalAccountUri +
+                '/study/search';
               config['params'] = newParams;
             }
             let studiesUids: Set<string> = new Set();
@@ -256,7 +267,10 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
           let config: AxiosRequestConfig = {
             method: 'delete',
-            url: `${dicomWebConfig.personalAccountUri}/study/${studyInstanceUid}`,
+            url:
+              dicomWebConfig.domain +
+              dicomWebConfig.personalAccountUri +
+              `/study/${studyInstanceUid}`,
             headers: head,
           };
 
@@ -367,9 +381,15 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             ...getAuthrorizationHeader(),
             'Content-Type': 'application/json',
           };
-          return axios.post(dicomWebConfig.personalAccountUri + '/study/', formData, {
-            headers,
-          });
+          return axios.post(
+            dicomWebConfig.domain +
+              dicomWebConfig.personalAccountUri +
+              '/study/',
+            formData,
+            {
+              headers,
+            }
+          );
         }
         const blob = new Blob([dataset], { type: 'application/dicom' });
         const formData = new FormData();
@@ -415,7 +435,9 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
                   studyInfo.data.MainDicomTags.StudyInstanceUID,
               });
               return axios.post(
-                dicomWebConfig.personalAccountUri + '/api/v2/study/',
+                dicomWebConfig.domain +
+                  dicomWebConfig.personalAccountUri +
+                  '/api/v2/study/',
                 json,
                 { headers }
               );
@@ -423,6 +445,86 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
         }
       },
     },
+
+    // ================== Admin endpoints ==================
+    admin: {
+      /**
+       * POST {domain}{personalAccountUri}/assign-permissions
+       * Body: { user_id: number, permissions: number }
+       * Требует ADMIN access-токен.
+       */
+      assignPermissions: async (
+        userId: number,
+        permissions: number
+      ): Promise<SimpleMessageResponse> => {
+        const url =
+          dicomWebConfig.domain +
+          dicomWebConfig.personalAccountUri +
+          '/auth/assign-permissions';
+        const headers = {
+          ...getAuthrorizationHeader(),
+          'Content-Type': 'application/json',
+        };
+        try {
+          const { data } = await axios.post<SimpleMessageResponse>(
+            url,
+            { user_id: userId, permissions },
+            { headers }
+          );
+          return data;
+        } catch (e: any) {
+          if (axios.isAxiosError(e) && e.response) {
+            const { status, data } = e.response as {
+              status: number;
+              data?: any;
+            };
+            if (status === 403) throw new Error('403: нет прав ADMIN');
+            if (status === 404) throw new Error('404: пользователь не найден');
+            throw new Error(`${status}: ${data?.message || 'Ошибка запроса'}`);
+          }
+          throw e;
+        }
+      },
+
+      /**
+       * POST {domain}{personalAccountUri}/update-password
+       * Body: { user_id: number, new_password: string }
+       * Требует ADMIN access-токен.
+       */
+      updatePassword: async (
+        userId: number,
+        newPassword: string
+      ): Promise<SimpleMessageResponse> => {
+        const url =
+          dicomWebConfig.domain +
+          dicomWebConfig.personalAccountUri +
+          '/auth/update-password';
+        const headers = {
+          ...getAuthrorizationHeader(),
+          'Content-Type': 'application/json',
+        };
+        try {
+          const { data } = await axios.post<SimpleMessageResponse>(
+            url,
+            { user_id: userId, new_password: newPassword },
+            { headers }
+          );
+          return data;
+        } catch (e: any) {
+          if (axios.isAxiosError(e) && e.response) {
+            const { status, data } = e.response as {
+              status: number;
+              data?: any;
+            };
+            if (status === 403) throw new Error('403: нет прав ADMIN');
+            if (status === 404) throw new Error('404: пользователь не найден');
+            throw new Error(`${status}: ${data?.message || 'Ошибка запроса'}`);
+          }
+          throw e;
+        }
+      },
+    },
+    // =====================================================
 
     _retrieveSeriesMetadataSync: async (
       StudyInstanceUID,
@@ -523,24 +625,20 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
        * @param {*} instance
        * @returns naturalized dataset, with retrieveBulkData methods
        */
-      const addRetrieveBulkData = (instance) => {
+      const addRetrieveBulkData = (instance: any) => {
         const naturalized = naturalizeDataset(instance);
 
         if (instance['00190020'] != undefined) {
           naturalized.imageView = instance['00190020']['Value'][0];
         }
 
-        if (instance['00190010'] != undefined) {
-          naturalized.trueModality = instance['00190010']['Value'][0];
-        }
-
-        // if we konw the server doesn't use bulkDataURI, then don't
+        // if we know the server doesn't use bulkDataURI, then don't
         if (!dicomWebConfig.bulkDataURI?.enabled) {
           return naturalized;
         }
 
         Object.keys(naturalized).forEach((key) => {
-          const value = naturalized[key];
+          const value = (naturalized as any)[key];
 
           // The value.Value will be set with the bulkdata read value
           // in which case it isn't necessary to re-read this.
@@ -583,11 +681,11 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
       };
 
       // Async load series, store as retrieved
-      function storeInstances(instances) {
+      function storeInstances(instances: any[]) {
         const naturalizedInstances = instances.map(addRetrieveBulkData);
 
         // Adding instanceMetadata to OHIF MetadataProvider
-        naturalizedInstances.forEach((instance, index) => {
+        naturalizedInstances.forEach((instance: any) => {
           instance.wadoRoot = dicomWebConfig.wadoRoot;
           instance.wadoUri = dicomWebConfig.wadoUri;
 
@@ -618,12 +716,12 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           StudyInstanceUID,
           madeInClient
         );
-        study.isLoaded = true;
+        (study as any).isLoaded = true;
       }
 
       // Google Cloud Healthcare doesn't return StudyInstanceUID, so we need to add
       // it manually here
-      seriesSummaryMetadata.forEach((aSeries) => {
+      seriesSummaryMetadata.forEach((aSeries: any) => {
         aSeries.StudyInstanceUID = StudyInstanceUID;
       });
 
@@ -640,7 +738,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
     deleteStudyMetadataPromise,
     getImageIdsForDisplaySet(displaySet) {
       const images = displaySet.images;
-      const imageIds = [];
+      const imageIds: string[] = [];
 
       if (!images) {
         return imageIds;

@@ -10,7 +10,12 @@ import { useTranslation } from 'react-i18next';
 import filtersMeta from './filtersMeta.js';
 import { useAppConfig } from '@state';
 import { useDebounce, useSearchParams } from '@hooks';
-import { utils, hotkeys, ServicesManager, Types as CoreTypes } from '@ohif/core';
+import {
+  utils,
+  hotkeys,
+  ServicesManager,
+  Types as CoreTypes,
+} from '@ohif/core';
 
 import {
   ConfirmContent,
@@ -29,11 +34,14 @@ import {
   LoadingIndicatorProgress,
 } from '@ohif/ui';
 
-import AboutModal from '../components/AboutModal' ;
+import AboutModal from '../components/AboutModal';
+import AdminModal from './AdminModal';
 
 import i18n from '@ohif/i18n';
 
 import { Types } from '@ohif/ui';
+
+import AuthService from '../../../../platform/app/src/services/AuthService.js';
 
 const { sortBySeriesDate, getDateWithTimezone } = utils;
 
@@ -73,21 +81,45 @@ function WorkSheet({
   const navigate = useNavigate();
   const STUDIES_LIMIT = 101;
   const queryFilterValues = _getQueryFilterValues(searchParams);
-  const [sessionQueryFilterValues, updateSessionQueryFilterValues] = useSessionStorage({
-    key: 'queryFilterValues',
-    defaultValue: queryFilterValues,
-    // ToDo: useSessionStorage currently uses an unload listener to clear the filters from session storage
-    // so on systems that do not support unload events a user will NOT be able to alter any existing filter
-    // in the URL, load the page and have it apply.
-    clearOnUnload: true,
-  });
+  const [sessionQueryFilterValues, updateSessionQueryFilterValues] =
+    useSessionStorage({
+      key: 'queryFilterValues',
+      defaultValue: queryFilterValues,
+      clearOnUnload: true,
+    });
   const [filterValues, _setFilterValues] = useState({
     ...defaultFilterValues,
     ...sessionQueryFilterValues,
   });
 
+  // ---- Новое: хранение флага ADMIN в состоянии и автообновление ----
+  const [isAdmin, setIsAdmin] = useState(AuthService.isAdmin());
+  useEffect(() => {
+    let cancelled = false;
+    // одноразово проверим и освежим флаг из /protected
+    AuthService.checkAdminAndCache()
+      .then((val) => {
+        if (!cancelled) setIsAdmin(!!val);
+      })
+      .catch(() => {
+        // молча игнорируем сетевые ошибки
+      });
+
+    // если флаг изменится в другой вкладке/контексте — подхватим
+    const onStorage = (e) => {
+      if (e.key === 'is_admin') {
+        setIsAdmin(e.newValue === '1');
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
+  // -----------------------------------------------------------------
+
   const debouncedFilterValues = useDebounce(filterValues, 20);
-  // Пока что большой Debounce не требуется за счет использования кэширования
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
 
   /*
@@ -137,7 +169,7 @@ function WorkSheet({
     return isLoadingData || expandedRows.length > 0;
   }, [isLoadingData, expandedRows]);
 
-  const setFilterValues = val => {
+  const setFilterValues = (val) => {
     if (filterValues.pageNumber === val.pageNumber) {
       val.pageNumber = 1;
     }
@@ -146,11 +178,11 @@ function WorkSheet({
     setExpandedRows([]);
   };
 
-  const onPageNumberChange = newPageNumber => {
+  const onPageNumberChange = (newPageNumber) => {
     setFilterValues({ ...filterValues, pageNumber: newPageNumber });
   };
 
-  const onResultsPerPageChange = newResultsPerPage => {
+  const onResultsPerPageChange = (newResultsPerPage) => {
     setFilterValues({
       ...filterValues,
       pageNumber: 1,
@@ -173,7 +205,7 @@ function WorkSheet({
     }
 
     const queryString = {};
-    Object.keys(defaultFilterValues).forEach(key => {
+    Object.keys(defaultFilterValues).forEach((key) => {
       const defaultValue = defaultFilterValues[key];
       const currValue = debouncedFilterValues[key];
 
@@ -209,19 +241,16 @@ function WorkSheet({
 
   // Query for series information
   useEffect(() => {
-    const fetchSeries = async studyInstanceUid => {
+    const fetchSeries = async (studyInstanceUid) => {
       try {
         const series = await dataSource.query.series.search(studyInstanceUid);
         seriesInStudiesMap.set(studyInstanceUid, sortBySeriesDate(series));
         setStudiesWithSeriesData([...studiesWithSeriesData, studyInstanceUid]);
       } catch (ex) {
-        // TODO: UI Notification Service
         console.warn(ex);
       }
     };
 
-    // TODO: WHY WOULD YOU USE AN INDEX OF 1?!
-    // Note: expanded rows index begins at 1
     for (let z = 0; z < expandedRows.length; z++) {
       const expandedRowIndex = expandedRows[z] - 1;
       const studyInstanceUid = sortedStudies[expandedRowIndex].studyInstanceUid;
@@ -246,7 +275,7 @@ function WorkSheet({
   const offsetAndTake = offset + resultsPerPage;
   const tableDataSource = sortedStudies.map((study, key) => {
     const rowKey = key + 1;
-    const isExpanded = expandedRows.some(k => k === rowKey);
+    const isExpanded = expandedRows.some((k) => k === rowKey);
     const {
       studyInstanceUid,
       accession,
@@ -257,23 +286,24 @@ function WorkSheet({
       patientName,
       date,
       time,
-      uploadedAt
+      uploadedAt,
     } = study;
 
     const [studyDate, studyTime] = i18n.formatFullDateWithTimezone(date, time);
-    const [uploadDate, uploadTime] = i18n.formatFullDateWithTimezone(uploadedAt);
+    const [uploadDate, uploadTime] =
+      i18n.formatFullDateWithTimezone(uploadedAt);
 
     const handleClickYes = async (e) => {
       e.preventDefault();
       await dataSource.query.studies.delete(studyInstanceUid);
       onRefresh();
       uiModalService.hide();
-    }
+    };
 
     const handleClickNo = async (e) => {
       e.preventDefault();
       uiModalService.hide();
-    }
+    };
 
     return {
       row: [
@@ -342,8 +372,6 @@ function WorkSheet({
           gridCol: 4,
         },
       ],
-      // Todo: This is actually running for all rows, even if they are
-      // not clicked on.
       expandedContent: (
         <StudyListExpandedRow
           seriesTableColumns={{
@@ -354,7 +382,7 @@ function WorkSheet({
           }}
           seriesTableDataSource={
             seriesInStudiesMap.has(studyInstanceUid)
-              ? seriesInStudiesMap.get(studyInstanceUid).map(s => {
+              ? seriesInStudiesMap.get(studyInstanceUid).map((s) => {
                   return {
                     description: s.description || '(empty)',
                     seriesNumber: s.seriesNumber ?? '',
@@ -375,13 +403,7 @@ function WorkSheet({
                 modalities: modalitiesToCheck,
                 study,
               });
-              const isValidMode = isValidModeCheck === !! isValidModeCheck;
-              // TODO: Modes need a default/target route? We mostly support a single one for now.
-              // We should also be using the route path, but currently are not
-              // mode.routeName
-              // mode.routes[x].path
-              // Don't specify default data source, and it should just be picked up... (this may not currently be the case)
-              // How do we know which params to pass? Today, it's just StudyInstanceUIDs and configUrl if exists
+              const isValidMode = isValidModeCheck === !!isValidModeCheck;
               const query = new URLSearchParams();
               if (filterValues.configUrl) {
                 query.append('configUrl', filterValues.configUrl);
@@ -395,21 +417,17 @@ function WorkSheet({
                     to={`${dataPath ? '../../' : ''}${
                       mode.routeName
                     }${dataPath || ''}?${query.toString()}`}
-                    onClick={event => {
-                      // In case any event bubbles up for an invalid mode, prevent the navigation.
-                      // For example, the event bubbles up when the icon embedded in the disabled button is clicked.
+                    onClick={(event) => {
                       if (!isValidMode) {
                         event.preventDefault();
                       }
                     }}
-                    // to={`${mode.routeName}/dicomweb?StudyInstanceUIDs=${studyInstanceUid}`}
                   >
-                    {/* TODO revisit the completely rounded style of buttons used for launching a mode from the WorkSheet later - for now use LegacyButton*/}
                     <LegacyButton
                       rounded="full"
                       variant={isValidMode ? 'contained' : 'disabled'}
                       disabled={!isValidMode}
-                      endIcon={<Icon name="launch-arrow" />} // launch-arrow | launch-info
+                      endIcon={<Icon name="launch-arrow" />}
                       onClick={() => {}}
                     >
                       {t(`${mode.displayName}`)}
@@ -422,9 +440,6 @@ function WorkSheet({
         </StudyListExpandedRow>
       ),
       onClickRow: () => {
-        // Переход на исследование сразу при нажатии на него
-
-        // В массиве моды в режиме их приоритета
         const modes = [
           appConfig.loadedModes.find((obj) => obj.routeName === 'viewer-mg'),
           appConfig.loadedModes.find((obj) => obj.routeName === 'viewer'),
@@ -438,7 +453,9 @@ function WorkSheet({
         const validMode = modes.find(isValidMode);
 
         if (validMode) {
-          navigate(`/${validMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`);
+          navigate(
+            `/${validMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`
+          );
         } else {
           uiNotificationService.show({
             title: t('Invalid mode'),
@@ -448,10 +465,6 @@ function WorkSheet({
         }
       },
 
-        // Открытие окна с выбором мода (пока мод 1, можно отключить)
-        // setExpandedRows(s =>
-        //   isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]
-        // ),
       isExpanded,
       onClickDelete: (e) => {
         e.stopPropagation();
@@ -460,15 +473,15 @@ function WorkSheet({
           containerDimensions: 'w-80',
           content: () => {
             return (
-                <ConfirmContent
-                  labelContent={t('Are you sure you wish to delete this study?')}
-                  handleClickYes={handleClickYes}
-                  handleClickNo={handleClickNo}
-                />
+              <ConfirmContent
+                labelContent={t('Are you sure you wish to delete this study?')}
+                handleClickYes={handleClickYes}
+                handleClickNo={handleClickNo}
+              />
             );
-          }
+          },
         });
-      }
+      },
     };
   });
 
@@ -476,61 +489,73 @@ function WorkSheet({
   const versionNumber = process.env.VERSION_NUMBER;
   const commitHash = process.env.COMMIT_HASH;
 
-  const menuOptions = [
-    {
-      title: t('Header:About'),
-      icon: 'info',
-      onClick: () =>
-        show({
-          content: AboutModal,
-          title: 'About ZMed Viewer',
-          contentProps: { versionNumber, commitHash },
-        }),
-    },
-    {
-      title: t('Header:Preferences'),
-      icon: 'settings',
-      onClick: () =>
-        show({
-          title: t('UserPreferencesModal:User Preferences'),
-          content: UserPreferences,
-          contentProps: {
-            hotkeyDefaults: hotkeysManager.getValidHotkeyDefinitions(
-              hotkeyDefaults
-            ),
-            hotkeyDefinitions,
-            onCancel: hide,
-            currentLanguage: currentLanguage(),
-            availableLanguages,
-            defaultLanguage,
-            onSubmit: state => {
-              i18n.changeLanguage(state.language.value);
-              hotkeysManager.setHotkeys(state.hotkeyDefinitions);
-              hide();
-            },
-            onReset: () => hotkeysManager.restoreDefaultBindings(),
-            hotkeysModule: hotkeys,
-          },
-        }),
-    },
-  ];
-
-  if (appConfig.oidc) {
-    menuOptions.push({
-      icon: 'power-off',
-      title: t('Header:Logout'),
-      onClick: () => {
-        navigate(
-          `/logout?redirect_uri=${encodeURIComponent(window.location.href)}`
-        );
+  // --- Меню хедера: «Админ панель» только для isAdmin === true ---
+  const menuOptions = useMemo(() => {
+    const base = [
+      {
+        title: t('Header:About'),
+        icon: 'info',
+        onClick: () =>
+          show({
+            content: AboutModal,
+            title: 'About ZMed Viewer',
+            contentProps: { versionNumber, commitHash },
+          }),
       },
-    });
-  }
+      {
+        title: t('Header:Preferences'),
+        icon: 'settings',
+        onClick: () =>
+          show({
+            title: t('UserPreferencesModal:User Preferences'),
+            content: UserPreferences,
+            contentProps: {
+              hotkeyDefaults:
+                hotkeysManager.getValidHotkeyDefinitions(hotkeyDefaults),
+              hotkeyDefinitions,
+              onCancel: hide,
+              currentLanguage: currentLanguage(),
+              availableLanguages,
+              defaultLanguage,
+              onSubmit: (state) => {
+                i18n.changeLanguage(state.language.value);
+                hotkeysManager.setHotkeys(state.hotkeyDefinitions);
+                hide();
+              },
+              onReset: () => hotkeysManager.restoreDefaultBindings(),
+              hotkeysModule: hotkeys,
+            },
+          }),
+      },
+      {
+        title: t('Header:Logout'),
+        icon: 'power-off',
+        onClick: async () => {
+          AuthService.logout();
+        },
+      },
+    ];
+
+    if (isAdmin) {
+      base.unshift({
+        title: t('Common:AdminPanelTitle'),
+        icon: 'info-action',
+        onClick: () =>
+          show({
+            content: AdminModal,
+            title: t('Common:AdminPanelTitle'),
+          }),
+      });
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, t]);
+  // ---------------------------------------------------------------
 
   const { customizationService } = servicesManager.services;
   const { component: dicomUploadComponent } =
     customizationService.get('dicomUploadComponent') ?? {};
-  let uploadTitle = t("Upload files")
+  let uploadTitle = t('Upload files');
   const uploadProps =
     dicomUploadComponent && dataSource.getConfig()?.dicomUploadEnabled
       ? {
@@ -547,7 +572,6 @@ function WorkSheet({
             onStarted: () => {
               show({
                 ...uploadProps,
-                // when upload starts, hide the default close button as closing the dialogue must be handled by the upload dialogue itself
                 closeButton: false,
               });
             },
@@ -677,16 +701,14 @@ function _getQueryFilterValues(params) {
     configUrl: params.get('configurl'),
   };
 
-  // Delete null/undefined keys
   Object.keys(queryFilterValues).forEach(
-    key => queryFilterValues[key] == null && delete queryFilterValues[key]
+    (key) => queryFilterValues[key] == null && delete queryFilterValues[key]
   );
 
   return queryFilterValues;
 }
 
 function _sortStringDates(s1, s2, sortModifier) {
-  // TODO: Delimiters are non-standard. Should we support them?
   const s1Date = moment(s1.date, ['YYYYMMDD', 'YYYY.MM.DD'], true);
   const s2Date = moment(s2.date, ['YYYYMMDD', 'YYYY.MM.DD'], true);
 
