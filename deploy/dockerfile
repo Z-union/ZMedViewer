@@ -23,7 +23,7 @@
 
 
 # Stage 1: Build the application
-FROM node:18.16.1-slim as builder
+FROM node:20.19.3-slim as builder
 ARG ZVIEWER_HOST
 ARG ZVIEWER_APP_CONFIG
 

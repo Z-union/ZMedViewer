@@ -187,7 +187,7 @@ function DataSourceWrapper(props) {
 
     // 204: no content
     const getData = async () => {
-      setIsLoading(false);
+      setIsLoading(true);
 
       const updateState = ({
         studies = [],
