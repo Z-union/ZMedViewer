@@ -255,7 +255,7 @@ function DataSourceWrapper(props) {
         (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
       if (isDataInvalid) {
-        getData()//.catch(() => navigate('/notfoundserver', '_self'));
+        getData().catch(() => navigate('/notfoundserver', '_self'));
       }
     } catch (ex) {
       console.warn(ex);
