@@ -187,7 +187,7 @@ function DataSourceWrapper(props) {
 
     // 204: no content
     const getData = async () => {
-      setIsLoading(true);
+      //setIsLoading(true);
 
       const updateState = ({
         studies = [],
@@ -222,6 +222,7 @@ function DataSourceWrapper(props) {
 
           filterRangeAge,
         );
+        console.log(data)
         cache.current.set(queryKey, data);
         updateState(data);
         setShouldGetFilteredData(false);
@@ -255,7 +256,7 @@ function DataSourceWrapper(props) {
         (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
       if (isDataInvalid) {
-        getData().catch(() => navigate('/notfoundserver', '_self'));
+        getData()//.catch(() => navigate('/notfoundserver', '_self'));
       }
     } catch (ex) {
       console.warn(ex);
