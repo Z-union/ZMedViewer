@@ -193,7 +193,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             let studiesUids: Set<string> = new Set();
             response = await axios(config);
             if (response.status == 200) {
-              response.data.forEach((el) => {
+              response.data.items.forEach((el) => {
                 date.set(el.study_uid, el.uploaded_at);
                 if (projections.has(el.study_uid)) {
                   projections.set(el.study_uid, [
