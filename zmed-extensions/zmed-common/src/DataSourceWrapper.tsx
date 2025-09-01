@@ -214,15 +214,25 @@ function DataSourceWrapper(props) {
         const cachedData = cache.current.get(queryKey);
         updateState(cachedData);
       } else {
-        //Данные из сетевого запроса
-        const data = await dataSource.query.studies.search(
+        const res = await dataSource.query.studies.search(
           queryFilterValues,
           shouldGetFilteredData,
           selectedFilterOptions,
-
-          filterRangeAge,
+          filterRangeAge
         );
-        console.log(data)
+
+        type Study = { uploadedAt?: string; uploaded_at?: string };
+        type Payload = { studies: Study[] } & Record<string, unknown>;
+        const raw = res as Payload;
+        const key = (s: Study): string => s.uploadedAt ?? s.uploaded_at ?? '';
+
+        const data: Payload = {
+          ...raw,
+          // лексикографическая сортировка ISO-дат по убыванию (надёжнее, чем Date.parse с микросекундами)
+          studies: [...raw.studies].sort((a, b) =>
+            key(b).localeCompare(key(a))
+          ),
+        };
         cache.current.set(queryKey, data);
         updateState(data);
         setShouldGetFilteredData(false);
