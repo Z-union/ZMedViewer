@@ -205,14 +205,14 @@ async function _loadSegments({
     }
   });
 
-  if (results.overlappingSegments) {
-    uiNotificationService.show({
-      title: 'Overlapping Segments',
-      message:
-        'Unsupported overlapping segments detected, segmentation rendering results may be incorrect.',
-      type: 'warning',
-    });
-  }
+  // if (results.overlappingSegments) {
+  //   uiNotificationService.show({
+  //     title: 'Overlapping Segments',
+  //     message:
+  //       'Unsupported overlapping segments detected, segmentation rendering results may be incorrect.',
+  //     type: 'warning',
+  //   });
+  // }
 
   if (!usedRecommendedDisplayCIELabValue) {
     // Display a notification about the non-utilization of RecommendedDisplayCIELabValue
