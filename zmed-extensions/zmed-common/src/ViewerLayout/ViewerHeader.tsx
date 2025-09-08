@@ -98,23 +98,13 @@ function ViewerHeader({
     });
   };
 
-  const isMRStudy = () => {
+  const isMGStudy = () => {
     const displaySet = DisplaySetService.getActiveDisplaySets().find(
-      (ds) => ds && 'MR'.includes(ds.Modality)
+      ds => ds && 'MG'.includes(ds.Modality)
     );
-
     return !!displaySet;
   };
 
-    const isMGStudy = () => {
-    const displaySet = DisplaySetService.getActiveDisplaySets().find(
-      (ds) => ds && 'MG'.includes(ds.Modality)
-    );
-
-    return !!displaySet;
-  };
-
-  const isMr = isMRStudy();
   const isMg = isMGStudy();
 
   const handleMGStudyClick = async () => {
@@ -122,27 +112,16 @@ function ViewerHeader({
     setIsAnalyzing(true);
 
     try {
-      // Получаем study_uid
-      const study_uid = DisplaySetService.getActiveDisplaySets()[0]['StudyInstanceUID'];
-
+      const study_uid =
+        DisplaySetService.getActiveDisplaySets()[0]['StudyInstanceUID'];
       const urlPredict = appConfig?.zmedtools?.mgURL + 'predict';
 
-      // Хелпер для polling
-      const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-      let success = false;
-
-      // Отправляем запрос
-      const postData = {
-        study_instance_uid: study_uid,
-      };
+      const postData = { study_instance_uid: study_uid };
       const postRes = await axios.post(urlPredict, postData, {
         responseType: 'blob',
       });
 
-      // Проверяем статус ответа
       if (postRes.status === 200) {
-        // Скачиваем файл отчета
         const reportBlob = postRes.data;
         const reportUrl = URL.createObjectURL(reportBlob);
         const link = document.createElement('a');
@@ -151,145 +130,16 @@ function ViewerHeader({
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
-        success = true;
       } else {
         console.error('Ошибка при обработке MG-исследования:', postRes);
-        success = false;
       }
     } catch (error) {
       console.error('Ошибка при обработке MG-исследования:', error);
       uiNotificationService.show({
-          title: t('Header:Processing error'),
-          message: t(
-            ''
-          ),
-          type: 'error',
-        });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handleMRStudyClick = async () => {
-    console.log('handleMRStudyClick:ViewerHeader');
-    setIsAnalyzing(true);
-
-    try {
-      // 1) Собираем все MR-датасеты, первый датасет тот, кто во Вьюпорте
-      const { activeViewportId, viewports } = viewportGridService.getState();
-      const { displaySetInstanceUIDs } = viewports.get(activeViewportId);
-      const primaryUID = displaySetInstanceUIDs[0];
-
-      // Собираем все MR-дисплейсеты
-      const allMR = DisplaySetService.getActiveDisplaySets().filter(
-        (ds) => ds && ds.Modality === 'MR'
-      );
-
-      // Ищем индекс того, что должен быть первым
-      const primaryIndex = allMR.findIndex(
-        (ds) => ds.displaySetInstanceUID === primaryUID
-      );
-
-      let mrDisplaySets;
-      if (primaryIndex >= 0) {
-        const [primarySet] = allMR.splice(primaryIndex, 1);
-        mrDisplaySets = [primarySet, ...allMR];
-      } else {
-        mrDisplaySets = allMR;
-      }
-
-      const urlProcessMRT = appConfig?.zmedtools?.mrURL + 'process_mrt';
-      const urlGetDocx = appConfig?.zmedtools?.mrURL + 'create_docx/';
-
-      // Хелпер для polling
-      const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-      let success = false;
-
-      // 2) Перебираем их по порядку
-      for (const displaySet of mrDisplaySets) {
-        const postData = {
-          study_instance_uid: displaySet.StudyInstanceUID,
-          series_instance_uid: displaySet.SeriesInstanceUID,
-        };
-
-        try {
-          // 2.1) Запуск обработки — получаем task_id
-          const postRes = await axios.post(urlProcessMRT, postData);
-          const taskId = postRes.data.task_id;
-
-          // 2.2) Polling на готовность .docx
-          let fileBlob = null;
-          for (let attempt = 1; attempt <= 10; attempt++) {
-            try {
-              const getRes = await axios.get(`${urlGetDocx}${taskId}`, {
-                responseType: 'blob',
-              });
-              if (getRes.data.size > 1024) {
-                fileBlob = getRes.data;
-                console.log(
-                  `Файл готов для датасета ${displaySet.SeriesInstanceUID} (попытка ${attempt})`
-                );
-                break;
-              }
-            } catch (err) {
-              // 404 — ещё не готов, продолжаем polling
-              if (err.response?.status !== 404) {
-                throw err;
-              }
-            }
-            await delay(2000);
-          }
-
-          if (!fileBlob) {
-            throw new Error('Polling завершился без готового файла');
-          }
-
-          // 2.3) Скачиваем результат и выходим из цикла
-          const blob = new Blob([fileBlob], {
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          });
-          const downloadUrl = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.style.display = 'none';
-          link.href = downloadUrl;
-          link.download = `${taskId}_report.docx`;
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            window.URL.revokeObjectURL(downloadUrl);
-            document.body.removeChild(link);
-          }, 100);
-
-          success = true;
-          break;
-        } catch (err) {
-          // 500 от сервера — просто переходим к следующему датасету
-          if (err.response?.status === 500) {
-            console.warn(
-              `Обработка датасета ${displaySet.SeriesInstanceUID} вернула 500, пробуем следующий…`
-            );
-            continue;
-          }
-          // Другие ошибки — кидаем дальше
-          throw err;
-        }
-      }
-
-      // 3) Если ни один датасет не сработал — сообщаем об этом в консоль
-      if (!success) {
-        console.log('Data Error');
-        uiNotificationService.show({
-          title: t('Header:Processing error'),
-          message: t(
-            'Header:The study does not contain a series with a sagittal slice'
-          ),
-          type: 'error',
-        });
-      }
-    } catch (err) {
-      console.error('Ошибка при скачивании отчёта:', err);
+        title: t('Header:Processing error'),
+        message: t(''),
+        type: 'error',
+      });
     } finally {
       setIsAnalyzing(false);
     }
@@ -368,10 +218,8 @@ function ViewerHeader({
       servicesManager={servicesManager}
       appConfig={appConfig}
       onClickDelete={onClickDelete}
-      handleMRStudyClick={handleMRStudyClick}
       handleMGStudyClick={handleMGStudyClick}
       isAnalyzing={isAnalyzing}
-      isMRStudy={isMr}
       isMGStudy={isMg}
     >
       <ErrorBoundary context="Primary Toolbar">

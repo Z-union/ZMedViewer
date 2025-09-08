@@ -91,6 +91,10 @@
     {
       "packageName": "zmed-mode-longitudinal",
       "version": "0.0.1"
+    },
+    {
+      "packageName": "zmed-mr-mode",
+      "version": "0.0.1"
     }
   ],
   "public": [

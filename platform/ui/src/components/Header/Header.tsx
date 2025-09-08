@@ -1,3 +1,4 @@
+// Header.tsx
 import React, { ReactNode } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
@@ -11,7 +12,6 @@ import Dropdown from '../Dropdown';
 import HeaderPatientInfo from '../HeaderPatientInfo';
 import Button from '../Button';
 import { PatientInfoVisibility } from '../../types/PatientInfoVisibility';
-import axios from 'axios';
 
 function Spinner() {
   return <div className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />;
@@ -29,29 +29,21 @@ function Header({
   Secondary,
   appConfig,
   onClickDelete,
-  handleMRStudyClick,
   isAnalyzing,
-  isMRStudy,
   isMGStudy,
   handleMGStudyClick,
   ...props
-}: withAppTypes): ReactNode {
+}: any): ReactNode {
   const { t } = useTranslation('Header');
 
-  // TODO: this should be passed in as a prop instead and the react-router-dom
-  // dependency should be dropped
   const onClickReturn = () => {
     if (isReturnEnabled && onClickReturnButton) {
       onClickReturnButton();
     }
   };
 
-
   return (
-    <NavBar
-      isSticky={isSticky}
-      {...props}
-    >
+    <NavBar isSticky={isSticky} {...props}>
       <div className="relative h-[48px] items-center ">
         <div className="absolute left-0 top-1/2 flex -translate-y-1/2 items-center">
           <div
@@ -63,27 +55,24 @@ function Header({
             data-cy="return-to-work-list"
           >
             {isReturnEnabled && (
-              <Icon
-                name="chevron-left"
-                className="text-primary-active w-8"
-              />
+              <Icon name="chevron-left" className="text-primary-active w-8" />
             )}
             <div className="ml-1">
               {WhiteLabeling?.createLogoComponentFn?.(React, props) || <Svg name="logo-ohif" />}
             </div>
           </div>
         </div>
+
         <div className="absolute top-1/2 left-[250px]  h-8 -translate-y-1/2">{Secondary}</div>
+
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transform">
           <div className="flex items-center justify-center space-x-2">{children}</div>
         </div>
+
         <div className="absolute right-0 top-1/2 flex -translate-y-1/2 select-none items-center">
           {showPatientInfo !== PatientInfoVisibility.DISABLED && (
             <>
-              <HeaderPatientInfo
-                servicesManager={servicesManager}
-                appConfig={appConfig}
-              />
+              <HeaderPatientInfo servicesManager={servicesManager} appConfig={appConfig} />
 
               {isMGStudy && (
                 <>
@@ -95,7 +84,6 @@ function Header({
                     disabled={isAnalyzing}
                   >
                     <span className="invisible select-none">{t('AI Analysis')}</span>
-
                     <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                       {isAnalyzing ? <Spinner /> : <span>{t('AI Analysis')}</span>}
                     </span>
@@ -103,42 +91,18 @@ function Header({
                 </>
               )}
 
-              {isMRStudy && (
-                <>
-                  <div className="border-primary-dark mx-1.5 h-[25px] border-r"></div>
-                  <Button
-                    size="small"
-                    className="relative bg-orange-600 hover:bg-orange-500"
-                    onClick={handleMRStudyClick}
-                    disabled={isAnalyzing}
-                  >
-                    <span className="invisible select-none">{t('AI Analysis')}</span>
+              {/* MR-кнопка удалена полностью */}
 
-                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      {isAnalyzing ? <Spinner /> : <span>{t('AI Analysis')}</span>}
-                    </span>
-                  </Button>
-                </>
-              )}
               <div className="border-primary-dark mx-1.5 h-[25px] border-r" />
 
-              <Button
-                size="small"
-                className="bg-red-600 hover:bg-red-500"
-                onClick={onClickDelete}
-              >
+              <Button size="small" className="bg-red-600 hover:bg-red-500" onClick={onClickDelete}>
                 {t('Delete')}
               </Button>
             </>
           )}
           <div className="border-primary-dark mx-1.5 h-[25px] border-r"></div>
           <div className="flex-shrink-0">
-            <Dropdown
-              id="options"
-              showDropdownIcon={false}
-              list={menuOptions}
-              alignment="right"
-            >
+            <Dropdown id="options" showDropdownIcon={false} list={menuOptions} alignment="right">
               <IconButton
                 id={'options-settings-icon'}
                 variant="text"

@@ -5,6 +5,7 @@ import getLayoutTemplateModule from './getLayoutTemplateModule';
 import getToolbarModule from './getToolbarModule';
 import { Types } from '@ohif/core';
 import PanelAI from './panels/PanelAI';
+import PanelMR from './panels/PanelMR';
 import config from './config'
 import getCommandsModule from './commandsModule';
 import React from 'react';
@@ -54,6 +55,15 @@ export default {
         />
       );
     };
+    const wrappedPanelMR = () => {
+      return (
+        <PanelMR
+          commandsManager={commandsManager}
+          servicesManager={servicesManager}
+          extensionManager={extensionManager}
+        />
+      );
+    };
     return [
       {
         name: 'panelZMedAIInnopolist',
@@ -61,6 +71,13 @@ export default {
         iconLabel: 'ZFlu',
         label: 'ZFlu',
         component: wrappedPanel,
+      },
+      {
+        name: 'panelZMedMR',
+        iconName: 'tab-segmentation',
+        iconLabel: 'ZFlu',
+        label: 'Z-med | SCAI',
+        component: wrappedPanelMR,
       },
     ];
   },
@@ -74,7 +91,7 @@ export default {
     servicesManager,
     commandsManager,
     extensionManager,
-  }) => {},
+  }) => { },
   /**
    * ToolbarModule should provide a list of tool buttons that will be available in OHIF
    * for Modes to consume and use in the toolbar. Each tool button is defined by
@@ -101,7 +118,7 @@ export default {
     servicesManager,
     commandsManager,
     extensionManager,
-  }) => {},
+  }) => { },
   /**
    * HangingProtocolModule should provide a list of hanging protocols that will be
    * available in OHIF for Modes to use to decide on the structure of the viewports
@@ -113,7 +130,7 @@ export default {
     servicesManager,
     commandsManager,
     extensionManager,
-  }) => {},
+  }) => { },
   /**
    * CommandsModule should provide a list of commands that will be available in OHIF
    * for Modes to consume and use in the viewports. Each command is defined by
@@ -132,7 +149,7 @@ export default {
     servicesManager,
     commandsManager,
     extensionManager,
-  }) => {},
+  }) => { },
   /**
    * DataSourceModule should provide a list of data sources to be used in OHIF.
    * DataSources can be used to map the external data formats to the OHIF's
@@ -147,13 +164,13 @@ export default {
   //   extensionManager,
   // }) => {
   // return [
-    // {
-    //   name: 'zmedGPT',
-    //   value: {
-    //     id: 'ZMed-ChatGPT',
-    //     component: ChatGPT,
-    //   },
-    // },
+  // {
+  //   name: 'zmedGPT',
+  //   value: {
+  //     id: 'ZMed-ChatGPT',
+  //     component: ChatGPT,
+  //   },
+  // },
   // ];
   // }
 };

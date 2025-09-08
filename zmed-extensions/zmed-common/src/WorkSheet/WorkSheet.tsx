@@ -420,30 +420,47 @@ function WorkSheet({
         </StudyListExpandedRow>
       ),
       onClickRow: () => {
-        // Переход на исследование сразу при нажатии на него
-        const basicViewerMode = appConfig.loadedModes.find(obj => obj.routeName === 'viewer')
+        // Выбор режимов
+        const modes = appConfig.loadedModes || [];
+        const basicViewerMode = modes.find(m => m.routeName === 'viewer');
+        const mrViewerMode = modes.find(m => m.routeName === 'mr-viewer');
 
-        const modalitiesToCheck = modalities.replaceAll('/', '\\');
+        // Нормализация модальностей
+        const modalitiesToCheck = String(modalities || '').replaceAll('/', '\\');
+        const hasMR = modalitiesToCheck
+          .split('\\')
+          .some(m => m.trim().toUpperCase() === 'MR');
 
-        const isValidModeCheck = basicViewerMode.isValidMode({
-          modalities: modalitiesToCheck,
-          study,
-        });
+        // Целевой режим
+        const targetMode = hasMR ? mrViewerMode : basicViewerMode;
 
-        const isValidMode = isValidModeCheck === !!isValidModeCheck;
-
-        if (!isValidMode) {
+        if (!targetMode) {
           uiNotificationService.show({
-            title: t('Invalid mode'),
-            message: t('Cannot open the study in basic Viewer'),
+            title: t('Mode not found'),
+            message: t('Cannot find a suitable viewer mode'),
             type: 'error',
           });
           return;
         }
 
-        isValidMode && navigate(
-          `/${basicViewerMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`
-        )
+        // Валидность выбранного режима
+        const isValidMode = typeof targetMode.isValidMode === 'function'
+          ? !!targetMode.isValidMode({ modalities: modalitiesToCheck, study })
+          : true;
+
+        if (!isValidMode) {
+          uiNotificationService.show({
+            title: t('Invalid mode'),
+            message: hasMR
+              ? t('Cannot open the study in MR Viewer')
+              : t('Cannot open the study in basic Viewer'),
+            type: 'error',
+          });
+          return;
+        }
+
+        // Навигация в выбранный режим
+        navigate(`/${targetMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`);
       },
 
       // Открытие окна с выбором мода (пока мод 1, можно отключить)
