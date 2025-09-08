@@ -7,7 +7,7 @@ import moreTools from './moreTools.ts';
 
 // Allow this mode by excluding non-imaging modalities such as SR, SEG
 // Also, SM is not a simple imaging modalities, so exclude it.
-const NON_IMAGE_MODALITIES = ['SM', 'ECG', 'SR', 'SEG', 'RTSTRUCT'];
+const NON_IMAGE_MODALITIES = ['SM', 'ECG', 'SEG', 'RTSTRUCT'];
 
 const ohif = {
   layout: 'zmed-common.layoutTemplateModule.viewerLayout',

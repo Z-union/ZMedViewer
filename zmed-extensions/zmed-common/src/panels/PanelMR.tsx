@@ -10,8 +10,12 @@ const MR = ['MR'];
 
 type UIState = 'idle' | 'loading' | 'polling' | 'done' | 'unsupported' | 'error';
 
-interface ServicesManager { services: any; }
-interface PanelMRProps { servicesManager: ServicesManager; }
+interface ServicesManager {
+  services: any;
+}
+interface PanelMRProps {
+  servicesManager: ServicesManager;
+}
 
 interface Row {
   disk: string | null;
@@ -31,17 +35,22 @@ function flattenFirst<T = any>(v: any, def: T | null = null): T | null {
   }
   return (v ?? def) as T | null;
 }
+
 function formatRuDate(value?: string | number | Date | null): string {
   if (!value) return '—';
   try {
     if (typeof value === 'string' && /^\d{8}$/.test(value)) {
-      const y = value.slice(0, 4), m = value.slice(4, 6), d = value.slice(6, 8);
+      const y = value.slice(0, 4),
+        m = value.slice(4, 6),
+        d = value.slice(6, 8);
       return `${d}.${m}.${y}`;
     }
     const dt = new Date(value);
     if (Number.isNaN(+dt)) return '—';
     return dt.toLocaleDateString('ru-RU');
-  } catch { return '—'; }
+  } catch {
+    return '—';
+  }
 }
 
 export default function PanelMR({ servicesManager }: PanelMRProps) {
@@ -55,18 +64,27 @@ export default function PanelMR({ servicesManager }: PanelMRProps) {
 
   const studyId: string | null =
     DisplaySetService?.activeDisplaySets?.[0]?.StudyInstanceUID ??
-    displaySet?.StudyInstanceUID ?? null;
+    displaySet?.StudyInstanceUID ??
+    null;
 
   if (!studyId) {
     return <div className="px-3 py-4 text-primary-light">{t('MR study not selected')}</div>;
   }
 
-  return <PanelMRInner key={studyId} servicesManager={servicesManager} studyId={studyId} t={t} />;
+  return (
+    <PanelMRInner key={studyId} servicesManager={servicesManager} studyId={studyId} t={t} />
+  );
 }
 
 function PanelMRInner({
-  servicesManager, studyId, t
-}: { servicesManager: ServicesManager; studyId: string, t: (k: string) => string }) {
+  servicesManager,
+  studyId,
+  t,
+}: {
+  servicesManager: ServicesManager;
+  studyId: string;
+  t: (k: string) => string;
+}) {
   const storageKey = `MRTOOLS:${studyId}`;
 
   const [ui, setUi] = useState<UIState>('idle');
@@ -87,17 +105,26 @@ function PanelMRInner({
     }
   };
 
-  const persist = (data: Partial<{
-    processingId: string | null;
-    processedAt: string | null;
-    reportAvailable: boolean;
-    reportPath: string | null;
-    rows: Row[];
-  }> = {}) => {
+  const persist = (
+    data: Partial<{
+      processingId: string | null;
+      processedAt: string | null;
+      reportAvailable: boolean;
+      reportPath: string | null;
+      rows: Row[];
+    }> = {}
+  ) => {
     const snapshot = {
-      processingId, processedAt, reportAvailable, reportPath, rows, ...data,
+      processingId,
+      processedAt,
+      reportAvailable,
+      reportPath,
+      rows,
+      ...data,
     };
-    try { sessionStorage.setItem(storageKey, JSON.stringify(snapshot)); } catch { }
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify(snapshot));
+    } catch { }
   };
 
   useEffect(() => {
@@ -122,13 +149,23 @@ function PanelMRInner({
 
     const controller = new AbortController();
     (async () => {
-      setUi('loading');
+      setUi(prev => (prev === 'done' && rows.length ? 'done' : 'loading'));
       setErr('');
       try {
         const { data } = await axios.get(
           `${BASE}status/${encodeURIComponent(studyId)}`,
           { headers: { accept: 'application/json' }, signal: controller.signal }
         );
+
+        // Не считать "не найдено/не обработан" ошибкой, без смены на error
+        if (
+          typeof data?.detail === 'string' &&
+          /not processed yet|not\s*found/i.test(data.detail)
+        ) {
+          setUi('idle');
+          setErr('');
+          return;
+        }
 
         const procId: string | null = data.processing_id ?? null;
         const repAvail: boolean = !!data.report_available;
@@ -141,12 +178,30 @@ function PanelMRInner({
         if (procAt) setProcessedAt(procAt);
 
         persist({
-          processingId: procId, processedAt: procAt, reportAvailable: repAvail, reportPath: repUrl,
+          processingId: procId,
+          processedAt: procAt,
+          reportAvailable: repAvail,
+          reportPath: repUrl,
         });
 
         setUi('done');
       } catch (e: any) {
-        if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return;
+        if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED')
+          return;
+
+        const status = e?.response?.status;
+        const detail: string | undefined = e?.response?.data?.detail;
+
+        if (
+          (status === 404 || status === 400) &&
+          typeof detail === 'string' &&
+          /not processed yet|not\s*found/i.test(detail)
+        ) {
+          setUi('idle');
+          setErr('');
+          return;
+        }
+
         setErr(t('Status error'));
         setUi('error');
       }
@@ -156,6 +211,7 @@ function PanelMRInner({
       controller.abort();
       clearPollTimer();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyId]);
 
   const mapResultsToRows = (resultsStr: any): Row[] => {
@@ -176,7 +232,9 @@ function PanelMRInner({
               ? Number(item.hernia_max_protrusion_mm)
               : null,
       }));
-    } catch { return []; }
+    } catch {
+      return [];
+    }
   };
 
   const handleProcess = async () => {
@@ -247,7 +305,8 @@ function PanelMRInner({
             return;
           }
         } catch (e: any) {
-          if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return;
+          if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED')
+            return;
         }
         tries += 1;
         if (tries >= maxTries) {
@@ -364,7 +423,7 @@ function PanelMRInner({
               <div className="mt-2 text-xs text-red-400">{err || t('Error')}</div>
             )}
 
-            {!isBusy && rows.length === 0 && (
+            {!isBusy && rows.length === 0 && ui !== 'error' && (
               <div className="text-base text-primary-light">
                 {t('Data preview will be available after re-analysis')}
               </div>
