@@ -95,6 +95,10 @@
     {
       "packageName": "zmed-mr-mode",
       "version": "0.0.1"
+    },
+    {
+      "packageName": "mg-mode",
+      "version": "0.0.1"
     }
   ],
   "public": [

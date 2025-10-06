@@ -65,6 +65,8 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
     getAuthrorizationHeader,
     generateWadoHeader;
 
+  console.log(dicomWebConfig.backendUrl)
+
   const implementation = {
     initialize: ({ params, query }) => {
       if (
@@ -151,7 +153,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             };
             const config: AxiosRequestConfig = {
               method: 'get',
-              url: dicomWebConfig.personalAccountUri + '/api/studies/',
+              url: dicomWebConfig.backendUrl + dicomWebConfig.personalAccountUri + '/api/studies/',
               headers: head,
               params,
             };
@@ -227,7 +229,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
           let config: AxiosRequestConfig = {
             method: 'delete',
-            url: dicomWebConfig.personalAccountUri + '/api/studies/',//'http://51.250.72.247:5057/api/studies/',
+            url: dicomWebConfig.backendUrl + dicomWebConfig.personalAccountUri + '/api/studies/',
             headers: head,
             data: body,
           };
@@ -357,16 +359,16 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           //     );
           //   });
           return (function () {
-              const headers = {
-                ...getAuthrorizationHeader(),
-                'Content-Type': 'application/json',
-              };
-              return axios.post(
-                dicomWebConfig.personalAccountUri + '/api/studies/', //'http://51.250.72.247:5057/api/studies/',
-                formData,
-                { headers }
-              );
-            })();
+            const headers = {
+              ...getAuthrorizationHeader(),
+              'Content-Type': 'application/json',
+            };
+            return axios.post(
+              dicomWebConfig.backendUrl + dicomWebConfig.personalAccountUri + '/api/studies/',
+              formData,
+              { headers }
+            );
+          })();
         } else {
           const meta = {
             FileMetaInformationVersion:

@@ -60,6 +60,7 @@ window.config = {
           enabled: true,
         },
         personalAccountUri: '/personal',
+        backendUrl: 'https://dev-zview.z-union.ru'
       },
     },
     // {

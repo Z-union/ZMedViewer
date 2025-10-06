@@ -1,11 +1,11 @@
 // PanelMR.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import { Button } from '@ohif/ui';
+import { Button, Icon } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import './PanelMR.css';
+import { useAppConfig } from '@state';
 
-const BASE = 'https://zview.z-union.ru/mrtools/';
 const MR = ['MR'];
 
 type UIState = 'idle' | 'loading' | 'polling' | 'done' | 'unsupported' | 'error';
@@ -54,6 +54,8 @@ function formatRuDate(value?: string | number | Date | null): string {
 }
 
 export default function PanelMR({ servicesManager }: PanelMRProps) {
+  const [appConfig] = useAppConfig();
+  const BASE = appConfig.zmedtools.mrURL;
   const { t } = useTranslation('SidePanel');
   const { DisplaySetService } = servicesManager.services;
 
@@ -72,7 +74,7 @@ export default function PanelMR({ servicesManager }: PanelMRProps) {
   }
 
   return (
-    <PanelMRInner key={studyId} servicesManager={servicesManager} studyId={studyId} t={t} />
+    <PanelMRInner key={studyId} servicesManager={servicesManager} studyId={studyId} t={t} BASE={BASE} />
   );
 }
 
@@ -80,10 +82,12 @@ function PanelMRInner({
   servicesManager,
   studyId,
   t,
+  BASE
 }: {
   servicesManager: ServicesManager;
   studyId: string;
   t: (k: string) => string;
+  BASE: string;
 }) {
   const storageKey = `MRTOOLS:${studyId}`;
 
@@ -375,10 +379,13 @@ function PanelMRInner({
   return (
     <div className="flex h-full min-h-0 flex-col px-3 pt-3 pb-1 text-white">
       <div className="sticky top-0 z-10 -mx-3 -mt-3 px-3 pt-3 pb-2 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/30 border-b border-white/10">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 mt-2">
           <Button
+            startIcon={<Icon
+              className="!h-[12px] !w-[12px] text-black"
+              name="sparkles" />}
             size="initial"
-            className="px-2 py-2 text-base"
+            className="px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
             color="primaryActive"
             variant="outlined"
             disabled={isBusy}
@@ -389,7 +396,7 @@ function PanelMRInner({
 
           <Button
             size="initial"
-            className="px-2 py-2 text-base bg-orange-600 hover:bg-orange-500"
+            className="px-2 py-2 text-base"
             variant="outlined"
             disabled={!reportAvailable || isBusy}
             onClick={handleDownload}

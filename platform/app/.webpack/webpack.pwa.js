@@ -72,7 +72,8 @@ module.exports = (env, argv) => {
         SRC_DIR,
         path.resolve(__dirname, 'zmed-extensions/zmed-common/node_modules'),
         path.resolve(__dirname, 'zmed-extensions/base-mode/node_modules'),
-      ]
+        path.resolve(__dirname, 'zmed-extensions/mg-mode/node_modules'),
+      ],
     },
     plugins: [
       new Dotenv(),

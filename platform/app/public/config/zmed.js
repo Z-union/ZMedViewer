@@ -60,6 +60,7 @@ window.config = {
           enabled: true,
         },
         personalAccountUri: '/personal',
+        backendUrl: 'https://zview.z-union.ru'
       },
     },
     // {
@@ -116,7 +117,7 @@ window.config = {
     {
       // ~ REQUIRED
       // Authorization Server URL
-      authority: '/auth/realms/ohif',
+      authority: 'https://zview.z-union.ru/auth/realms/ohif',
       client_id: 'ohif-viewer',
       redirect_uri: 'https://zview.z-union.ru/callback', // `OHIFStandaloneViewer.js`
       // "Authorization Code Flow"

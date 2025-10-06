@@ -6,6 +6,7 @@ import getToolbarModule from './getToolbarModule';
 import { Types } from '@ohif/core';
 import PanelAI from './panels/PanelAI';
 import PanelMR from './panels/PanelMR';
+import PanelMG from './panels/PanelMG';
 import config from './config'
 import getCommandsModule from './commandsModule';
 import React from 'react';
@@ -64,20 +65,36 @@ export default {
         />
       );
     };
+    const wrappedPanelMG = () => {
+      return (
+        <PanelMG
+          commandsManager={commandsManager}
+          servicesManager={servicesManager}
+          extensionManager={extensionManager}
+        />
+      );
+    };
     return [
       {
         name: 'panelZMedAIInnopolist',
-        iconName: 'tab-segmentation',
+        iconName: 'tab-roi-threshold',
         iconLabel: 'ZFlu',
         label: 'ZFlu',
         component: wrappedPanel,
       },
       {
         name: 'panelZMedMR',
-        iconName: 'tab-segmentation',
+        iconName: 'tab-roi-threshold',
         iconLabel: 'ZFlu',
         label: 'Z-med | SCAI',
         component: wrappedPanelMR,
+      },
+      {
+        name: 'panelZMedMG',
+        iconName: 'tab-roi-threshold',
+        iconLabel: 'Z-med MG',
+        label: 'Z-med MG',
+        component: wrappedPanelMG,
       },
     ];
   },

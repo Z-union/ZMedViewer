@@ -179,6 +179,8 @@ import { ReactComponent as zmedLogo } from './../../assets/icons/zmed-logo.svg';
 import { ReactComponent as zmedWhiteLogoWithText } from './../../assets/icons/zmed-white-logo-with-text.svg';
 import { ReactComponent as zmedWhiteLogoWithoutText } from './../../assets/icons/zmed-white-logo-without-text.svg';
 import { ReactComponent as zmedBlackLogoWithText } from './../../assets/icons/zmed-black-logo-with-text.svg';
+import { ReactComponent as sparkle } from './../../assets/icons/sparkle.svg';
+import { ReactComponent as sparkles } from './../../assets/icons/sparkles.svg';
 
 /** Volume Rendering */
 import CTAAA from './../../assets/icons/CT-AAA.png';
@@ -292,6 +294,8 @@ const ICONS = {
   'zmed-white-logo-with-text': zmedWhiteLogoWithText,
   'zmed-white-logo-without-text': zmedWhiteLogoWithoutText,
   'zmed-black-logo-with-text': zmedBlackLogoWithText,
+  'sparkle': sparkle,
+  'sparkles': sparkles,
 
   /** Tools */
   'toggle-dicom-overlay': toggleDicomOverlay,

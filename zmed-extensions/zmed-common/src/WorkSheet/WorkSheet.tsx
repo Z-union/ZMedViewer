@@ -424,6 +424,7 @@ function WorkSheet({
         const modes = appConfig.loadedModes || [];
         const basicViewerMode = modes.find(m => m.routeName === 'viewer');
         const mrViewerMode = modes.find(m => m.routeName === 'mr-viewer');
+        const mgViewerMode = modes.find(m => m.routeName === 'mg-viewer');
 
         // Нормализация модальностей
         const modalitiesToCheck = String(modalities || '').replaceAll('/', '\\');
@@ -431,8 +432,11 @@ function WorkSheet({
           .split('\\')
           .some(m => m.trim().toUpperCase() === 'MR');
 
+        const hasMG = modalitiesToCheck
+          .split('\\')
+          .some(m => m.trim().toUpperCase() === 'MG');
         // Целевой режим
-        const targetMode = hasMR ? mrViewerMode : basicViewerMode;
+        const targetMode = hasMR ? mrViewerMode : hasMG ? mgViewerMode : basicViewerMode;
 
         if (!targetMode) {
           uiNotificationService.show({

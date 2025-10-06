@@ -26,7 +26,6 @@ function ViewerHeader({
   servicesManager,
   appConfig,
 }: withAppTypes) {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -96,53 +95,6 @@ function ViewerHeader({
       pathname: '/',
       search: decodeURIComponent(searchQuery.toString()),
     });
-  };
-
-  const isMGStudy = () => {
-    const displaySet = DisplaySetService.getActiveDisplaySets().find(
-      ds => ds && 'MG'.includes(ds.Modality)
-    );
-    return !!displaySet;
-  };
-
-  const isMg = isMGStudy();
-
-  const handleMGStudyClick = async () => {
-    console.log('handleMGStudyClick:ViewerHeader');
-    setIsAnalyzing(true);
-
-    try {
-      const study_uid =
-        DisplaySetService.getActiveDisplaySets()[0]['StudyInstanceUID'];
-      const urlPredict = appConfig?.zmedtools?.mgURL + 'predict';
-
-      const postData = { study_instance_uid: study_uid };
-      const postRes = await axios.post(urlPredict, postData, {
-        responseType: 'blob',
-      });
-
-      if (postRes.status === 200) {
-        const reportBlob = postRes.data;
-        const reportUrl = URL.createObjectURL(reportBlob);
-        const link = document.createElement('a');
-        link.href = reportUrl;
-        link.download = `mammography_report_${study_uid}.docx`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        console.error('Ошибка при обработке MG-исследования:', postRes);
-      }
-    } catch (error) {
-      console.error('Ошибка при обработке MG-исследования:', error);
-      uiNotificationService.show({
-        title: t('Header:Processing error'),
-        message: t(''),
-        type: 'error',
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
   };
 
   const { t } = useTranslation();
@@ -218,9 +170,6 @@ function ViewerHeader({
       servicesManager={servicesManager}
       appConfig={appConfig}
       onClickDelete={onClickDelete}
-      handleMGStudyClick={handleMGStudyClick}
-      isAnalyzing={isAnalyzing}
-      isMGStudy={isMg}
     >
       <ErrorBoundary context="Primary Toolbar">
         <div className="relative flex justify-center gap-[4px]">

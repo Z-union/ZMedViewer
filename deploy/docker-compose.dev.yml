@@ -1,0 +1,7 @@
+version: '3.5'
+
+services:
+  zmed_viewer:
+    ports:
+      - '80:80'
+      - '443:443'

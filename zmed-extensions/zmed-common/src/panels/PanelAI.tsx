@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
-import { Button } from '@ohif/ui';
+import { Button, Icon } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import StudyItem from './StudyItem';
 import axios from 'axios';
@@ -163,10 +163,10 @@ export default function PanelAI({
 
     const studyModality =
       fludisplaySets &&
-      (fludisplaySets != undefined || fludisplaySets.length != 0)
+        (fludisplaySets != undefined || fludisplaySets.length != 0)
         ? 'flu'
         : mrdisplaySets &&
-            (mrdisplaySets != undefined || mrdisplaySets.length != 0)
+          (mrdisplaySets != undefined || mrdisplaySets.length != 0)
           ? 'mr'
           : 'no';
 
@@ -368,7 +368,7 @@ export default function PanelAI({
       case AIState.finished:
       case AIState.finishedWithApply:
         return (
-          <div className="flex flex-col">
+          <div className="flex flex-col px-3">
             {seriesData.map((item) => (
               <StudyItem
                 key={item.title}
@@ -380,7 +380,8 @@ export default function PanelAI({
             ))}
             <Button
               size="initial"
-              className="px-2 py-2 text-base text-white"
+              startIcon={<Icon className="!h-[12px] !w-[12px] text-black" name="sparkles" />}
+              className="mt-2 px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
               color="light"
               variant="outlined"
               fullWidth
@@ -405,10 +406,11 @@ export default function PanelAI({
         );
       case AIState.notFinishedYet:
         return (
-          <div className="flex flex-col justify-center w-1 mb-2 text-primary-light">
+          <div className="flex flex-col justify-center w-1 mb-2 px-3 text-primary-light">
             <Button
               size="initial"
-              className="mt-2 px-2 py-2 text-base text-white"
+              startIcon={<Icon className="!h-[12px] !w-[12px] text-black" name="sparkles" />}
+              className="mt-2 px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
               color="primaryActive"
               variant="outlined"
               fullWidth

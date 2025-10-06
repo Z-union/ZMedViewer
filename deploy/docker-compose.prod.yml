@@ -1,0 +1,31 @@
+version: '3.5'
+
+services:
+  zmed_viewer:
+    ports:
+      - '127.0.0.1:81:80'
+      - '127.0.0.1:444:443'
+    networks:
+      - default
+      - spine_net
+
+  zmed_keycloak:
+    networks:
+      - default
+
+  zmed_postgres:
+    volumes:
+      - zmed_postgres_data:/var/lib/postgresql/data
+    networks:
+      - default
+
+volumes:
+  zmed_postgres_data:
+    driver: local
+
+networks:
+  spine_net:
+    external: true
+    name: spine_analyzer_default
+  default:
+    driver: bridge

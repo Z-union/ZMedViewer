@@ -1,9 +1,9 @@
 import { hotkeys } from '@ohif/core';
 import type { withAppTypes } from '@ohif/core/types';
-import toolbarButtons from './toolbarButtons';
+import toolbarButtons from './toolbarButtons.ts';
 import { id } from './id.js';
 import initToolGroups from './initToolGroups.js';
-import moreTools from './moreTools';
+import moreTools from './moreTools.ts';
 
 // Allow this mode by excluding non-imaging modalities such as SR, SEG
 // Also, SM is not a simple imaging modalities, so exclude it.
@@ -53,8 +53,8 @@ const dicomRt = {
     '@ohif/extension-cornerstone-dicom-rt.sopClassHandlerModule.dicom-rt',
 };
 
-const panelZMedMR = {
-  panel: 'zmed-common.panelModule.panelZMedMR',
+const panelZMedMG = {
+  panel: 'zmed-common.panelModule.panelZMedMG',
 };
 
 const extensionDependencies = {
@@ -75,8 +75,8 @@ function modeFactory({ modeConfiguration }) {
     // TODO: We're using this as a route segment
     // We should not be.
     id,
-    routeName: 'mr-viewer',
-    displayName: 'MR Viewer',
+    routeName: 'mg-viewer',
+    displayName: 'MG Viewer',
     /**
      * Lifecycle hooks
      */
@@ -176,7 +176,7 @@ function modeFactory({ modeConfiguration }) {
             props: {
               leftPanels: [tracked.thumbnailList],
               rightPanels: [
-                panelZMedMR.panel,
+                panelZMedMG.panel,
                 dicomSeg.panel,
               ],
               rightPanelDefaultClosed: true,
