@@ -6,43 +6,93 @@ import { useTranslation } from 'react-i18next';
 import './PanelMR.css';
 import { useAppConfig } from '@state';
 
-const MR = ['MR'];
+const MR = ['MR'] as const;
 
 type UIState = 'idle' | 'loading' | 'polling' | 'done' | 'unsupported' | 'error';
 
+interface DisplaySet {
+  Modality?: string;
+  StudyInstanceUID?: string;
+}
+interface DisplaySetServiceLike {
+  getActiveDisplaySets?: () => DisplaySet[];
+  activeDisplaySets?: DisplaySet[];
+}
+interface Services {
+  DisplaySetService?: DisplaySetServiceLike;
+}
 interface ServicesManager {
-  services: any;
+  services: Services;
 }
 interface PanelMRProps {
   servicesManager: ServicesManager;
 }
 
-interface Row {
-  disk: string | null;
-  pfirrmann: string | number | null;
-  bulging: string | number | null;
-  narrowing: string | number | null;
-  hernia: boolean;
-  spondy: boolean;
-  hernia_mm: number | null;
+type ZeroOne = 0 | 1;
+
+interface BackendDiskItem {
+  disk_label?: number | string | null;
+  Modic?: number[] | null;
+  ['UP endplate']?: number[][] | null;
+  ['LOW endplate']?: number[][] | null;
+  Spondylolisthesis?: number[][] | null;
+  ['Disc herniation']?: number[][] | null;
+  ['Disc narrowing']?: number[][] | null;
+  ['Disc bulging']?: number[][] | null;
+  ['Pfirrmann grade']?: Array<number | string> | null;
+
+  hernia_detected?: boolean | null;
+  hernia_volume_mm3?: number | string | null;
+  hernia_max_protrusion_mm?: number | string | null;
+  spondy_detected?: boolean | null;
+  spondy_displacement_mm?: number | string | null;
+  spondy_displacement_percentage?: number | string | null;
+  spondy_grade?: number | string | null;
 }
 
-function flattenFirst<T = any>(v: any, def: T | null = null): T | null {
+interface BackendPipelineResult {
+  results?: string;
+}
+
+interface BackendStatusResponse {
+  status?: string;
+  study_id?: string;
+  processing_id?: string | null;
+  report_available?: boolean;
+  report_download_url?: string | null;
+  processed_at?: string | null;
+  detail?: string;
+}
+
+interface BackendProcessResponse extends BackendStatusResponse {
+  pipeline_result?: BackendPipelineResult;
+}
+
+interface Row {
+  diskLabel: string;
+  pfirrmann: number | string | null;
+  modic: 1 | 2 | 3 | null;
+  bulging: ZeroOne | null;
+  narrowing: ZeroOne | null;
+  herniation: ZeroOne | null;
+}
+
+function flattenFirst<T>(v: unknown, def: T | null = null): T | null {
   if (Array.isArray(v)) {
-    const a = v[0];
-    if (Array.isArray(a)) return (a[0] ?? def) as T | null;
-    return (a ?? def) as T | null;
+    const a = (v as unknown[])[0] as unknown;
+    if (Array.isArray(a)) return ((((a as unknown[])[0]) ?? def) as T) ?? def;
+    return ((a ?? def) as T) ?? def;
   }
-  return (v ?? def) as T | null;
+  return ((v ?? def) as T) ?? def;
 }
 
 function formatRuDate(value?: string | number | Date | null): string {
   if (!value) return '—';
   try {
     if (typeof value === 'string' && /^\d{8}$/.test(value)) {
-      const y = value.slice(0, 4),
-        m = value.slice(4, 6),
-        d = value.slice(6, 8);
+      const y = value.slice(0, 4);
+      const m = value.slice(4, 6);
+      const d = value.slice(6, 8);
       return `${d}.${m}.${y}`;
     }
     const dt = new Date(value);
@@ -53,15 +103,26 @@ function formatRuDate(value?: string | number | Date | null): string {
   }
 }
 
+function toHumanDiskLabel(raw: number | string | null, map?: Record<string, string>): string {
+  if (raw == null) return '-';
+  const key = String(raw);
+  if (map && map[key]) return map[key];
+  return `#${key}`;
+}
+
 export default function PanelMR({ servicesManager }: PanelMRProps) {
   const [appConfig] = useAppConfig();
-  const BASE = appConfig.zmedtools.mrURL;
+  const BASE: string = String(appConfig.zmedtools.mrURL ?? '');
+  const diskMap: Record<string, string> | undefined = appConfig?.zmedtools?.diskLabelMap as
+    | Record<string, string>
+    | undefined;
+
   const { t } = useTranslation('SidePanel');
   const { DisplaySetService } = servicesManager.services;
 
-  const displaySet = useMemo(() => {
+  const displaySet = useMemo<DisplaySet | undefined>(() => {
     const sets = DisplaySetService?.getActiveDisplaySets?.() || [];
-    return sets.find((ds: any) => ds && MR.includes(ds.Modality));
+    return sets.find(ds => ds && ds.Modality && MR.includes(ds.Modality));
   }, [DisplaySetService]);
 
   const studyId: string | null =
@@ -74,74 +135,128 @@ export default function PanelMR({ servicesManager }: PanelMRProps) {
   }
 
   return (
-    <PanelMRInner key={studyId} servicesManager={servicesManager} studyId={studyId} t={t} BASE={BASE} />
+    <PanelMRInner
+      key={studyId}
+      servicesManager={servicesManager}
+      studyId={studyId}
+      t={t}
+      BASE={BASE}
+      diskMap={diskMap}
+    />
   );
 }
 
 function PanelMRInner({
-  servicesManager,
   studyId,
   t,
-  BASE
+  BASE,
+  diskMap,
 }: {
-  servicesManager: ServicesManager;
   studyId: string;
   t: (k: string) => string;
   BASE: string;
+  diskMap?: Record<string, string>;
 }) {
   const storageKey = `MRTOOLS:${studyId}`;
 
   const [ui, setUi] = useState<UIState>('idle');
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState<string>('');
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processedAt, setProcessedAt] = useState<string | null>(null);
-  const [reportAvailable, setReportAvailable] = useState(false);
+  const [reportAvailable, setReportAvailable] = useState<boolean>(false);
   const [reportPath, setReportPath] = useState<string | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
 
   const previewRef = useRef<HTMLDivElement | null>(null);
   const pollTimerRef = useRef<number | null>(null);
 
-  const clearPollTimer = () => {
+  const clearPollTimer = (): void => {
     if (pollTimerRef.current != null) {
       clearTimeout(pollTimerRef.current);
       pollTimerRef.current = null;
     }
   };
 
+  // helpers
+  const readSnapshot = (): {
+    processingId?: string | null;
+    processedAt?: string | null;
+    reportAvailable?: boolean;
+    reportPath?: string | null;
+    rows?: Row[];
+  } => {
+    try {
+      const raw = sessionStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  };
+
   const persist = (
-    data: Partial<{
+    patch: Partial<{
       processingId: string | null;
       processedAt: string | null;
       reportAvailable: boolean;
       reportPath: string | null;
       rows: Row[];
-    }> = {}
-  ) => {
+    }> = {},
+    opts: { preserveRows?: boolean } = {}
+  ): void => {
+    const prev = readSnapshot();
+
+    // Если rows не переданы — сохраняем прежние
+    const nextRows =
+      'rows' in patch
+        ? patch.rows
+        : opts.preserveRows
+          ? (prev.rows ?? rows)
+          : (rows.length ? rows : (prev.rows ?? [])); // не пишем [] поверх имеющихся
+
     const snapshot = {
-      processingId,
-      processedAt,
-      reportAvailable,
-      reportPath,
-      rows,
-      ...data,
+      processingId: patch.processingId ?? processingId ?? prev.processingId ?? null,
+      processedAt: patch.processedAt ?? processedAt ?? prev.processedAt ?? null,
+      reportAvailable: patch.reportAvailable ?? reportAvailable ?? prev.reportAvailable ?? false,
+      reportPath: patch.reportPath ?? reportPath ?? prev.reportPath ?? null,
+      rows: nextRows,
     };
+
     try {
       sessionStorage.setItem(storageKey, JSON.stringify(snapshot));
-    } catch { }
+    } catch {
+      /* ignore */
+    }
   };
 
+
+  // ВАЖНО: сначала восстановление из sessionStorage, потом запрос статуса.
   useEffect(() => {
+    clearPollTimer();
+    setErr('');
+
+    // 1) Восстановление снапшота синхронно
+    let restoredRows: Row[] = [];
     try {
       const raw = sessionStorage.getItem(storageKey);
       if (raw) {
-        const s = JSON.parse(raw);
+        const s = JSON.parse(raw) as {
+          processingId?: string | null;
+          processedAt?: string | null;
+          reportAvailable?: boolean;
+          reportPath?: string | null;
+          rows?: Row[];
+        };
+        const safeRows = Array.isArray(s.rows) ? s.rows : [];
+        restoredRows = safeRows;
+
         setProcessingId(s.processingId ?? null);
         setProcessedAt(s.processedAt ?? null);
-        setReportAvailable(!!s.reportAvailable);
+        setReportAvailable(Boolean(s.reportAvailable));
         setReportPath(s.reportPath ?? null);
-        setRows(Array.isArray(s.rows) ? s.rows : []);
-        setUi('done');
+        setRows(safeRows);
+
+        // Не ставим isBusy. Если есть данные — показываем предпросмотр сразу.
+        setUi(safeRows.length ? 'done' : 'idle');
       } else {
         setRows([]);
         setUi('idle');
@@ -151,63 +266,55 @@ function PanelMRInner({
       setUi('idle');
     }
 
+    // 2) Актуализация статуса с сервера
     const controller = new AbortController();
     (async () => {
-      setUi(prev => (prev === 'done' && rows.length ? 'done' : 'loading'));
-      setErr('');
       try {
-        const { data } = await axios.get(
+        // Если уже есть предпросмотр, не прячем его лоадером.
+        if (!restoredRows.length) setUi('loading');
+
+        const { data } = await axios.get<BackendStatusResponse>(
           `${BASE}status/${encodeURIComponent(studyId)}`,
           { headers: { accept: 'application/json' }, signal: controller.signal }
         );
 
-        // Не считать "не найдено/не обработан" ошибкой, без смены на error
-        if (
-          typeof data?.detail === 'string' &&
-          /not processed yet|not\s*found/i.test(data.detail)
-        ) {
-          setUi('idle');
+        persist(
+          {
+            processingId: data.processing_id ?? null,
+            processedAt: data.processed_at ?? null,
+            reportAvailable: Boolean(data.report_available),
+            reportPath: data.report_download_url ?? null,
+            // rows не передаём — пусть сохранятся прежние, если были
+          },
+          { preserveRows: true }
+        );
+
+
+        if (typeof data.detail === 'string' && /not processed yet|not\s*found/i.test(data.detail)) {
+          setUi(prev => (prev === 'done' ? 'done' : 'idle'));
           setErr('');
           return;
         }
 
-        const procId: string | null = data.processing_id ?? null;
-        const repAvail: boolean = !!data.report_available;
-        const repUrl: string | null = data.report_download_url ?? null;
-        const procAt: string | null = data.processed_at ?? null;
 
-        setProcessingId(procId);
-        setReportAvailable(repAvail);
-        setReportPath(repUrl);
-        if (procAt) setProcessedAt(procAt);
+        setProcessingId(data.processing_id ?? null);
+        setReportAvailable(Boolean(data.report_available));
+        setReportPath(data.report_download_url ?? null);
+        if (data.processed_at) setProcessedAt(data.processed_at);
 
         persist({
-          processingId: procId,
-          processedAt: procAt,
-          reportAvailable: repAvail,
-          reportPath: repUrl,
+          processingId: data.processing_id ?? null,
+          processedAt: data.processed_at ?? null,
+          reportAvailable: Boolean(data.report_available),
+          reportPath: data.report_download_url ?? null,
         });
 
+        // Если был предпросмотр — остаёмся в done, иначе переключаемся в done после статуса.
         setUi('done');
-      } catch (e: any) {
-        if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED')
-          return;
-
-        const status = e?.response?.status;
-        const detail: string | undefined = e?.response?.data?.detail;
-
-        if (
-          (status === 404 || status === 400) &&
-          typeof detail === 'string' &&
-          /not processed yet|not\s*found/i.test(detail)
-        ) {
-          setUi('idle');
-          setErr('');
-          return;
-        }
-
+      } catch {
+        // Ошибка статуса не должна скрывать уже показанный предпросмотр.
         setErr(t('Status error'));
-        setUi('error');
+        setUi(prev => (prev === 'done' ? 'done' : 'error'));
       }
     })();
 
@@ -218,30 +325,44 @@ function PanelMRInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyId]);
 
-  const mapResultsToRows = (resultsStr: any): Row[] => {
+  const mapResultsToRows = (resultsStr?: string): Row[] => {
     if (!resultsStr) return [];
     try {
-      const arr = JSON.parse(resultsStr);
-      return (arr as any[]).map(item => ({
-        disk: item.disk_label ?? null,
-        pfirrmann: flattenFirst(item['Pfirrmann grade']),
-        bulging: flattenFirst(item['Disc bulging']),
-        narrowing: flattenFirst(item['Disc narrowing']),
-        hernia: !!item.hernia_detected,
-        spondy: !!item.spondy_detected,
-        hernia_mm:
-          typeof item.hernia_max_protrusion_mm === 'number'
-            ? item.hernia_max_protrusion_mm
-            : item.hernia_max_protrusion_mm
-              ? Number(item.hernia_max_protrusion_mm)
-              : null,
-      }));
+      const arr = JSON.parse(resultsStr) as BackendDiskItem[];
+      return arr.map((item): Row => {
+        const diskRaw = item.disk_label ?? null;
+        const diskLabel = toHumanDiskLabel(
+          typeof diskRaw === 'number' || typeof diskRaw === 'string' ? diskRaw : null,
+          diskMap
+        );
+
+        const pf = flattenFirst<number | string>(item['Pfirrmann grade'], null);
+        const modic = (Array.isArray(item.Modic) && item.Modic.length > 0
+          ? (Number(item.Modic[0]) as 1 | 2 | 3)
+          : null);
+
+        const bulging = flattenFirst<number>(item['Disc bulging'], null);
+        const narrowing = flattenFirst<number>(item['Disc narrowing'], null);
+        const herniation = flattenFirst<number>(item['Disc herniation'], null);
+
+        const asZO = (v: number | null): ZeroOne | null =>
+          v === 0 ? 0 : v === 1 ? 1 : null;
+
+        return {
+          diskLabel,
+          pfirrmann: pf,
+          modic: modic ?? null,
+          bulging: asZO(typeof bulging === 'number' ? bulging : null),
+          narrowing: asZO(typeof narrowing === 'number' ? narrowing : null),
+          herniation: asZO(typeof herniation === 'number' ? herniation : null),
+        };
+      });
     } catch {
       return [];
     }
   };
 
-  const handleProcess = async () => {
+  const handleProcess = async (): Promise<void> => {
     setUi('loading');
     setErr('');
     clearPollTimer();
@@ -251,7 +372,7 @@ function PanelMRInner({
       const body = new URLSearchParams();
       body.set('study_id', studyId);
 
-      const { data } = await axios.post(`${BASE}process-study/`, body, {
+      const { data } = await axios.post<BackendProcessResponse>(`${BASE}process-study/`, body, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           accept: 'application/json',
@@ -259,25 +380,20 @@ function PanelMRInner({
         signal: controller.signal,
       });
 
-      const procId: string | null = data.processing_id || null;
-      const repAvail: boolean = !!data.report_available;
-      const repUrl: string | null = data.report_download_url || null;
+      setProcessingId(data.processing_id ?? null);
+      setReportAvailable(Boolean(data.report_available));
+      setReportPath(data.report_download_url ?? null);
 
-      setProcessingId(procId);
-      setReportAvailable(repAvail);
-      setReportPath(repUrl);
-
-      const nextRows = mapResultsToRows(data?.pipeline_result?.results);
-      setRows(nextRows);
-
+      const next = mapResultsToRows(data.pipeline_result?.results);
+      setRows(next);
       persist({
-        processingId: procId,
-        reportAvailable: repAvail,
-        reportPath: repUrl,
-        rows: nextRows,
+        processingId: data.processing_id ?? null,
+        reportAvailable: Boolean(data.report_available),
+        reportPath: data.report_download_url ?? null,
+        rows: next,
       });
 
-      if (repAvail) {
+      if (data.report_available) {
         setUi('done');
         return;
       }
@@ -289,28 +405,27 @@ function PanelMRInner({
       let tries = 0;
       const tick = async () => {
         try {
-          const { data: s } = await axios.get(
+          const { data: s } = await axios.get<BackendStatusResponse>(
             `${BASE}status/${encodeURIComponent(studyId)}`,
             { headers: { accept: 'application/json' }, signal: controller.signal }
           );
 
-          const repAvail2 = !!s.report_available;
-          const repUrl2: string | null = s.report_download_url ?? null;
-          const procAt2: string | null = s.processed_at ?? null;
+          setReportAvailable(Boolean(s.report_available));
+          setReportPath(s.report_download_url ?? null);
+          if (s.processed_at) setProcessedAt(s.processed_at);
+          persist({
+            processedAt: s.processed_at ?? null,
+            reportAvailable: Boolean(s.report_available),
+            reportPath: s.report_download_url ?? null,
+          });
 
-          if (procAt2) setProcessedAt(procAt2);
-          setReportAvailable(repAvail2);
-          setReportPath(repUrl2);
-          persist({ processedAt: procAt2, reportAvailable: repAvail2, reportPath: repUrl2 });
-
-          if (repAvail2) {
+          if (s.report_available) {
             setUi('done');
             clearPollTimer();
             return;
           }
-        } catch (e: any) {
-          if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED')
-            return;
+        } catch {
+          /* silent */
         }
         tries += 1;
         if (tries >= maxTries) {
@@ -322,14 +437,13 @@ function PanelMRInner({
       };
 
       pollTimerRef.current = window.setTimeout(tick, delay);
-    } catch (e: any) {
-      if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return;
+    } catch {
       setErr(t('Processing error'));
       setUi('error');
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (): Promise<void> => {
     const pid = processingId;
     const path = reportPath?.startsWith('/report/')
       ? reportPath
@@ -350,7 +464,7 @@ function PanelMRInner({
       });
 
       let filename = String(processingId || 'report');
-      const disp = (resp.headers as any)['content-disposition'];
+      const disp = (resp.headers as Record<string, string | undefined>)['content-disposition'];
       if (disp) {
         const m = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(disp);
         if (m && m[1]) filename = decodeURIComponent(m[1]);
@@ -366,8 +480,7 @@ function PanelMRInner({
       window.URL.revokeObjectURL(url);
 
       setUi('done');
-    } catch (e: any) {
-      if (axios.isCancel?.(e) || e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED') return;
+    } catch {
       setErr(t('Download error'));
       setUi('error');
     }
@@ -376,35 +489,84 @@ function PanelMRInner({
   const lastProcessed = formatRuDate(processedAt);
   const isBusy = ui === 'loading' || ui === 'polling';
 
+  const Badge = ({ children }: { children: React.ReactNode }) => (
+    <span className="rounded-md bg-white/10 px-2 py-0.5 text-xs text-white">{children}</span>
+  );
+
+  const Chip = ({ label, value }: { label: string; value: ZeroOne | number | string | null }) => {
+    const on = value === 1 || value === t('1');
+    const off = value === 0 || value === t('0');
+    const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1';
+    const cls = on
+      ? `${base} bg-emerald-500/10 text-emerald-300 ring-emerald-400/30`
+      : off
+        ? `${base} bg-primary-main text-primary-light ring-white/5`
+        : `${base} bg-yellow-500/10 text-yellow-200 ring-yellow-400/30`;
+    const dotCls =
+      'mr-1 block h-1.5 w-1.5 rounded-full ' +
+      (on ? 'bg-emerald-400' : off ? 'bg-white/40' : 'bg-yellow-300');
+    return (
+      <span className={cls} title={`${label}: ${String(value ?? '-')}`}>
+        <span className={dotCls} />
+        {label}: {String(value ?? '-')}
+      </span>
+    );
+  };
+
+  const Card = ({ row }: { row: Row }) => (
+    <li className="rounded-lg border border-white/10 bg-white/[0.07] p-3 hover:bg-white/[0.05] transition-colors">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-sm font-medium text-white">
+          {t('Disk')} {row.diskLabel}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Badge>
+            {t('Pfirrmann grade')} {row.pfirrmann ?? '-'}
+          </Badge>
+          <Badge>
+            {t('Modic')} {row.modic ?? '-'}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2">
+        <Chip label={t('Disc herniation')} value={row.herniation == 1 ? t('1') : t('0')} />
+        <Chip label={t('Disc bulging')} value={row.bulging == 1 ? t('1') : t('0')} />
+        <Chip label={t('Disc narrowing')} value={row.narrowing == 1 ? t('1') : t('0')} />
+      </div>
+    </li>
+  );
+
   return (
     <div className="flex h-full min-h-0 flex-col px-3 pt-3 pb-1 text-white">
-      <div className="sticky top-0 z-10 -mx-3 -mt-3 px-3 pt-3 pb-2 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/30 border-b border-white/10">
-        <div className="flex flex-col gap-2 mt-2">
-          <Button
-            startIcon={<Icon
-              className="!h-[12px] !w-[12px] text-black"
-              name="sparkles" />}
-            size="initial"
-            className="px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
-            color="primaryActive"
-            variant="outlined"
-            disabled={isBusy}
-            onClick={handleProcess}
-          >
-            {t('Analyze')}
-          </Button>
+      <div className="mb-3 rounded-lg border border-primary-light/30 bg-black/40 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-black/30">
+        <div className="sticky top-0 z-10 -mx-3 -mt-3 px-3 pt-3 pb-2 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/30">
+          <div className="flex flex-col gap-2">
+            <Button
+              startIcon={<Icon className="!h-[12px] !w-[12px] text-black" name="sparkles" />}
+              size="initial"
+              className="px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
+              color="primaryActive"
+              variant="outlined"
+              disabled={isBusy}
+              onClick={handleProcess}
+            >
+              {t('Analyze')}
+            </Button>
 
-          <Button
-            size="initial"
-            className="px-2 py-2 text-base"
-            variant="outlined"
-            disabled={!reportAvailable || isBusy}
-            onClick={handleDownload}
-          >
-            {t('Download report')}
-          </Button>
+            <Button
+              size="initial"
+              className="px-2 py-2 text-base"
+              variant="outlined"
+              disabled={!reportAvailable || isBusy}
+              onClick={handleDownload}
+            >
+              {t('Download report')}
+            </Button>
+          </div>
 
-          <div className="ml-auto text-sm text-primary-light">
+          <div className="sm:justify-self-end text-sm text-primary-light mt-2">
             {t('Last processed')}: <span className="text-white">{lastProcessed}</span>
           </div>
         </div>
@@ -413,65 +575,35 @@ function PanelMRInner({
       <div className="flex-1 min-h-0">
         <div
           ref={previewRef}
-          className="relative h-full border border-primary-light/30 rounded p-3 overflow-auto custom-scroll flex flex-col"
+          className="relative h-full border border-primary-light/30 rounded p-3 overflow-y-auto overflow-x-hidden custom-scroll flex flex-col gap-3"
         >
-          <div className="mb-3 text-lg text-primary-light">{t('Preview results')}</div>
+          <div className="text-lg text-primary-light">{t('Preview results')}</div>
 
-          <div className="flex-1 min-h-0">
-            {isBusy && (
-              <div className="h-full w-full flex items-center justify-center">
-                <div className="loading">
-                  <div className="infinite-loading-bar bg-primary-light" />
-                </div>
+          {isBusy && (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="loading">
+                <div className="infinite-loading-bar bg-primary-light" />
               </div>
-            )}
+            </div>
+          )}
 
-            {!isBusy && ui === 'error' && (
-              <div className="mt-2 text-xs text-red-400">{err || t('Error')}</div>
-            )}
+          {!isBusy && ui === 'error' && (
+            <div className="text-xs text-red-400">{err || t('Error')}</div>
+          )}
 
-            {!isBusy && rows.length === 0 && ui !== 'error' && (
-              <div className="text-base text-primary-light">
-                {t('Data preview will be available after re-analysis')}
-              </div>
-            )}
+          {!isBusy && rows.length === 0 && ui !== 'error' && (
+            <div className="text-base text-primary-light">
+              {t('Data preview will be available after re-analysis')}
+            </div>
+          )}
 
-            {!isBusy && rows.length > 0 && (
-              <div className="flex flex-col gap-2 text-base">
-                {rows.map((r, i) => (
-                  <div
-                    key={`${r.disk ?? 'disk'}-${i}`}
-                    className="grid grid-cols-6 gap-3 items-center border-b border-white/10 pb-2"
-                  >
-                    <div className="col-span-1">
-                      <span className="text-primary-light">{t('Disk')}</span>{' '}
-                      <span className="text-white">{r.disk ?? '-'}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-primary-light">{t('Pfirrmann grade')}</span>{' '}
-                      <span className="text-white">{r.pfirrmann ?? '-'}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-primary-light">{t('Bulging')}</span>{' '}
-                      <span className="text-white">{r.bulging ?? '-'}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-primary-light">{t('Narrowing')}</span>{' '}
-                      <span className="text-white">{r.narrowing ?? '-'}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-primary-light">{t('Hernia')}</span>{' '}
-                      <span className="text-white">{r.hernia ? t('Yes') : t('No')}</span>
-                    </div>
-                    <div className="col-span-1">
-                      <span className="text-primary-light">{t('Spondylolisthesis')}</span>{' '}
-                      <span className="text-white">{r.spondy ? t('Yes') : t('No')}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {!isBusy && rows.length > 0 && (
+            <ul className="flex flex-col gap-3">
+              {rows.map((r, i) => (
+                <Card key={`${r.diskLabel}-${i}`} row={r} />
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
