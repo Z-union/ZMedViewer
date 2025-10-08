@@ -1,8 +1,7 @@
 # Reference:
 # - https://docs.docker.com/compose/compose-file
 # - https://eclipsesource.com/blogs/2018/01/11/authenticating-reverse-proxy-with-keycloak/
-
-version: '3.5'
+name: atlas
 
 services:
   # Exposed server that's handling incoming web requests
@@ -118,6 +117,7 @@ volumes:
 
 networks:
   atlas_network:
+    name: atlas_network
     driver: bridge
   dockers_default:
     external: true
