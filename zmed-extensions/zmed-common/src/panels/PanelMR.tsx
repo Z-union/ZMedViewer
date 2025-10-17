@@ -5,6 +5,7 @@ import { Button, Icon } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import './PanelMR.css';
 import { useAppConfig } from '@state';
+import { forceUpdateSeriesData } from './utils';
 
 const MR = ['MR'] as const;
 
@@ -26,6 +27,7 @@ interface ServicesManager {
 }
 interface PanelMRProps {
   servicesManager: ServicesManager;
+  extensionManager: any;
 }
 
 type ZeroOne = 0 | 1;
@@ -40,7 +42,6 @@ interface BackendDiskItem {
   ['Disc narrowing']?: number[][] | null;
   ['Disc bulging']?: number[][] | null;
   ['Pfirrmann grade']?: Array<number | string> | null;
-
   hernia_detected?: boolean | null;
   hernia_volume_mm3?: number | string | null;
   hernia_max_protrusion_mm?: number | string | null;
@@ -110,7 +111,7 @@ function toHumanDiskLabel(raw: number | string | null, map?: Record<string, stri
   return `#${key}`;
 }
 
-export default function PanelMR({ servicesManager }: PanelMRProps) {
+export default function PanelMR({ servicesManager, extensionManager }: PanelMRProps) {
   const [appConfig] = useAppConfig();
   const BASE: string = String(appConfig.zmedtools.mrURL ?? '');
   const diskMap: Record<string, string> | undefined = appConfig?.zmedtools?.diskLabelMap as
@@ -142,6 +143,7 @@ export default function PanelMR({ servicesManager }: PanelMRProps) {
       t={t}
       BASE={BASE}
       diskMap={diskMap}
+      extensionManager={extensionManager}
     />
   );
 }
@@ -151,11 +153,13 @@ function PanelMRInner({
   t,
   BASE,
   diskMap,
+  extensionManager
 }: {
   studyId: string;
   t: (k: string) => string;
   BASE: string;
   diskMap?: Record<string, string>;
+  extensionManager: any;
 }) {
   const storageKey = `MRTOOLS:${studyId}`;
 
@@ -177,7 +181,6 @@ function PanelMRInner({
     }
   };
 
-  // helpers
   const readSnapshot = (): {
     processingId?: string | null;
     processedAt?: string | null;
@@ -205,13 +208,12 @@ function PanelMRInner({
   ): void => {
     const prev = readSnapshot();
 
-    // Если rows не переданы — сохраняем прежние
     const nextRows =
       'rows' in patch
         ? patch.rows
         : opts.preserveRows
           ? (prev.rows ?? rows)
-          : (rows.length ? rows : (prev.rows ?? [])); // не пишем [] поверх имеющихся
+          : (rows.length ? rows : (prev.rows ?? []));
 
     const snapshot = {
       processingId: patch.processingId ?? processingId ?? prev.processingId ?? null,
@@ -228,13 +230,10 @@ function PanelMRInner({
     }
   };
 
-
-  // ВАЖНО: сначала восстановление из sessionStorage, потом запрос статуса.
   useEffect(() => {
     clearPollTimer();
     setErr('');
 
-    // 1) Восстановление снапшота синхронно
     let restoredRows: Row[] = [];
     try {
       const raw = sessionStorage.getItem(storageKey);
@@ -255,7 +254,6 @@ function PanelMRInner({
         setReportPath(s.reportPath ?? null);
         setRows(safeRows);
 
-        // Не ставим isBusy. Если есть данные — показываем предпросмотр сразу.
         setUi(safeRows.length ? 'done' : 'idle');
       } else {
         setRows([]);
@@ -266,55 +264,45 @@ function PanelMRInner({
       setUi('idle');
     }
 
-    // 2) Актуализация статуса с сервера
     const controller = new AbortController();
     (async () => {
       try {
-        // Если уже есть предпросмотр, не прячем его лоадером.
         if (!restoredRows.length) setUi('loading');
 
-        const { data } = await axios.get<BackendStatusResponse>(
+        const resp = await axios.get<BackendStatusResponse>(
           `${BASE}status/${encodeURIComponent(studyId)}`,
-          { headers: { accept: 'application/json' }, signal: controller.signal }
+          {
+            headers: { accept: 'application/json' },
+            signal: controller.signal,
+            validateStatus: s => (s >= 200 && s < 300) || s === 404,
+          }
         );
 
+        if (resp.status === 404) {
+          // ничего не показываем
+          setUi(prev => (prev === 'done' ? 'done' : 'idle'));
+          return;
+        }
+
+        const data = resp.data;
         persist(
           {
             processingId: data.processing_id ?? null,
             processedAt: data.processed_at ?? null,
             reportAvailable: Boolean(data.report_available),
             reportPath: data.report_download_url ?? null,
-            // rows не передаём — пусть сохранятся прежние, если были
           },
           { preserveRows: true }
         );
-
-
-        if (typeof data.detail === 'string' && /not processed yet|not\s*found/i.test(data.detail)) {
-          setUi(prev => (prev === 'done' ? 'done' : 'idle'));
-          setErr('');
-          return;
-        }
-
 
         setProcessingId(data.processing_id ?? null);
         setReportAvailable(Boolean(data.report_available));
         setReportPath(data.report_download_url ?? null);
         if (data.processed_at) setProcessedAt(data.processed_at);
-
-        persist({
-          processingId: data.processing_id ?? null,
-          processedAt: data.processed_at ?? null,
-          reportAvailable: Boolean(data.report_available),
-          reportPath: data.report_download_url ?? null,
-        });
-
-        // Если был предпросмотр — остаёмся в done, иначе переключаемся в done после статуса.
         setUi('done');
       } catch {
-        // Ошибка статуса не должна скрывать уже показанный предпросмотр.
-        setErr(t('Status error'));
-        setUi(prev => (prev === 'done' ? 'done' : 'error'));
+        // не показываем ошибку в UI для статуса
+        setUi(prev => (prev === 'done' ? 'done' : 'idle'));
       }
     })();
 
@@ -395,6 +383,7 @@ function PanelMRInner({
 
       if (data.report_available) {
         setUi('done');
+        forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId })
         return;
       }
 
@@ -405,24 +394,31 @@ function PanelMRInner({
       let tries = 0;
       const tick = async () => {
         try {
-          const { data: s } = await axios.get<BackendStatusResponse>(
+          const resp = await axios.get<BackendStatusResponse>(
             `${BASE}status/${encodeURIComponent(studyId)}`,
-            { headers: { accept: 'application/json' }, signal: controller.signal }
+            {
+              headers: { accept: 'application/json' },
+              signal: controller.signal,
+              validateStatus: s => (s >= 200 && s < 300) || s === 404,
+            }
           );
 
-          setReportAvailable(Boolean(s.report_available));
-          setReportPath(s.report_download_url ?? null);
-          if (s.processed_at) setProcessedAt(s.processed_at);
-          persist({
-            processedAt: s.processed_at ?? null,
-            reportAvailable: Boolean(s.report_available),
-            reportPath: s.report_download_url ?? null,
-          });
+          if (resp.status !== 404) {
+            const s = resp.data;
+            setReportAvailable(Boolean(s.report_available));
+            setReportPath(s.report_download_url ?? null);
+            if (s.processed_at) setProcessedAt(s.processed_at);
+            persist({
+              processedAt: s.processed_at ?? null,
+              reportAvailable: Boolean(s.report_available),
+              reportPath: s.report_download_url ?? null,
+            });
 
-          if (s.report_available) {
-            setUi('done');
-            clearPollTimer();
-            return;
+            if (s.report_available) {
+              setUi('done');
+              clearPollTimer();
+              return;
+            }
           }
         } catch {
           /* silent */

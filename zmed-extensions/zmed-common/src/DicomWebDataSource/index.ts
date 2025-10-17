@@ -29,6 +29,7 @@ import {
 import StaticWadoClient from './utils/StaticWadoClient';
 import getDirectURL from '../utils/getDirectURL';
 import { fixBulkDataURI } from './utils/fixBulkDataURI';
+import { sortStudies } from './utils/prepStudies';
 
 const { DicomMetaDictionary, DicomDict } = dcmjs.data;
 
@@ -203,9 +204,8 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           finalStudies.forEach((el) => {
             el['uploadedAt'] = date.get(el['studyInstanceUid']);
           });
-
           return {
-            studies: finalStudies,
+            studies: sortStudies(finalStudies),
             pages: response.data.pages,
             size: response.data.size,
             total: response.data.total,

@@ -1,0 +1,65 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <!-- Глубокий тёмный фон -->
+  <rect width="1920" height="1080" fill="#070A10"></rect>
+
+  <defs>
+    <!-- Мягкое размытие для свечений -->
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="140" edgeMode="duplicate"></feGaussianBlur>
+    </filter>
+
+    <!-- Едва заметный «шум», придаёт глубину -->
+    <filter id="noise" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" stitchTiles="stitch" result="n"></feTurbulence>
+      <feColorMatrix in="n" type="saturate" values="0"></feColorMatrix>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.03"></feFuncA>
+      </feComponentTransfer>
+    </filter>
+
+    <!-- Палитра ATLAS (приглушённая) -->
+    <radialGradient id="gCyan" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.35"></stop>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="gIndigo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#6366F1" stop-opacity="0.30"></stop>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="gFuchsia" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#D946EF" stop-opacity="0.28"></stop>
+      <stop offset="100%" stop-color="#D946EF" stop-opacity="0"></stop>
+    </radialGradient>
+
+    <!-- Очень лёгкая сетка -->
+    <pattern id="grid" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M 120 0 L 0 0 0 120" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"></path>
+    </pattern>
+
+    <!-- Виньетка: затемнение краёв -->
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="55%" stop-color="#000" stop-opacity="0"></stop>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.55"></stop>
+    </radialGradient>
+  </defs>
+
+  <!-- Сетка -->
+  <rect width="1920" height="1080" fill="url(#grid)"></rect>
+
+  <!-- Мягкие свечения (без линий/вершин) -->
+  <g filter="url(#blur)">
+    <!-- верхний левый cyan -->
+    <circle cx="260" cy="220" r="360" fill="url(#gCyan)"></circle>
+    <!-- нижний правый indigo -->
+    <circle cx="1620" cy="860" r="420" fill="url(#gIndigo)"></circle>
+    <!-- центр-смещение fuchsia -->
+    <circle cx="1120" cy="540" r="520" fill="url(#gFuchsia)"></circle>
+  </g>
+
+  <!-- Виньетка по краям -->
+  <rect width="1920" height="1080" fill="url(#vignette)"></rect>
+
+  <!-- Лёгкий шум поверх -->
+  <rect width="1920" height="1080" filter="url(#noise)"></rect>
+</svg>

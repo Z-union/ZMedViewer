@@ -94,7 +94,7 @@ function WorkSheet({
    * Only applied if no other sorting is specified and there are less than 101 studies
    */
 
-  const canSort = studiesTotal < STUDIES_LIMIT;
+  const canSort = false;
   const shouldUseDefaultSort = sortBy === '' || !sortBy;
   const sortModifier = sortDirection === 'descending' ? 1 : -1;
   const defaultSortValues =

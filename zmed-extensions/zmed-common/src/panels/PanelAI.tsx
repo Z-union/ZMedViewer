@@ -8,6 +8,7 @@ import axios from 'axios';
 import './PanelAI.css';
 import configuration from './../config';
 import { useAppConfig } from '@state';
+import { forceUpdateSeriesData } from './utils';
 
 const fluModalities = ['DX', 'CR'];
 const mrModalities = ['MR'];
@@ -304,15 +305,6 @@ export default function PanelAI({
     }
   };
 
-  // Функция обновления данных серии (оставляем логику sessionStorage)
-  function getSeriesData() {
-    const datasource = extensionManager.getActiveDataSource()[0];
-    datasource.retrieve.series.metadata({
-      StudyInstanceUID,
-      getMetadataFromServer: true,
-    });
-  }
-
   useEffect(() => {
     if (!zFluResults) {
       setProcessingState(AIState.loading);
@@ -336,7 +328,7 @@ export default function PanelAI({
       processingState === AIState.finished
     ) {
       if (buttonClicked) {
-        getSeriesData();
+        forceUpdateSeriesData({ extensionManager, StudyInstanceUID })
         setButtonClicked(false);
       }
     }
