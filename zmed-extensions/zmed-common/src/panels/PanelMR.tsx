@@ -77,6 +77,7 @@ interface Row {
   bulging: ZeroOne | null;
   narrowing: ZeroOne | null;
   herniation: ZeroOne | null;
+  spondylolisthesis: ZeroOne | null;
 }
 
 function flattenFirst<T>(v: unknown, def: T | null = null): T | null {
@@ -317,7 +318,6 @@ function PanelMRInner({
     try {
       const arr = JSON.parse(resultsStr) as BackendDiskItem[];
       return arr.map((item): Row => {
-        // Показываем level_name из бэкенда; если его нет — fallback к карте по disk_label
         const level_name =
           (item.level_name && String(item.level_name)) ||
           toHumanDiskLabel(
@@ -327,7 +327,6 @@ function PanelMRInner({
             diskMap
           );
 
-        // Pfirrmann: первый элемент; если 0 → показываем 1
         const pfRaw = flattenFirst<number | string>(item['Pfirrmann'], null);
         let Pfirrmann: number | string | null = pfRaw;
         if (pfRaw !== null) {
@@ -335,7 +334,6 @@ function PanelMRInner({
           if (!Number.isNaN(n)) Pfirrmann = n === 0 ? 1 : n;
         }
 
-        // Modic: допускаем 0..3; берем первый, если это массив
         const modicRaw = flattenFirst<number>(item.Modic ?? null, null);
         const nModic = modicRaw != null ? Number(modicRaw) : NaN;
         const Modic: 0 | 1 | 2 | 3 | null =
@@ -344,9 +342,9 @@ function PanelMRInner({
         const bulging = flattenFirst<number>(item['Disc bulging'], null);
         const narrowing = flattenFirst<number>(item['Disc narrowing'], null);
         const herniation = flattenFirst<number>(item['Disc herniation'], null);
+        const spondy = flattenFirst<number>(item['Spondylolisthesis'], null);
 
-        const asZO = (v: number | null): ZeroOne | null =>
-          v === 0 ? 0 : v === 1 ? 1 : null;
+        const asZO = (v: number | null): ZeroOne | null => (v === 0 ? 0 : v === 1 ? 1 : null);
 
         return {
           level_name,
@@ -355,6 +353,7 @@ function PanelMRInner({
           bulging: asZO(typeof bulging === 'number' ? bulging : null),
           narrowing: asZO(typeof narrowing === 'number' ? narrowing : null),
           herniation: asZO(typeof herniation === 'number' ? herniation : null),
+          spondylolisthesis: asZO(typeof spondy === 'number' ? spondy : null),
         };
       });
     } catch {
@@ -542,6 +541,10 @@ function PanelMRInner({
         <Chip label={t('Disc herniation')} value={row.herniation == 1 ? t('1') : t('0')} />
         <Chip label={t('Disc bulging')} value={row.bulging == 1 ? t('1') : t('0')} />
         <Chip label={t('Disc narrowing')} value={row.narrowing == 1 ? t('1') : t('0')} />
+        <Chip
+          label={t('Spondylolisthesis')}
+          value={row.spondylolisthesis == 1 ? t('1') : t('0')}
+        />
       </div>
     </li>
   );
