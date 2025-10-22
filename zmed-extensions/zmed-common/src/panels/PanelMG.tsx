@@ -4,12 +4,14 @@ import axios from 'axios';
 import { Button, Icon } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '@state';
+import { forceUpdateSeriesData } from './utils';
 
 // Глобально на жизнь вкладки: StudyUID -> AbortController
 const inflight = new Map<string, AbortController>();
 
 type PanelMGProps = {
   servicesManager: { services: any };
+  extensionManager: any;
 };
 
 function Spinner() {
@@ -32,7 +34,7 @@ function getStudyUID(DisplaySetService: any): string | null {
   }
 }
 
-const PanelMG: React.FC<PanelMGProps> = ({ servicesManager }) => {
+const PanelMG: React.FC<PanelMGProps> = ({ servicesManager, extensionManager }) => {
   const [appConfig] = useAppConfig();
   const { t } = useTranslation('Header');
   const { uiNotificationService, DisplaySetService } = servicesManager.services;
@@ -114,6 +116,7 @@ const PanelMG: React.FC<PanelMGProps> = ({ servicesManager }) => {
       // Всегда очищаем реестр и локальный флаг
       inflight.delete(studyId);
       setAnalyzingSafe(false);
+      forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId })
     }
   };
 

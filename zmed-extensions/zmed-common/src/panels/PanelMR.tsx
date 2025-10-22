@@ -27,21 +27,22 @@ interface ServicesManager {
 }
 interface PanelMRProps {
   servicesManager: ServicesManager;
-  extensionManager: any;
+  extensionManager: unknown;
 }
 
 type ZeroOne = 0 | 1;
 
 interface BackendDiskItem {
   disk_label?: number | string | null;
-  Modic?: number[] | null;
+  level_name?: string | null;
+  Modic?: number | number[] | null;
   ['UP endplate']?: number[][] | null;
   ['LOW endplate']?: number[][] | null;
   Spondylolisthesis?: number[][] | null;
   ['Disc herniation']?: number[][] | null;
   ['Disc narrowing']?: number[][] | null;
   ['Disc bulging']?: number[][] | null;
-  ['Pfirrmann grade']?: Array<number | string> | null;
+  ['Pfirrmann']?: Array<number | string> | null;
   hernia_detected?: boolean | null;
   hernia_volume_mm3?: number | string | null;
   hernia_max_protrusion_mm?: number | string | null;
@@ -70,9 +71,9 @@ interface BackendProcessResponse extends BackendStatusResponse {
 }
 
 interface Row {
-  diskLabel: string;
-  pfirrmann: number | string | null;
-  modic: 1 | 2 | 3 | null;
+  level_name: string;
+  Pfirrmann: number | string | null;
+  Modic: 0 | 1 | 2 | 3 | null;
   bulging: ZeroOne | null;
   narrowing: ZeroOne | null;
   herniation: ZeroOne | null;
@@ -159,7 +160,7 @@ function PanelMRInner({
   t: (k: string) => string;
   BASE: string;
   diskMap?: Record<string, string>;
-  extensionManager: any;
+  extensionManager: unknown;
 }) {
   const storageKey = `MRTOOLS:${studyId}`;
 
@@ -279,7 +280,6 @@ function PanelMRInner({
         );
 
         if (resp.status === 404) {
-          // ничего не показываем
           setUi(prev => (prev === 'done' ? 'done' : 'idle'));
           return;
         }
@@ -301,7 +301,6 @@ function PanelMRInner({
         if (data.processed_at) setProcessedAt(data.processed_at);
         setUi('done');
       } catch {
-        // не показываем ошибку в UI для статуса
         setUi(prev => (prev === 'done' ? 'done' : 'idle'));
       }
     })();
@@ -318,16 +317,29 @@ function PanelMRInner({
     try {
       const arr = JSON.parse(resultsStr) as BackendDiskItem[];
       return arr.map((item): Row => {
-        const diskRaw = item.disk_label ?? null;
-        const diskLabel = toHumanDiskLabel(
-          typeof diskRaw === 'number' || typeof diskRaw === 'string' ? diskRaw : null,
-          diskMap
-        );
+        // Показываем level_name из бэкенда; если его нет — fallback к карте по disk_label
+        const level_name =
+          (item.level_name && String(item.level_name)) ||
+          toHumanDiskLabel(
+            typeof item.disk_label === 'number' || typeof item.disk_label === 'string'
+              ? item.disk_label
+              : null,
+            diskMap
+          );
 
-        const pf = flattenFirst<number | string>(item['Pfirrmann grade'], null);
-        const modic = (Array.isArray(item.Modic) && item.Modic.length > 0
-          ? (Number(item.Modic[0]) as 1 | 2 | 3)
-          : null);
+        // Pfirrmann: первый элемент; если 0 → показываем 1
+        const pfRaw = flattenFirst<number | string>(item['Pfirrmann'], null);
+        let Pfirrmann: number | string | null = pfRaw;
+        if (pfRaw !== null) {
+          const n = Number(pfRaw);
+          if (!Number.isNaN(n)) Pfirrmann = n === 0 ? 1 : n;
+        }
+
+        // Modic: допускаем 0..3; берем первый, если это массив
+        const modicRaw = flattenFirst<number>(item.Modic ?? null, null);
+        const nModic = modicRaw != null ? Number(modicRaw) : NaN;
+        const Modic: 0 | 1 | 2 | 3 | null =
+          Number.isNaN(nModic) || nModic < 0 || nModic > 3 ? null : (nModic as 0 | 1 | 2 | 3);
 
         const bulging = flattenFirst<number>(item['Disc bulging'], null);
         const narrowing = flattenFirst<number>(item['Disc narrowing'], null);
@@ -337,9 +349,9 @@ function PanelMRInner({
           v === 0 ? 0 : v === 1 ? 1 : null;
 
         return {
-          diskLabel,
-          pfirrmann: pf,
-          modic: modic ?? null,
+          level_name,
+          Pfirrmann,
+          Modic,
           bulging: asZO(typeof bulging === 'number' ? bulging : null),
           narrowing: asZO(typeof narrowing === 'number' ? narrowing : null),
           herniation: asZO(typeof herniation === 'number' ? herniation : null),
@@ -383,7 +395,7 @@ function PanelMRInner({
 
       if (data.report_available) {
         setUi('done');
-        forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId })
+        forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId });
         return;
       }
 
@@ -513,15 +525,15 @@ function PanelMRInner({
     <li className="rounded-lg border border-white/10 bg-white/[0.07] p-3 hover:bg-white/[0.05] transition-colors">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm font-medium text-white">
-          {t('Disk')} {row.diskLabel}
+          {t('Disk')}: {row.level_name}
         </div>
 
         <div className="flex items-center gap-2">
           <Badge>
-            {t('Pfirrmann grade')} {row.pfirrmann ?? '-'}
+            {t('Pfirrmann grade')} {row.Pfirrmann ?? '-'}
           </Badge>
           <Badge>
-            {t('Modic')} {row.modic ?? '-'}
+            {t('Modic')} {row.Modic ?? '-'}
           </Badge>
         </div>
       </div>
@@ -596,7 +608,7 @@ function PanelMRInner({
           {!isBusy && rows.length > 0 && (
             <ul className="flex flex-col gap-3">
               {rows.map((r, i) => (
-                <Card key={`${r.diskLabel}-${i}`} row={r} />
+                <Card key={`${r.level_name}-${i}`} row={r} />
               ))}
             </ul>
           )}
