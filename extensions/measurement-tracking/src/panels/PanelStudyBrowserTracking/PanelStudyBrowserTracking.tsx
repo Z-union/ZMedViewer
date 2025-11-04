@@ -6,6 +6,7 @@ import { utils } from '@ohif/core';
 import { StudyBrowser, useImageViewer, useViewportGrid, Dialog, ButtonEnums } from '@ohif/ui';
 import { useTrackedMeasurements } from '../../getContextModule';
 import i18n from '@ohif/i18n';
+import { useAppConfig } from '@state';
 
 const { formatDate } = utils;
 
@@ -653,6 +654,7 @@ function _createStudyBrowserTabs(
   displaySets,
   hangingProtocolService
 ) {
+  const [appConfig] = useAppConfig();
   const primaryStudies = [];
   const recentStudies = [];
   const allStudies = [];
@@ -665,7 +667,7 @@ function _createStudyBrowserTabs(
     );
 
     // Sort them
-    const dsSortFn = hangingProtocolService.getDisplaySetSortFunction();
+    const dsSortFn = appConfig?.sortDisplaySets?.getZmedDisplaySetSortFunction();
     displaySetsForStudy.sort(dsSortFn);
 
     /* Sort by series number, then by series date
