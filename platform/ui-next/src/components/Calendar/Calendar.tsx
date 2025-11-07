@@ -9,13 +9,14 @@ import { buttonVariants } from '../Button';
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
 function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
+  const year = new Date().getFullYear();
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn('p-3', className)}
       captionLayout="dropdown"
       fromYear={1945}
-      toYear={2024}
+      toYear={year}
       labels={{
         labelMonthDropdown: () => undefined,
         labelYearDropdown: () => undefined,

@@ -161,7 +161,7 @@ function DataSourceWrapper(props) {
       const updateState = ({ studies = [], pages, size, total }: Types.StudyListWithPagination) => {
         setPages(pages);
         setSize(size);
-        setTotalStudies(studies.length);
+        setTotalStudies(total);
         setData({ studies, total: studies.length, ...queryFilterValues, location });
       };
 
@@ -228,7 +228,7 @@ function DataSourceWrapper(props) {
       {...rest}
       data={data.studies}
       dataPath={dataSourcePath}
-      dataTotal={data.total}
+      dataTotal={totalStudies}
       dataSource={dataSource}
       isLoadingData={isLoading}
       pages={pages}
