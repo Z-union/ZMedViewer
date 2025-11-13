@@ -59,6 +59,8 @@ function WorkSheet({
   dataPath,
   onRefresh,
   servicesManager,
+  isLoadingError,
+  getData
 }) {
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const { uiNotificationService, uiModalService } = servicesManager.services;
@@ -625,7 +627,7 @@ function WorkSheet({
             {appConfig.showLoadingIndicator && isLoadingData ? (
               <LoadingIndicatorProgress className={'w-full h-full bg-black'} />
             ) : (
-              <EmptyStudies />
+              <EmptyStudies isLoadingError={isLoadingError} getData={getData}/>
             )}
           </div>
         )}

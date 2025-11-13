@@ -7,6 +7,7 @@ import { Types } from '@ohif/core';
 // import { extensionManager } from '../App.tsx';
 import { useParams, useLocation } from 'react-router';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useSearchParams from './hooks/useSearchParams';
 
 /**
@@ -31,6 +32,8 @@ const areLocationsTheSame = (location0, location1) => {
 function DataSourceWrapper(props) {
   const navigate = useNavigate();
   const { children: LayoutTemplate, ...rest } = props;
+  const { uiNotificationService } = rest.servicesManager.services;
+  const { t } = useTranslation('StudyList');
   const params = useParams();
   const location = useLocation();
   const lowerCaseSearchParams = useSearchParams({ lowerCaseKeys: true });
@@ -81,6 +84,8 @@ function DataSourceWrapper(props) {
     return dataSourceName;
   }, []);
 
+  const [isLoadingError, setIsLoadingError] = useState(false);
+
   const [isDataSourceInitialized, setIsDataSourceInitialized] = useState(false);
 
   // The path to the data source to be used in the URL for a mode (e.g. mode/dataSourcePath?StudyIntanceUIDs=1.2.3)
@@ -110,6 +115,47 @@ function DataSourceWrapper(props) {
   const [size, setSize] = useState<number | null>(null);
   const [totalStudies, setTotalStudies] = useState<number | null>(null);
   const cache = useRef<Map<string, Types.StudyListWithPagination>>(new Map());
+
+  const queryFilterValues = _getQueryFilterValues(
+    location.search,
+    STUDIES_LIMIT
+  );
+
+  const errorHandler = (e) => {
+    console.log(e);
+    setIsLoadingError(true);
+
+    uiNotificationService.show({
+      title: t('Error fetching studies'),
+      message: t('Failed to load studies'),
+      type: 'error',
+    });
+  }
+
+  const getData = async () => {
+  setIsLoading(true);
+
+  const updateState = ({ studies = [], pages, size, total }: Types.StudyListWithPagination) => {
+    setPages(pages);
+    setSize(size);
+    setTotalStudies(total);
+    setData({ studies, total: studies.length, ...queryFilterValues, location });
+  };
+
+  if (data.location === 'Not a valid location, causes first load to occur') cache.current.clear();
+  const queryKey = JSON.stringify(queryFilterValues);
+
+  if (cache.current.has(queryKey)) { //Данные из кэша
+    const cachedData = cache.current.get(queryKey);
+    updateState(cachedData);
+  } else {                           //Данные из сетевого запроса
+    const data = await dataSource.query.studies.search(queryFilterValues);
+    cache.current.set(queryKey, data);
+    updateState(data);
+  }
+
+  setIsLoading(false);
+};
 
   /**
    * The effect to initialize the data source whenever it changes. Similar to
@@ -149,37 +195,6 @@ function DataSourceWrapper(props) {
       return;
     }
 
-    const queryFilterValues = _getQueryFilterValues(
-      location.search,
-      STUDIES_LIMIT
-    );
-
-    // 204: no content
-    const getData = async () => {
-      setIsLoading(true);
-
-      const updateState = ({ studies = [], pages, size, total }: Types.StudyListWithPagination) => {
-        setPages(pages);
-        setSize(size);
-        setTotalStudies(total);
-        setData({ studies, total: studies.length, ...queryFilterValues, location });
-      };
-
-      if (data.location === 'Not a valid location, causes first load to occur') cache.current.clear();
-      const queryKey = JSON.stringify(queryFilterValues);
-
-      if (cache.current.has(queryKey)) { //Данные из кэша
-        const cachedData = cache.current.get(queryKey);
-        updateState(cachedData);
-      } else {                           //Данные из сетевого запроса
-        const data = await dataSource.query.studies.search(queryFilterValues);
-        cache.current.set(queryKey, data);
-        updateState(data);
-      }
-
-      setIsLoading(false);
-    };
-
     try {
       // Cache invalidation :thinking:
       // - Anytime change is not just next/previous page
@@ -205,7 +220,7 @@ function DataSourceWrapper(props) {
         (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
       if (isDataInvalid) {
-        getData().catch(() => navigate('/notfoundserver', '_self'));
+        getData().catch((e) => {errorHandler(e); setIsLoading(false);});
       }
     } catch (ex) {
       console.warn(ex);
@@ -233,6 +248,8 @@ function DataSourceWrapper(props) {
       isLoadingData={isLoading}
       pages={pages}
       size={size}
+      isLoadingError={isLoadingError}
+      getData={getData}
       // To refresh the data, simply reset it to DEFAULT_DATA which invalidates it and triggers a new query to fetch the data.
       onRefresh={() => setData(DEFAULT_DATA)}
     />

@@ -29,5 +29,8 @@
   "Upload": "Upload",
   "Upload files": "Upload files",
   "Value": "Value",
-  "VR": "VR"
+  "VR": "VR",
+  "Update": "Update",
+  "Error fetching studies": "Error fetching studies",
+  "Failed to load studies": "Failed to load studies"
 }

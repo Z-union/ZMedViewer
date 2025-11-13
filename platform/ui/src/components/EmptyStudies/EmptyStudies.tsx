@@ -5,9 +5,10 @@ import { useTranslation } from 'react-i18next';
 
 import Icon from '../Icon';
 import Typography from '../Typography';
+import Button from '../Button';
 
 // TODO: Add loading spinner to OHIF + use it here.
-const EmptyStudies = ({ className = '' }) => {
+const EmptyStudies = ({ isLoadingError, getData, className = '' }) => {
   const { t } = useTranslation('StudyList');
   return (
     <div className={classnames('inline-flex flex-col items-center', className)}>
@@ -16,11 +17,12 @@ const EmptyStudies = ({ className = '' }) => {
         className="mb-4"
       />
       <Typography
-        className="text-primary-light"
+        className="text-primary-light mb-4"
         variant="h5"
       >
         {t('No studies available')}
       </Typography>
+      {isLoadingError ? <Button onClick={() => getData()}>{t('Update')}</Button> : <></>}
     </div>
   );
 };
