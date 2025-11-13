@@ -61,7 +61,7 @@ window.config = {
         },
         personalAccountUri: '/personal',
         backendUrl: 'https://zview.z-union.ru',
-        domain: 'https://dev-zview.z-union.ru',
+        domain: 'https://zview.z-union.ru',
       },
     },
     // {
