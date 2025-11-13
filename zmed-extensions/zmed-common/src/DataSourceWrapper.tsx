@@ -125,36 +125,77 @@ function DataSourceWrapper(props) {
     console.log(e);
     setIsLoadingError(true);
 
+    // считать, что "попытка загрузки по этому location была", чтобы не триггерить автоповтор
+    setData(prev => ({
+      ...prev,
+      location, // объект useLocation()
+    }));
+
     uiNotificationService.show({
       title: t('Error fetching studies'),
       message: t('Failed to load studies'),
       type: 'error',
     });
-  }
+  };
 
   const getData = async () => {
   setIsLoading(true);
 
-  const updateState = ({ studies = [], pages, size, total }: Types.StudyListWithPagination) => {
-    setPages(pages);
-    setSize(size);
-    setTotalStudies(total);
-    setData({ studies, total: studies.length, ...queryFilterValues, location });
-  };
+  try {
+    const updateState = ({
+      studies = [],
+      pages,
+      size,
+      total,
+    }: Types.StudyListWithPagination) => {
+      setPages(pages);
+      setSize(size);
+      setTotalStudies(total);
+      setData({
+        studies,
+        total: studies.length,
+        ...queryFilterValues,
+        location,
+      });
+    };
 
-  if (data.location === 'Not a valid location, causes first load to occur') cache.current.clear();
-  const queryKey = JSON.stringify(queryFilterValues);
+    if (data.location === 'Not a valid location, causes first load to occur') {
+      cache.current.clear();
+    }
 
-  if (cache.current.has(queryKey)) { //Данные из кэша
-    const cachedData = cache.current.get(queryKey);
-    updateState(cachedData);
-  } else {                           //Данные из сетевого запроса
-    const data = await dataSource.query.studies.search(queryFilterValues);
-    cache.current.set(queryKey, data);
-    updateState(data);
+    const queryKey = JSON.stringify(queryFilterValues);
+
+    if (cache.current.has(queryKey)) {
+      // Данные из кэша
+      const cachedData = cache.current.get(queryKey)!;
+      updateState(cachedData);
+    } else {
+      // Данные из сетевого запроса
+      const result = await dataSource.query.studies.search(queryFilterValues);
+      cache.current.set(queryKey, result);
+      updateState(result);
+    }
+
+    // если всё ок — сбрасываем флаг ошибки
+    setIsLoadingError(false);
+  } catch (e) {
+    // ваш вариант 1: помечаем location актуальным и показываем уведомление
+    console.log(e);
+    setIsLoadingError(true);
+    setData(prev => ({
+      ...prev,
+      location, // объект useLocation(), чтобы isLocationUpdated стал false
+    }));
+
+    uiNotificationService.show({
+      title: t('Error fetching studies'),
+      message: t('Failed to load studies'),
+      type: 'error',
+    });
+  } finally {
+    // ГАРАНТИРОВАННО выключаем лоадер
+    setIsLoading(false);
   }
-
-  setIsLoading(false);
 };
 
   /**
@@ -220,7 +261,7 @@ function DataSourceWrapper(props) {
         (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
       if (isDataInvalid) {
-        getData().catch((e) => {errorHandler(e); setIsLoading(false);});
+        getData().catch((e) => {errorHandler(e); setIsLoading(false);}).finally(() => {setIsLoading(false);});
       }
     } catch (ex) {
       console.warn(ex);

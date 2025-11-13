@@ -30,11 +30,14 @@ import {
 } from '@ohif/ui';
 
 import AboutModal from '../components/AboutModal';
+import AdminModal from './AdminModal';
 import Feedback from '../components/Feedback';
 
 import i18n from '@ohif/i18n';
 
 import { Types } from '@ohif/ui';
+
+import AuthService from '../../../../platform/app/src/services/AuthService.js';
 
 const { sortBySeriesDate, getDateWithTimezone } = utils;
 
@@ -64,7 +67,7 @@ function WorkSheet({
 }) {
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const { uiNotificationService, uiModalService } = servicesManager.services;
-  const userEmail = servicesManager.services.userAuthenticationService.getUser().profile.preferred_username;
+  const userEmail = 'zview';//servicesManager.services.userAuthenticationService.getUser().profile.preferred_username;
   const { show, hide } = useModal();
   const { t } = useTranslation('StudyList');
   // ~ Modes
@@ -86,6 +89,31 @@ function WorkSheet({
     ...defaultFilterValues,
     ...sessionQueryFilterValues,
   });
+
+  const [isAdmin, setIsAdmin] = useState(AuthService.isAdmin());
+  useEffect(() => {
+    let cancelled = false;
+    // одноразово проверим и освежим флаг из /protected
+    AuthService.checkAdminAndCache()
+      .then((val) => {
+        if (!cancelled) setIsAdmin(!!val);
+      })
+      .catch(() => {
+        // молча игнорируем сетевые ошибки
+      });
+
+    // если флаг изменится в другой вкладке/контексте — подхватим
+    const onStorage = (e) => {
+      if (e.key === 'is_admin') {
+        setIsAdmin(e.newValue === '1');
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   const debouncedFilterValues = useDebounce(filterValues, 20);
   // Пока что большой Debounce не требуется за счет использования кэширования
@@ -497,44 +525,66 @@ function WorkSheet({
   const versionNumber = process.env.VERSION_NUMBER;
   const commitHash = process.env.COMMIT_HASH;
 
-  const menuOptions = [
-    {
-      title: t('Header:About'),
-      icon: 'info',
-      onClick: () =>
-        show({
-          content: AboutModal,
-          title: 'About ZMed Viewer',
-          contentProps: { versionNumber, commitHash },
-        }),
-    },
-    {
-      title: t('Header:Preferences'),
-      icon: 'settings',
-      onClick: () =>
-        show({
-          title: t('UserPreferencesModal:User Preferences'),
-          content: UserPreferences,
-          contentProps: {
-            hotkeyDefaults: hotkeysManager.getValidHotkeyDefinitions(
-              hotkeyDefaults
-            ),
-            hotkeyDefinitions,
-            onCancel: hide,
-            currentLanguage: currentLanguage(),
-            availableLanguages,
-            defaultLanguage,
-            onSubmit: state => {
-              i18n.changeLanguage(state.language.value);
-              hotkeysManager.setHotkeys(state.hotkeyDefinitions);
-              hide();
+  const menuOptions = useMemo(() => {
+    const base = [
+      {
+        title: t('Header:About'),
+        icon: 'info',
+        onClick: () =>
+          show({
+            content: AboutModal,
+            title: 'About ZMed Viewer',
+            contentProps: { versionNumber, commitHash },
+          }),
+      },
+      {
+        title: t('Header:Preferences'),
+        icon: 'settings',
+        onClick: () =>
+          show({
+            title: t('UserPreferencesModal:User Preferences'),
+            content: UserPreferences,
+            contentProps: {
+              hotkeyDefaults:
+                hotkeysManager.getValidHotkeyDefinitions(hotkeyDefaults),
+              hotkeyDefinitions,
+              onCancel: hide,
+              currentLanguage: currentLanguage(),
+              availableLanguages,
+              defaultLanguage,
+              onSubmit: (state) => {
+                i18n.changeLanguage(state.language.value);
+                hotkeysManager.setHotkeys(state.hotkeyDefinitions);
+                hide();
+              },
+              onReset: () => hotkeysManager.restoreDefaultBindings(),
+              hotkeysModule: hotkeys,
             },
-            onReset: () => hotkeysManager.restoreDefaultBindings(),
-            hotkeysModule: hotkeys,
-          },
-        }),
-    },
-  ];
+          }),
+        },
+        {
+        title: t('Header:Logout'),
+        icon: 'power-off',
+        onClick: async () => {
+          AuthService.logout();
+        },
+      },
+    ];
+
+    if (isAdmin) {
+      base.unshift({
+        title: t('Common:AdminPanelTitle'),
+        icon: 'info-action',
+        onClick: () =>
+          show({
+            content: AdminModal,
+            title: t('Common:AdminPanelTitle'),
+          }),
+      });
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, t]);
 
   if (appConfig.oidc) {
     menuOptions.push({

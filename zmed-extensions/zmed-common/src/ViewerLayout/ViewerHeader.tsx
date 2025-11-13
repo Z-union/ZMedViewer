@@ -18,6 +18,8 @@ import AboutModal from '../components/AboutModal';
 import configuration from '../config';
 import axios from 'axios';
 
+import AuthService from '../../../../platform/app/src/services/AuthService';
+
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
 function ViewerHeader({
@@ -146,6 +148,14 @@ function ViewerHeader({
           },
         }),
     },
+    {
+      title: t('Header:Logout'),
+      icon: 'power-off',
+      onClick: async () => {
+        console.log('logout');
+        AuthService.logout();
+      }
+    }
   ];
 
   if (appConfig.oidc) {

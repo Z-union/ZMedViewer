@@ -31,6 +31,8 @@ import getDirectURL from '../utils/getDirectURL';
 import { fixBulkDataURI } from './utils/fixBulkDataURI';
 import { sortStudies } from './utils/prepStudies';
 
+import AuthService from '../../../../platform/app/src/services/AuthService';
+
 const { DicomMetaDictionary, DicomDict } = dcmjs.data;
 
 const { naturalizeDataset, denaturalizeDataset } = DicomMetaDictionary;
@@ -41,6 +43,14 @@ const ImplementationVersionName = 'OHIF-VIEWER-2.0.0';
 const EXPLICIT_VR_LITTLE_ENDIAN = '1.2.840.10008.1.2.1';
 
 const metadataProvider = classes.MetadataProvider;
+
+axios.interceptors.request.use((config) => {
+  const auth = AuthService.getAuthorizationHeader();
+  config.headers = { ...(config.headers || {}), ...auth };
+  return config;
+});
+
+type SimpleMessageResponse = { message: string };
 
 /**
  *
@@ -56,8 +66,7 @@ const metadataProvider = classes.MetadataProvider;
  * @param {string|bool} singlepart - indicates of the retrieves can fetch singlepart.  Options are bulkdata, video, image or boolean true
  */
 function createDicomWebApi(dicomWebConfig, servicesManager) {
-  const { userAuthenticationService, customizationService } =
-    servicesManager.services;
+  const { customizationService } = servicesManager.services;
   let dicomWebConfigCopy,
     qidoConfig,
     wadoConfig,
@@ -83,17 +92,11 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
       dicomWebConfigCopy = JSON.parse(JSON.stringify(dicomWebConfig));
 
       getAuthrorizationHeader = () => {
-        const xhrRequestHeaders = {};
-        const authHeaders = userAuthenticationService.getAuthorizationHeader();
-        if (authHeaders && authHeaders.Authorization) {
-          xhrRequestHeaders.Authorization = authHeaders.Authorization;
-        }
-        return xhrRequestHeaders;
+        return AuthService.getAuthorizationHeader();
       };
 
       generateWadoHeader = () => {
         let authorizationHeader = getAuthrorizationHeader();
-        //Generate accept header depending on config params
         let formattedAcceptHeader = utils.generateAcceptHeader(
           dicomWebConfig.acceptHeader,
           dicomWebConfig.requestTransferSyntaxUID,
@@ -110,7 +113,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
         url: dicomWebConfig.qidoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: userAuthenticationService.getAuthorizationHeader(),
+        headers: AuthService.getAuthorizationHeader(),
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
       };
 
@@ -118,7 +121,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
         url: dicomWebConfig.wadoRoot,
         staticWado: dicomWebConfig.staticWado,
         singlepart: dicomWebConfig.singlepart,
-        headers: userAuthenticationService.getAuthorizationHeader(),
+        headers: AuthService.getAuthorizationHeader(),
         errorInterceptor: errorHandler.getHTTPErrorHandler(),
       };
 
@@ -146,7 +149,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           const date = new Map();
 
           if (origParams.me) {
-            const head = headers;
+            const head = { ...headers };
             head['Content-Type'] = 'application/json';
             const params = {
               page: origParams.pageNumber,
@@ -485,6 +488,84 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           madeInClient
         )
       );
+    },
+
+    admin: {
+      /**
+       * POST {domain}{personalAccountUri}/assign-permissions
+       * Body: { user_id: number, permissions: number }
+       * Требует ADMIN access-токен.
+       */
+      assignPermissions: async (
+        userId: number,
+        permissions: number
+      ): Promise<SimpleMessageResponse> => {
+        const url =
+          dicomWebConfig.domain +
+          dicomWebConfig.personalAccountUri +
+          '/auth/assign-permissions';
+        const headers = {
+          ...getAuthrorizationHeader(),
+          'Content-Type': 'application/json',
+        };
+        try {
+          const { data } = await axios.post<SimpleMessageResponse>(
+            url,
+            { user_id: userId, permissions },
+            { headers }
+          );
+          return data;
+        } catch (e: any) {
+          if (axios.isAxiosError(e) && e.response) {
+            const { status, data } = e.response as {
+              status: number;
+              data?: any;
+            };
+            if (status === 403) throw new Error('403: нет прав ADMIN');
+            if (status === 404) throw new Error('404: пользователь не найден');
+            throw new Error(`${status}: ${data?.message || 'Ошибка запроса'}`);
+          }
+          throw e;
+        }
+      },
+
+      /**
+       * POST {domain}{personalAccountUri}/update-password
+       * Body: { user_id: number, new_password: string }
+       * Требует ADMIN access-токен.
+       */
+      updatePassword: async (
+        userId: number,
+        newPassword: string
+      ): Promise<SimpleMessageResponse> => {
+        const url =
+          dicomWebConfig.domain +
+          dicomWebConfig.personalAccountUri +
+          '/auth/update-password';
+        const headers = {
+          ...getAuthrorizationHeader(),
+          'Content-Type': 'application/json',
+        };
+        try {
+          const { data } = await axios.post<SimpleMessageResponse>(
+            url,
+            { user_id: userId, new_password: newPassword },
+            { headers }
+          );
+          return data;
+        } catch (e: any) {
+          if (axios.isAxiosError(e) && e.response) {
+            const { status, data } = e.response as {
+              status: number;
+              data?: any;
+            };
+            if (status === 403) throw new Error('403: нет прав ADMIN');
+            if (status === 404) throw new Error('404: пользователь не найден');
+            throw new Error(`${status}: ${data?.message || 'Ошибка запроса'}`);
+          }
+          throw e;
+        }
+      },
     },
 
     _retrieveSeriesMetadataAsync: async (

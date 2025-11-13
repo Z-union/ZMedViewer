@@ -60,7 +60,8 @@ window.config = {
           enabled: true,
         },
         personalAccountUri: '/personal',
-        backendUrl: 'https://dev-zview.z-union.ru'
+        backendUrl: 'https://dev-zview.z-union.ru',
+        domain: 'https://dev-zview.z-union.ru',
       },
     },
     // {
@@ -113,22 +114,22 @@ window.config = {
     mgURL: 'https://dev-zview.z-union.ru/mgtools/'
   },
   // This is an array, but we'll only use the first entry for now
-  oidc: [
-    {
-      // ~ REQUIRED
-      // Authorization Server URL
-      authority: 'https://dev-zview.z-union.ru/auth/realms/ohif',
-      client_id: 'ohif-viewer',
-      redirect_uri: 'https://dev-zview.z-union.ru/callback', // `OHIFStandaloneViewer.js`
-      // "Authorization Code Flow"
-      // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
-      response_type: 'code',
-      scope: 'openid', // email profile openid
-      automaticSilentRenew: true,
-      // ~ OPTIONAL
-      post_logout_redirect_uri: '/logout-redirect.html',
-    },
-  ],
+  // oidc: [
+  //   {
+  //     // ~ REQUIRED
+  //     // Authorization Server URL
+  //     authority: 'https://dev-zview.z-union.ru/auth/realms/ohif',
+  //     client_id: 'ohif-viewer',
+  //     redirect_uri: 'https://dev-zview.z-union.ru/callback', // `OHIFStandaloneViewer.js`
+  //     // "Authorization Code Flow"
+  //     // Resource: https://medium.com/@darutk/diagrams-of-all-the-openid-connect-flows-6968e3990660
+  //     response_type: 'code',
+  //     scope: 'openid', // email profile openid
+  //     automaticSilentRenew: true,
+  //     // ~ OPTIONAL
+  //     post_logout_redirect_uri: '/logout-redirect.html',
+  //   },
+  // ],
   whiteLabeling: {
     /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */
     createLogoComponentFn: function (React) {
