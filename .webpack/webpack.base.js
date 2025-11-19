@@ -79,6 +79,8 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
     output: {
       // clean: true,
       publicPath: '/',
+      filename: isProdBuild ? 'js/[name].[contenthash:8].js' : 'js/[name].js',
+      chunkFilename: isProdBuild ? 'js/[name].[contenthash:8].chunk.js' : 'js/[name].chunk.js',
     },
     context: SRC_DIR,
     stats: {
@@ -112,11 +114,11 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
                           name: 'preset-default',
                           params: {
                             overrides: {
-                              removeViewBox: false
+                              removeViewBox: false,
                             },
                           },
                         },
-                      ]
+                      ],
                     },
                     prettier: false,
                     svgo: true,
@@ -158,7 +160,9 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
             {
               loader: 'file-loader',
               options: {
-                name: 'assets/images/[name].[ext]',
+                name: isProdBuild
+                  ? 'assets/images/[name].[contenthash:8].[ext]'
+                  : 'assets/images/[name].[ext]',
               },
             },
           ],
