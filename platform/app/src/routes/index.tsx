@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary, Icon } from '@ohif/ui';
 import { useTranslation } from 'react-i18next';
 
@@ -23,7 +23,7 @@ const NotFoundServer = ({
     <div className="absolute flex h-full w-full items-center justify-center">
       <div
         className="grid h-full w-full grid-cols-2"
-        style={{ 'grid-template-columns': '1fr 6fr' }}
+        style={{ 'grid-template-columns': '1fr 6fr' } as React.CSSProperties}
       >
         <a
           href={'/'}
@@ -56,7 +56,7 @@ const NotFoundStudy = ({
     <div className="absolute flex h-full w-full items-center justify-center">
       <div
         className="grid h-full w-full grid-cols-2"
-        style={{ 'grid-template-columns': '1fr 6fr' }}
+        style={{ 'grid-template-columns': '1fr 6fr' } as React.CSSProperties}
       >
         <a
           href={'/'}
@@ -78,6 +78,9 @@ const NotFoundStudy = ({
 NotFoundStudy.propTypes = {
   message: PropTypes.string,
 };
+
+// NOT FOUND (404)
+const notFoundRoute = { component: NotFound };
 
 // TODO: Include "routes" debug route if dev build
 const bakedInRoutes = [
@@ -102,9 +105,6 @@ const bakedInRoutes = [
     children: Local.bind(null, { modePath: 'viewer/dicomlocal' }),
   },
 ];
-
-// NOT FOUND (404)
-const notFoundRoute = { component: NotFound };
 
 const createRoutes = ({
   modes,
@@ -168,12 +168,11 @@ const createRoutes = ({
   // Note: PrivateRoutes in react-router-dom 6.x should be defined within
   // a Route element
   return (
-    <Routes>
-      {allRoutes.map((route, i) => {
-        return route.private === true ? (
+    <Routes basename={routerBasename}>
+      {allRoutes.map((route, i) =>
+        route.private === true ? (
           <Route
             key={i}
-            exact
             path={route.path}
             element={
               <PrivateRoute
@@ -182,15 +181,14 @@ const createRoutes = ({
                 <RouteWithErrorBoundary route={route} />
               </PrivateRoute>
             }
-          ></Route>
-        ) : (
-          <Route
-            key={i}
-            path={route.path}
-            element={<RouteWithErrorBoundary route={route} />}
           />
-        );
-      })}
+        ) : (
+          <Route key={i} path={route.path} element={<RouteWithErrorBoundary route={route} />} />
+        )
+      )}
+
+      {/* Авторедирект с несуществующего роута на корень */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
