@@ -69,8 +69,12 @@ function App({
 }) {
   const [init, setInit] = useState<any>(null);
   const [isAuth, setIsAuth] = useState(authService.isAuthenticated());
+  const [authReady, setAuthReady] = useState(false);
+
   useEffect(() => {
-    appInit(config, defaultExtensions, defaultModes).then(setInit).catch(console.error);
+    appInit(config, defaultExtensions, defaultModes)
+      .then(setInit)
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -84,12 +88,35 @@ function App({
   }, []);
 
   useEffect(() => {
-    if (!init) return;
-    const base = init.appConfig?.routerBasename || '/';
-    setRouterBasename(base);
-    authService.installAuthFetchInterceptor();
-    // ⬇️ первый refresh один раз при заходе, далее таймер из setTokensAndSchedule
-    authService.initializeAutoRefresh({ immediate: true });
+    if (!init) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const bootstrapAuth = async () => {
+      const base = init.appConfig?.routerBasename || '/';
+      setRouterBasename(base);
+      authService.installAuthFetchInterceptor();
+
+      try {
+        await authService.initializeAutoRefresh({ immediate: true });
+        if (!cancelled) {
+          setIsAuth(authService.isAuthenticated());
+        }
+      } catch {
+      } finally {
+        if (!cancelled) {
+          setAuthReady(true);
+        }
+      }
+    };
+
+    void bootstrapAuth();
+
+    return () => {
+      cancelled = true;
+    };
   }, [init]);
 
   useEffect(() => {
@@ -99,8 +126,11 @@ function App({
     }
   }, [init]);
 
-  // До этого места — только хуки. Дальше можно делать условные return.
-  if (!init) return null;
+  // Пока не инициализировались appInit И начальный auto-refresh — ничего не рендерим,
+  // чтобы первый запрос за исследованиями не ушёл со старым access_token
+  if (!init || !authReady) {
+    return null;
+  }
 
   // Set above for named export
   commandsManager = init.commandsManager;
