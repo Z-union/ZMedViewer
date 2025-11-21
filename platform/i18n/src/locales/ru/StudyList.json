@@ -38,5 +38,14 @@
   "VR": "Тип",
   "Update": "Обновить",
   "Error fetching studies": "Ошибка при загрузке исследований",
-  "Failed to load studies": "Не удалось загрузить исследования"
+  "Failed to load studies": "Не удалось загрузить исследования",
+  "Delete Zview reports": "Удалить Zview отчеты",
+  "Deleting Zview reports": "Удаление Zview отчетов",
+  "No Zview reports were found to delete": "Zview отчеты на найдены",
+  "Zview reports have been deleted successfully": "Zview отчеты успешно удалены",
+  "Unknown error occurred while deleting Zview reports": "Неизвестная ошибка во время удаления Zview отчетов",
+  "Are you sure you wish to delete all Zview reports?": "Вы действительно хотите удалить Zview отчеты для выбранного исследования?",
+  "Study have been deleted successfully": "Исследование успешно удалено",
+  "Error while deleting study": "Ошибка при удалении исследования",
+  "Deleting study": "Удаление исследования"
 }

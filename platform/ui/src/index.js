@@ -133,6 +133,7 @@ export {
   Toolbox,
   InvestigationalUseDialog,
   LayoutPreset,
+  DeleteStudyMenu
 } from './components';
 
 export { useSessionStorage } from './hooks';

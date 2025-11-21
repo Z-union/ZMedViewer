@@ -32,5 +32,14 @@
   "VR": "VR",
   "Update": "Update",
   "Error fetching studies": "Error fetching studies",
-  "Failed to load studies": "Failed to load studies"
+  "Failed to load studies": "Failed to load studies",
+  "Delete Zview reports": "Delete Zview reports",
+  "Deleting Zview reports": "Deleting Zview reports",
+  "No Zview reports were found to delete": "No Zview reports were found to delete",
+  "Zview reports have been deleted successfully": "Zview reports have been deleted successfully",
+  "Unknown error occurred while deleting Zview reports": "Unknown error occurred while deleting Zview reports",
+  "Are you sure you wish to delete all Zview reports?": "Are you sure you wish to delete all Zview reports?",
+  "Study have been deleted successfully": "Study have been deleted successfully",
+  "Error while deleting study": "Error while deleting study",
+  "Deleting study": "Deleting study"
 }

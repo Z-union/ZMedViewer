@@ -1,92 +1,70 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
 import type { withAppTypes } from '@ohif/core/types';
 import {
-  ConfirmContent,
   ErrorBoundary,
   UserPreferences,
   Header,
   useModal,
+  DeleteStudyMenu,
 } from '@ohif/ui';
 import i18n from '@ohif/i18n';
 import { hotkeys } from '@ohif/core';
 import { Toolbar } from '../Toolbar/Toolbar';
 
 import AboutModal from '../components/AboutModal';
-import configuration from '../config';
-import axios from 'axios';
-
 import AuthService from '../../../../platform/app/src/services/AuthService';
 
 const { availableLanguages, defaultLanguage, currentLanguage } = i18n;
 
-function ViewerHeader({
+const ViewerHeader: React.FC<withAppTypes> = ({
   hotkeysManager,
   extensionManager,
   servicesManager,
   appConfig,
-}: withAppTypes) {
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
+  const { show, hide } = useModal();
+  const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
+  const versionNumber = process.env.VERSION_NUMBER;
+  const commitHash = process.env.COMMIT_HASH;
+
+  const { uiModalService, uiNotificationService, DisplaySetService } = servicesManager.services;
 
   const dataSourceName = extensionManager.defaultDataSourceName;
   const dataSource = extensionManager.getDataSources(dataSourceName)?.[0];
-  const studyInstanceUID = new URLSearchParams(window.location.search).get(
-    'StudyInstanceUIDs'
-  );
 
-  const {
-    uiModalService,
-    DisplaySetService,
-    viewportGridService,
-    uiNotificationService,
-  } = servicesManager.services;
+  const urlSearchParams = new URLSearchParams(window.location.search);
+  const studyInstanceUID = urlSearchParams.get('StudyInstanceUIDs');
 
-  const handleClickYes = async (e) => {
-    e.preventDefault();
-    await dataSource.query.studies.delete(studyInstanceUID);
-    onClickReturnButton();
-    uiModalService.hide();
+  type UserPreferencesSubmitArgs = {
+    hotkeyDefinitions: Parameters<
+      (typeof hotkeysManager)['setHotkeys']
+    >[0];
+    language: { value: string };
   };
 
-  const handleClickNo = async (e) => {
-    e.preventDefault();
-    uiModalService.hide();
-  };
-
-  const onClickDelete = (e) => {
-    e.preventDefault();
-    uiModalService.show({
-      title: t('StudyList:Delete study'),
-      containerDimensions: 'w-80',
-      content: () => {
-        return (
-          <ConfirmContent
-            labelContent={t(
-              'StudyList:Are you sure you wish to delete this study?'
-            )}
-            handleClickYes={handleClickYes}
-            handleClickNo={handleClickNo}
-          />
-        );
-      },
-    });
-  };
-
-  const onClickReturnButton = () => {
+  const onClickReturnButton = (): void => {
     const { pathname } = location;
     const dataSourceIdx = pathname.indexOf('/', 1);
     const query = new URLSearchParams(window.location.search);
     const configUrl = query.get('configUrl');
 
-    const dataSourceName = pathname.substring(dataSourceIdx + 1);
-    const existingDataSource = extensionManager.getDataSources(dataSourceName);
+    const pathDataSourceName =
+      dataSourceIdx !== -1 ? pathname.substring(dataSourceIdx + 1) : '';
+
+    const existingDataSource = pathDataSourceName
+      ? extensionManager.getDataSources(pathDataSourceName)
+      : undefined;
 
     const searchQuery = new URLSearchParams();
+
     if (dataSourceIdx !== -1 && existingDataSource) {
-      searchQuery.append('datasources', pathname.substring(dataSourceIdx + 1));
+      searchQuery.append('datasources', pathDataSourceName);
     }
 
     if (configUrl) {
@@ -99,11 +77,138 @@ function ViewerHeader({
     });
   };
 
-  const { t } = useTranslation();
-  const { show, hide } = useModal();
-  const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
-  const versionNumber = process.env.VERSION_NUMBER;
-  const commitHash = process.env.COMMIT_HASH;
+  const handleConfirmDeleteStudy = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    try {
+      await dataSource.query.studies.delete(studyInstanceUID);
+
+      uiNotificationService.show({
+        title: t('StudyList:Deleting study'),
+        message: t(
+          'StudyList:Study have been deleted successfully'
+        ),
+        type: 'success',
+      });
+    } catch {
+        uiNotificationService.show({
+          title: t('StudyList:Deleting study'),
+          message: t(
+            'StudyList:Error while deleting study'
+          ),
+          type: 'error',
+        });
+    }
+    onClickReturnButton();
+    uiModalService.hide();
+  };
+
+  const handleConfirmDeleteAllSeries = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ): Promise<void> => {
+    event.preventDefault();
+
+    const allowedModalities: ReadonlyArray<string> = ['OT', 'SEG', 'SR', 'DOC', 'PDF'];
+
+    if (!dataSource || !dataSource.query?.series?.delete) {
+      uiNotificationService.show({
+        title: t('StudyList:Deleting Zview reports'),
+        message: t(
+          'StudyList:Error occurred while deleting Zview reports'
+        ),
+        type: 'error',
+      });
+      uiModalService.hide();
+      return;
+    }
+
+    const activeDisplaySets = DisplaySetService.activeDisplaySets ?? [];
+
+    const deletableDisplaySets = activeDisplaySets.filter(displaySet => {
+      const modality = displaySet.Modality?.trim().toUpperCase();
+      return (
+        modality !== undefined && allowedModalities.includes(modality)
+      );
+    });
+
+    if (deletableDisplaySets.length === 0) {
+      uiNotificationService.show({
+        title: t('StudyList:Deleting Zview reports'),
+        message: t(
+          'StudyList:No Zview reports were found to delete'
+        ),
+        type: 'info',
+      });
+      uiModalService.hide();
+      return;
+    }
+
+    try {
+      for (const displaySet of deletableDisplaySets) {
+        const seriesInstanceUID = displaySet.SeriesInstanceUID;
+
+        if (!seriesInstanceUID) {
+          continue;
+        }
+
+        await dataSource.query.series.delete(seriesInstanceUID);
+      }
+
+      uiNotificationService.show({
+        title: t('StudyList:Deleting Zview reports'),
+        message: t(
+          'StudyList:Zview reports have been deleted successfully'
+        ),
+        type: 'success',
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : t('StudyList:Unknown error occurred while deleting Zview reports');
+
+      uiNotificationService.show({
+        title: t('StudyList:Deleting Zview reports'),
+        message: errorMessage,
+        type: 'error',
+      });
+    } finally {
+      uiModalService.hide();
+    }
+  };
+
+  const handleCancelDelete = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ): void => {
+    event.preventDefault();
+    uiModalService.hide();
+  };
+
+  const onClickDelete = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ): void => {
+    event.preventDefault();
+
+    uiModalService.show({
+      title: t('StudyList:Delete study'),
+      containerDimensions: 'w-96',
+      content: () => (
+        <DeleteStudyMenu
+          deleteAllSeriesLabel={t(
+            'StudyList:Are you sure you wish to delete all Zview reports?'
+          )}
+          deleteStudyLabel={t(
+            'StudyList:Are you sure you wish to delete this study?'
+          )}
+          onConfirmDeleteAllSeries={handleConfirmDeleteAllSeries}
+          onConfirmDeleteStudy={handleConfirmDeleteStudy}
+          onCancel={handleCancelDelete}
+        />
+      ),
+    });
+  };
 
   const menuOptions = [
     {
@@ -136,11 +241,14 @@ function ViewerHeader({
               hotkeys.unpause();
               hide();
             },
-            onSubmit: ({ hotkeyDefinitions, language }) => {
+            onSubmit: ({
+              hotkeyDefinitions: submittedHotkeyDefinitions,
+              language,
+            }: UserPreferencesSubmitArgs) => {
               if (language.value !== currentLanguage().value) {
                 i18n.changeLanguage(language.value);
               }
-              hotkeysManager.setHotkeys(hotkeyDefinitions);
+              hotkeysManager.setHotkeys(submittedHotkeyDefinitions);
               hide();
             },
             onReset: () => hotkeysManager.restoreDefaultBindings(),
@@ -152,10 +260,9 @@ function ViewerHeader({
       title: t('Header:Logout'),
       icon: 'power-off',
       onClick: async () => {
-        console.log('logout');
         AuthService.logout();
-      }
-    }
+      },
+    },
   ];
 
   if (appConfig.oidc) {
@@ -188,6 +295,6 @@ function ViewerHeader({
       </ErrorBoundary>
     </Header>
   );
-}
+};
 
 export default ViewerHeader;

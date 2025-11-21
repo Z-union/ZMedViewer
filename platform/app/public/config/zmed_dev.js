@@ -151,36 +151,93 @@ window.config = {
   sortDisplaySets: {
     getZmedDisplaySetSortFunction: function () {
       return (a, b) => {
-        const aModality = a.Modality;
-        const bModality = b.Modality;
-        const aDate = a.SeriesDate !== undefined ? Number(a.SeriesDate) : -Infinity;
-        const aTime = a.SeriesTime !== undefined ? Number(a.SeriesTime) : -Infinity;
-        const bDate = b.SeriesDate !== undefined ? Number(b.SeriesDate) : -Infinity;
-        const bTime = b.SeriesTime !== undefined ? Number(b.SeriesTime) : -Infinity;
+        const priorityModalities = ['MR', 'MG', 'CT', 'DX'];
+        const restOrder = { OT: 0, SR: 1, SEG: 2, SC: 3 };
 
-        // 1. Сортировка по модальности: 'OT' и 'SR' в конец
-        if (aModality !== 'OT' && aModality !== 'SR') {
-          return -1;
-        } else if (bModality !== 'OT' && bModality !== 'SR') {
-          return 1;
-        }
+        const normMod = m => String(m || '').toUpperCase();
 
-        // 2. Сортировка по дате
-        if (aDate < bDate) {
-          return 1;
-        } else if (aDate > bDate) {
-          return -1;
-        }
+        const aModality = normMod(a.modality || a.Modality);
+        const bModality = normMod(b.modality || b.Modality);
 
-        // 3. Сортировка по времени
-        if (aTime < bTime) {
-          return 1;
-        } else if (aTime > bTime) {
-          return -1;
-        }
+        const toNumDate = v => {
+          if (v == null) return -Infinity;
+          const s = String(v).trim();
 
-        // 4. Сортировка по описанию
-        return b.SeriesDescription.localeCompare(a.SeriesDescription);
+          if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) {
+            const [dd, mm, yyyy] = s.split('.');
+            return Number(`${yyyy}${mm}${dd}`);
+          }
+
+          const d = s.replace(/\D/g, '');
+          if (d.length < 8) return -Infinity;
+
+          const yFirst = Number(d.slice(0, 4));
+          const yLast  = Number(d.slice(4, 8));
+
+          if (yFirst >= 1900 && yFirst <= 2999) {
+            return Number(d.slice(0, 8));
+          }
+          if (yLast >= 1900 && yLast <= 2999) {
+            // DDMMYYYY -> YYYYMMDD
+            const dd = d.slice(0, 2);
+            const mm = d.slice(2, 4);
+            const yy = d.slice(4, 8);
+            return Number(`${yy}${mm}${dd}`);
+          }
+
+          return -Infinity;
+        };
+
+        const toNumTime = v => {
+          if (v == null) return -Infinity;
+          let s = String(v).trim();
+          let frac = 0;
+          if (s.includes('.')) {
+            const [base, f] = s.split('.');
+            s = base;
+            if (/^\d+$/.test(f)) frac = Number(`0.${f}`);
+          }
+          s = s.replace(/\D/g, '');
+          if (!s) return -Infinity;
+
+          const base = (s + '000000').slice(0, 6);
+          const hh = Number(base.slice(0, 2));
+          const mm = Number(base.slice(2, 4));
+          const ss = Number(base.slice(4, 6));
+          if ([hh, mm, ss].some(n => Number.isNaN(n))) return -Infinity;
+
+          return hh * 3600 + mm * 60 + ss + frac;
+        };
+
+        const aDate = toNumDate(a.seriesDate ?? a.SeriesDate);
+        const bDate = toNumDate(b.seriesDate ?? b.SeriesDate);
+        const aTime = toNumTime(a.seriesTime ?? a.SeriesTime);
+        const bTime = toNumTime(b.seriesTime ?? b.SeriesTime);
+
+        // 1) MR/MG/CT/DX сверху
+        const aIsPriority = priorityModalities.includes(aModality);
+        const bIsPriority = priorityModalities.includes(bModality);
+        if (aIsPriority !== bIsPriority) return aIsPriority ? -1 : 1;
+
+        // 2) По дате (новее выше)
+        if (aDate !== bDate) return bDate - aDate;
+
+        // 3) При одинаковой дате — по времени (позже выше)
+        if (aTime !== bTime) return bTime - aTime;
+
+        // 4) При равенстве — по модальностям OT → SR → SC → прочее
+        const aRank = Object.prototype.hasOwnProperty.call(restOrder, aModality)
+          ? restOrder[aModality]
+          : Number.POSITIVE_INFINITY;
+        const bRank = Object.prototype.hasOwnProperty.call(restOrder, bModality)
+          ? restOrder[bModality]
+          : Number.POSITIVE_INFINITY;
+        if (aRank !== bRank) return aRank - bRank;
+
+        // 5) Тай-брейк по описанию
+        const aDesc = a.seriesDescription || a.SeriesDescription || '';
+        const bDesc = b.seriesDescription || b.SeriesDescription || '';
+        return bDesc.localeCompare(aDesc);
       };
     },
   },

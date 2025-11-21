@@ -13,7 +13,6 @@ import { useDebounce, useSearchParams } from '@hooks';
 import { utils, hotkeys, ServicesManager, Types as CoreTypes } from '@ohif/core';
 
 import {
-  ConfirmContent,
   Icon,
   StudyListExpandedRow,
   LegacyButton,
@@ -27,6 +26,7 @@ import {
   useSessionStorage,
   UserPreferences,
   LoadingIndicatorProgress,
+  DeleteStudyMenu,
 } from '@ohif/ui';
 
 import AboutModal from '../components/AboutModal';
@@ -63,11 +63,11 @@ function WorkSheet({
   onRefresh,
   servicesManager,
   isLoadingError,
-  getData
+  getData,
 }) {
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const { uiNotificationService, uiModalService } = servicesManager.services;
-  const userEmail = 'zview';//servicesManager.services.userAuthenticationService.getUser().profile.preferred_username;
+  const userEmail = 'zview'; // servicesManager.services.userAuthenticationService.getUser().profile.preferred_username;
   const { show, hide } = useModal();
   const { t } = useTranslation('StudyList');
   // ~ Modes
@@ -77,14 +77,12 @@ function WorkSheet({
   const navigate = useNavigate();
   const STUDIES_LIMIT = 101;
   const queryFilterValues = _getQueryFilterValues(searchParams);
-  const [sessionQueryFilterValues, updateSessionQueryFilterValues] = useSessionStorage({
-    key: 'queryFilterValues',
-    defaultValue: queryFilterValues,
-    // ToDo: useSessionStorage currently uses an unload listener to clear the filters from session storage
-    // so on systems that do not support unload events a user will NOT be able to alter any existing filter
-    // in the URL, load the page and have it apply.
-    clearOnUnload: true,
-  });
+  const [sessionQueryFilterValues, updateSessionQueryFilterValues] =
+    useSessionStorage({
+      key: 'queryFilterValues',
+      defaultValue: queryFilterValues,
+      clearOnUnload: true,
+    });
   const [filterValues, _setFilterValues] = useState({
     ...defaultFilterValues,
     ...sessionQueryFilterValues,
@@ -93,17 +91,12 @@ function WorkSheet({
   const [isAdmin, setIsAdmin] = useState(AuthService.isAdmin());
   useEffect(() => {
     let cancelled = false;
-    // одноразово проверим и освежим флаг из /protected
     AuthService.checkAdminAndCache()
-      .then((val) => {
+      .then(val => {
         if (!cancelled) setIsAdmin(!!val);
       })
-      .catch(() => {
-        // молча игнорируем сетевые ошибки
-      });
-
-    // если флаг изменится в другой вкладке/контексте — подхватим
-    const onStorage = (e) => {
+      .catch(() => {});
+    const onStorage = e => {
       if (e.key === 'is_admin') {
         setIsAdmin(e.newValue === '1');
       }
@@ -116,13 +109,7 @@ function WorkSheet({
   }, []);
 
   const debouncedFilterValues = useDebounce(filterValues, 20);
-  // Пока что большой Debounce не требуется за счет использования кэширования
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
-
-  /*
-   * The default sort value keep the filters synchronized with runtime conditional sorting
-   * Only applied if no other sorting is specified and there are less than 101 studies
-   */
 
   const canSort = false;
   const shouldUseDefaultSort = sortBy === '' || !sortBy;
@@ -187,7 +174,6 @@ function WorkSheet({
     });
   };
 
-  // Set body style
   useEffect(() => {
     document.body.classList.add('bg-black');
     return () => {
@@ -195,18 +181,16 @@ function WorkSheet({
     };
   }, []);
 
-  // Sync URL query parameters with filters
   useEffect(() => {
     if (!debouncedFilterValues) {
       return;
     }
 
-    const queryString = {};
+    const queryString: Record<string, string> = {};
     Object.keys(defaultFilterValues).forEach(key => {
-      const defaultValue = defaultFilterValues[key];
-      const currValue = debouncedFilterValues[key];
+      const defaultValue = (defaultFilterValues as any)[key];
+      const currValue = (debouncedFilterValues as any)[key];
 
-      // TODO: nesting/recursion?
       if (key === 'studyDate') {
         if (
           currValue.startDate &&
@@ -236,7 +220,6 @@ function WorkSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFilterValues]);
 
-  // Query for series information
   useEffect(() => {
     const fetchSeries = async studyInstanceUid => {
       try {
@@ -244,13 +227,10 @@ function WorkSheet({
         seriesInStudiesMap.set(studyInstanceUid, sortBySeriesDate(series));
         setStudiesWithSeriesData([...studiesWithSeriesData, studyInstanceUid]);
       } catch (ex) {
-        // TODO: UI Notification Service
         console.warn(ex);
       }
     };
 
-    // TODO: WHY WOULD YOU USE AN INDEX OF 1?!
-    // Note: expanded rows index begins at 1
     for (let z = 0; z < expandedRows.length; z++) {
       const expandedRowIndex = expandedRows[z] - 1;
       const studyInstanceUid = sortedStudies[expandedRowIndex].studyInstanceUid;
@@ -265,8 +245,8 @@ function WorkSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandedRows, studies]);
 
-  const isFiltering = (filterValues, defaultFilterValues) => {
-    return !isEqual(filterValues, defaultFilterValues);
+  const isFiltering = (fv, dfv) => {
+    return !isEqual(fv, dfv);
   };
 
   const rollingPageNumberMod = Math.floor(101 / resultsPerPage);
@@ -286,23 +266,109 @@ function WorkSheet({
       patientName,
       date,
       time,
-      uploadedAt
+      uploadedAt,
     } = study;
 
     const [studyDate, studyTime] = i18n.formatFullDateWithTimezone(date, time);
-    const [uploadDate, uploadTime] = i18n.formatFullDateWithTimezone(uploadedAt);
+    const [uploadDate, uploadTime] =
+      i18n.formatFullDateWithTimezone(uploadedAt);
 
-    const handleClickYes = async (e) => {
+    const handleConfirmDeleteStudy = async e => {
       e.preventDefault();
-      await dataSource.query.studies.delete(studyInstanceUid);
+      try {
+        await dataSource.query.studies.delete(studyInstanceUid);
+
+        uiNotificationService.show({
+          title: t('StudyList:Deleting study'),
+          message: t(
+            'StudyList:Study have been deleted successfully'
+          ),
+          type: 'success',
+        });
+      } catch {
+          uiNotificationService.show({
+            title: t('StudyList:Deleting study'),
+            message: t(
+              'StudyList:Error while deleting study'
+            ),
+            type: 'error',
+          });
+      }
       onRefresh();
       uiModalService.hide();
-    }
+    };
 
-    const handleClickNo = async (e) => {
-      e.preventDefault();
+    const handleCancelDelete = (
+      event: React.MouseEvent<HTMLButtonElement>
+    ): void => {
+      event.preventDefault();
       uiModalService.hide();
-    }
+    };
+
+    const handleConfirmDeleteAllSeries = async (
+      event: React.MouseEvent<HTMLButtonElement>,
+      studyInstanceUid: string,
+    ): Promise<void> => {
+      event.preventDefault();
+
+      const allowedModalities: ReadonlyArray<string> = ['OT', 'SEG', 'SR', 'DOC', 'PDF'];
+
+      const activeDisplaySets = await dataSource.query.series.search(studyInstanceUid) ?? [];
+
+        const deletableDisplaySets = activeDisplaySets.filter(displaySet => {
+        const modality = displaySet.modality?.trim().toUpperCase();
+        return (
+          modality !== undefined && allowedModalities.includes(modality)
+        );
+      });
+
+      if (deletableDisplaySets.length === 0) {
+        uiNotificationService.show({
+          title: t('StudyList:Deleting Zview reports'),
+          message: t(
+            'StudyList:No Zview reports were found to delete'
+          ),
+          type: 'info',
+        });
+        uiModalService.hide();
+        return;
+      }
+
+      try {
+        for (const displaySet of deletableDisplaySets) {
+          const seriesInstanceUID = displaySet.seriesInstanceUid;
+
+          if (!seriesInstanceUID) {
+            continue;
+          }
+
+          await dataSource.query.series.delete(seriesInstanceUID);
+        }
+
+        onRefresh();
+
+        uiNotificationService.show({
+          title: t('StudyList:Deleting Zview reports'),
+          message: t(
+            'StudyList:Zview reports have been deleted successfully'
+          ),
+          type: 'success',
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : t('StudyList:Unknown error occurred while deleting Zview reports');
+
+        uiNotificationService.show({
+          title: t('StudyList:Deleting Zview reports'),
+          message: errorMessage,
+          type: 'error',
+        });
+      } finally {
+        uiModalService.hide();
+      }
+    };
 
     return {
       row: [
@@ -371,8 +437,6 @@ function WorkSheet({
           gridCol: 4,
         },
       ],
-      // Todo: This is actually running for all rows, even if they are
-      // not clicked on.
       expandedContent: (
         <StudyListExpandedRow
           seriesTableColumns={{
@@ -384,13 +448,13 @@ function WorkSheet({
           seriesTableDataSource={
             seriesInStudiesMap.has(studyInstanceUid)
               ? seriesInStudiesMap.get(studyInstanceUid).map(s => {
-                return {
-                  description: s.description || '(empty)',
-                  seriesNumber: s.seriesNumber ?? '',
-                  modality: s.modality || '',
-                  instances: s.numSeriesInstances || '',
-                };
-              })
+                  return {
+                    description: s.description || '(empty)',
+                    seriesNumber: s.seriesNumber ?? '',
+                    modality: s.modality || '',
+                    instances: s.numSeriesInstances || '',
+                  };
+                })
               : []
           }
         >
@@ -405,12 +469,6 @@ function WorkSheet({
                 study,
               });
               const isValidMode = isValidModeCheck === !!isValidModeCheck;
-              // TODO: Modes need a default/target route? We mostly support a single one for now.
-              // We should also be using the route path, but currently are not
-              // mode.routeName
-              // mode.routes[x].path
-              // Don't specify default data source, and it should just be picked up... (this may not currently be the case)
-              // How do we know which params to pass? Today, it's just StudyInstanceUIDs and configUrl if exists
               const query = new URLSearchParams();
               if (filterValues.configUrl) {
                 query.append('configUrl', filterValues.configUrl);
@@ -421,24 +479,21 @@ function WorkSheet({
                   <Link
                     className={isValidMode ? '' : 'cursor-not-allowed'}
                     key={i}
-                    to={`${dataPath ? '../../' : ''}${mode.routeName
-                      }${dataPath || ''}?${query.toString()}`}
+                    to={`${dataPath ? '../../' : ''}${
+                      mode.routeName
+                    }${dataPath || ''}?${query.toString()}`}
                     onClick={event => {
-                      // In case any event bubbles up for an invalid mode, prevent the navigation.
-                      // For example, the event bubbles up when the icon embedded in the disabled button is clicked.
                       if (!isValidMode) {
                         event.preventDefault();
                       }
                     }}
-                  // to={`${mode.routeName}/dicomweb?StudyInstanceUIDs=${studyInstanceUid}`}
                   >
-                    {/* TODO revisit the completely rounded style of buttons used for launching a mode from the WorkSheet later - for now use LegacyButton*/}
                     <LegacyButton
                       rounded="full"
                       variant={isValidMode ? 'contained' : 'disabled'}
                       disabled={!isValidMode}
-                      endIcon={<Icon name="launch-arrow" />} // launch-arrow | launch-info
-                      onClick={() => { }}
+                      endIcon={<Icon name="launch-arrow" />}
+                      onClick={() => {}}
                     >
                       {t(`${mode.displayName}`)}
                     </LegacyButton>
@@ -450,13 +505,11 @@ function WorkSheet({
         </StudyListExpandedRow>
       ),
       onClickRow: () => {
-        // Выбор режимов
         const modes = appConfig.loadedModes || [];
         const basicViewerMode = modes.find(m => m.routeName === 'viewer');
         const mrViewerMode = modes.find(m => m.routeName === 'mr-viewer');
         const mgViewerMode = modes.find(m => m.routeName === 'mg-viewer');
 
-        // Нормализация модальностей
         const modalitiesToCheck = String(modalities || '').replaceAll('/', '\\');
         const hasMR = modalitiesToCheck
           .split('\\')
@@ -465,8 +518,12 @@ function WorkSheet({
         const hasMG = modalitiesToCheck
           .split('\\')
           .some(m => m.trim().toUpperCase() === 'MG');
-        // Целевой режим
-        const targetMode = hasMR ? mrViewerMode : hasMG ? mgViewerMode : basicViewerMode;
+
+        const targetMode = hasMR
+          ? mrViewerMode
+          : hasMG
+          ? mgViewerMode
+          : basicViewerMode;
 
         if (!targetMode) {
           uiNotificationService.show({
@@ -477,10 +534,13 @@ function WorkSheet({
           return;
         }
 
-        // Валидность выбранного режима
-        const isValidMode = typeof targetMode.isValidMode === 'function'
-          ? !!targetMode.isValidMode({ modalities: modalitiesToCheck, study })
-          : true;
+        const isValidMode =
+          typeof targetMode.isValidMode === 'function'
+            ? !!targetMode.isValidMode({
+                modalities: modalitiesToCheck,
+                study,
+              })
+            : true;
 
         if (!isValidMode) {
           uiNotificationService.show({
@@ -493,31 +553,31 @@ function WorkSheet({
           return;
         }
 
-        // Навигация в выбранный режим
-        navigate(`/${targetMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`);
+        navigate(
+          `/${targetMode.routeName}?StudyInstanceUIDs=${studyInstanceUid}`
+        );
       },
-
-      // Открытие окна с выбором мода (пока мод 1, можно отключить)
-      // setExpandedRows(s =>
-      //   isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]
-      // ),
       isExpanded,
-      onClickDelete: (e) => {
+      onClickDelete: e => {
         e.stopPropagation();
         uiModalService.show({
           title: t('Delete study'),
-          containerDimensions: 'w-80',
-          content: () => {
-            return (
-              <ConfirmContent
-                labelContent={t('Are you sure you wish to delete this study?')}
-                handleClickYes={handleClickYes}
-                handleClickNo={handleClickNo}
-              />
-            );
-          }
+          containerDimensions: 'w-96',
+          content: () => (
+            <DeleteStudyMenu
+              deleteAllSeriesLabel={t(
+                'Are you sure you wish to delete all Zview reports?'
+              )}
+              deleteStudyLabel={t(
+                'Are you sure you wish to delete this study?'
+              )}
+              onConfirmDeleteAllSeries={(e) => handleConfirmDeleteAllSeries(e, studyInstanceUid)}
+              onConfirmDeleteStudy={handleConfirmDeleteStudy}
+              onCancel={handleCancelDelete}
+            />
+          ),
         });
-      }
+      },
     };
   });
 
@@ -552,7 +612,7 @@ function WorkSheet({
               currentLanguage: currentLanguage(),
               availableLanguages,
               defaultLanguage,
-              onSubmit: (state) => {
+              onSubmit: state => {
                 i18n.changeLanguage(state.language.value);
                 hotkeysManager.setHotkeys(state.hotkeyDefinitions);
                 hide();
@@ -561,8 +621,8 @@ function WorkSheet({
               hotkeysModule: hotkeys,
             },
           }),
-        },
-        {
+      },
+      {
         title: t('Header:Logout'),
         icon: 'power-off',
         onClick: async () => {
@@ -601,29 +661,28 @@ function WorkSheet({
   const { customizationService } = servicesManager.services;
   const { component: dicomUploadComponent } =
     customizationService.get('dicomUploadComponent') ?? {};
-  let uploadTitle = t("Upload files")
+  const uploadTitle = t('Upload files');
   const uploadProps =
     dicomUploadComponent && dataSource.getConfig()?.dicomUploadEnabled
       ? {
-        title: uploadTitle,
-        closeButton: true,
-        shouldCloseOnEsc: false,
-        shouldCloseOnOverlayClick: false,
-        content: dicomUploadComponent.bind(null, {
-          dataSource,
-          onComplete: () => {
-            hide();
-            onRefresh();
-          },
-          onStarted: () => {
-            show({
-              ...uploadProps,
-              // when upload starts, hide the default close button as closing the dialogue must be handled by the upload dialogue itself
-              closeButton: false,
-            });
-          },
-        }),
-      }
+          title: uploadTitle,
+          closeButton: true,
+          shouldCloseOnEsc: false,
+          shouldCloseOnOverlayClick: false,
+          content: dicomUploadComponent.bind(null, {
+            dataSource,
+            onComplete: () => {
+              hide();
+              onRefresh();
+            },
+            onStarted: () => {
+              show({
+                ...uploadProps,
+                closeButton: false,
+              });
+            },
+          }),
+        }
       : undefined;
 
   const { component: dataSourceConfigurationComponent } =
@@ -677,14 +736,14 @@ function WorkSheet({
             {appConfig.showLoadingIndicator && isLoadingData ? (
               <LoadingIndicatorProgress className={'w-full h-full bg-black'} />
             ) : (
-              <EmptyStudies isLoadingError={isLoadingError} getData={getData}/>
+              <EmptyStudies isLoadingError={isLoadingError} getData={getData} />
             )}
           </div>
         )}
       </div>
       <Feedback
         email={userEmail}
-        apiKey='f93c4e9eb0094e9c13317eaa1925cb0a'
+        apiKey="f93c4e9eb0094e9c13317eaa1925cb0a"
       />
     </div>
   );
@@ -721,7 +780,7 @@ const defaultFilterValues = {
 function _tryParseInt(str, defaultValue) {
   let retValue = defaultValue;
   if (str && str.length > 0) {
-    if (!isNaN(str)) {
+    if (!isNaN(str as any)) {
       retValue = parseInt(str);
     }
   }
@@ -729,7 +788,7 @@ function _tryParseInt(str, defaultValue) {
 }
 
 function _getQueryFilterValues(params) {
-  const queryFilterValues = {
+  const queryFilterValues: any = {
     patientName: params.get('patientname'),
     mrn: params.get('mrn'),
     studyDate: {
@@ -749,7 +808,6 @@ function _getQueryFilterValues(params) {
     configUrl: params.get('configurl'),
   };
 
-  // Delete null/undefined keys
   Object.keys(queryFilterValues).forEach(
     key => queryFilterValues[key] == null && delete queryFilterValues[key]
   );
@@ -758,7 +816,6 @@ function _getQueryFilterValues(params) {
 }
 
 function _sortStringDates(s1, s2, sortModifier) {
-  // TODO: Delimiters are non-standard. Should we support them?
   const s1Date = moment(s1.date, ['YYYYMMDD', 'YYYY.MM.DD'], true);
   const s2Date = moment(s2.date, ['YYYYMMDD', 'YYYY.MM.DD'], true);
 

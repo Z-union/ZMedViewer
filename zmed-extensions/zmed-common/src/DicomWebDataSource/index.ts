@@ -252,6 +252,25 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
 
           return processSeriesResults(results);
         },
+        delete: async function (seriesInstanceUID) {
+          const headers = getAuthrorizationHeader();
+
+          qidoDicomWebClient.headers = headers;
+
+          const head = {
+            ...headers,
+            'Content-Type': 'application/json',
+          };
+
+
+          let config: AxiosRequestConfig = {
+            method: 'delete',
+            url: dicomWebConfig.backendUrl + dicomWebConfig.personalAccountUri + `/api/studies/${seriesInstanceUID}`,
+            headers: head,
+          };
+
+          await axios(config);
+        },
         // processResults: processResults.bind(),
       },
       instances: {
