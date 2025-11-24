@@ -121,7 +121,7 @@ function DataSourceWrapper(props) {
     STUDIES_LIMIT
   );
 
-  const errorHandler = (e) => {
+  const errorHandler = (e: unknown): void => {
     console.log(e);
     setIsLoadingError(true);
 
@@ -138,65 +138,64 @@ function DataSourceWrapper(props) {
     });
   };
 
-  const getData = async () => {
-  setIsLoading(true);
-
-  try {
-    const updateState = ({
-      studies = [],
-      pages,
-      size,
-      total,
-    }: Types.StudyListWithPagination) => {
-      setPages(pages);
-      setSize(size);
-      setTotalStudies(total);
-      setData({
-        studies,
-        total: studies.length,
-        ...queryFilterValues,
-        location,
-      });
-    };
-
-    if (data.location === 'Not a valid location, causes first load to occur') {
-      cache.current.clear();
-    }
-
-    const queryKey = JSON.stringify(queryFilterValues);
-
-    if (cache.current.has(queryKey)) {
-      // Данные из кэша
-      const cachedData = cache.current.get(queryKey)!;
-      updateState(cachedData);
-    } else {
-      // Данные из сетевого запроса
-      const result = await dataSource.query.studies.search(queryFilterValues);
-      cache.current.set(queryKey, result);
-      updateState(result);
-    }
-
-    // если всё ок — сбрасываем флаг ошибки
+  const getData = async (): Promise<void> => {
+    setIsLoading(true);
     setIsLoadingError(false);
-  } catch (e) {
-    // ваш вариант 1: помечаем location актуальным и показываем уведомление
-    console.log(e);
-    setIsLoadingError(true);
-    setData(prev => ({
-      ...prev,
-      location, // объект useLocation(), чтобы isLocationUpdated стал false
-    }));
 
-    uiNotificationService.show({
-      title: t('Error fetching studies'),
-      message: t('Failed to load studies'),
-      type: 'error',
-    });
-  } finally {
-    // ГАРАНТИРОВАННО выключаем лоадер
-    setIsLoading(false);
-  }
-};
+    try {
+      const updateState = ({
+        studies = [],
+        pages: nextPages,
+        size: nextSize,
+        total,
+      }: Types.StudyListWithPagination) => {
+        setPages(nextPages);
+        setSize(nextSize);
+        setTotalStudies(total);
+        setData({
+          studies,
+          total: studies.length,
+          ...queryFilterValues,
+          location,
+        });
+      };
+
+      if (data.location === 'Not a valid location, causes first load to occur') {
+        cache.current.clear();
+      }
+
+      const queryKey = JSON.stringify(queryFilterValues);
+
+      if (cache.current.has(queryKey)) {
+        // Данные из кэша
+        const cachedData = cache.current.get(queryKey)!;
+        updateState(cachedData);
+        return;
+      }
+
+      // Данные из сетевого запроса с ретраями
+      const maxRetries = 3;
+      for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+        try {
+          const result: Types.StudyListWithPagination =
+            await dataSource.query.studies.search(queryFilterValues);
+          cache.current.set(queryKey, result);
+          updateState(result);
+          // успех, выходим из цикла без уведомлений об ошибке
+          break;
+        } catch (e) {
+          // если это последняя попытка — считаем её окончательной ошибкой
+          if (attempt === maxRetries) {
+            errorHandler(e);
+          }
+          // на промежуточных попытках просто пробуем ещё раз, без уведомлений
+        }
+      }
+    } finally {
+      // ГАРАНТИРОВАННО выключаем лоадер
+      setIsLoading(false);
+    }
+  };
 
   /**
    * The effect to initialize the data source whenever it changes. Similar to
@@ -261,7 +260,7 @@ function DataSourceWrapper(props) {
         (!isLoading && (newOffset !== previousOffset || isLocationUpdated));
 
       if (isDataInvalid) {
-        getData().catch((e) => {errorHandler(e); setIsLoading(false);}).finally(() => {setIsLoading(false);});
+        getData();
       }
     } catch (ex) {
       console.warn(ex);
