@@ -152,7 +152,6 @@ window.config = {
   sortDisplaySets: {
     getZmedDisplaySetSortFunction: function () {
     return (a, b) => {
-      console.log(a);
       const priorityModalities = ['MR', 'MG', 'CT', 'DX'];
       const restOrder = { OT: 0, SR: 1, SEG: 2, SC: 3 };
 

@@ -54,6 +54,21 @@ interface BackendDiskItem {
 
 interface BackendPipelineResult {
   results?: string;
+  disk_results?: {
+    [diskKey: string]: {
+      predictions?: {
+        Modic?: number | null;
+        Pfirrmann_grade?: number | null;
+        Disc_herniation?: number | null;
+        Disc_bulging?: number | null;
+        Disc_narrowing?: number | null;
+        Spondylolisthesis?: number | null;
+        UP_endplate?: number | null;
+        LOW_endplate?: number | null;
+      };
+      level_name?: string | null;
+    };
+  };
 }
 
 interface BackendStatusResponse {
@@ -64,10 +79,16 @@ interface BackendStatusResponse {
   report_download_url?: string | null;
   processed_at?: string | null;
   detail?: string;
+  current_step?: number;
+  step_label?: string;
+  total_steps?: number;
+  pipeline_result?: BackendPipelineResult;
 }
 
-interface BackendProcessResponse extends BackendStatusResponse {
-  pipeline_result?: BackendPipelineResult;
+interface BackendProcessingStatus {
+  current_step?: number;
+  step_label?: string;
+  total_steps?: number;
 }
 
 interface Row {
@@ -116,6 +137,7 @@ function toHumanDiskLabel(raw: number | string | null, map?: Record<string, stri
 export default function PanelMR({ servicesManager, extensionManager }: PanelMRProps) {
   const [appConfig] = useAppConfig();
   const BASE: string = String(appConfig.zmedtools.mrURL ?? '');
+  const PERSONAL: string = String(appConfig.zmedtools.personalURL ?? '');
   const diskMap: Record<string, string> | undefined = appConfig?.zmedtools?.diskLabelMap as
     | Record<string, string>
     | undefined;
@@ -140,10 +162,10 @@ export default function PanelMR({ servicesManager, extensionManager }: PanelMRPr
   return (
     <PanelMRInner
       key={studyId}
-      servicesManager={servicesManager}
       studyId={studyId}
       t={t}
       BASE={BASE}
+      PERSONAL={PERSONAL}
       diskMap={diskMap}
       extensionManager={extensionManager}
     />
@@ -154,17 +176,17 @@ function PanelMRInner({
   studyId,
   t,
   BASE,
+  PERSONAL,
   diskMap,
   extensionManager
 }: {
   studyId: string;
   t: (k: string) => string;
   BASE: string;
+  PERSONAL: string;
   diskMap?: Record<string, string>;
   extensionManager: unknown;
 }) {
-  const storageKey = `MRTOOLS:${studyId}`;
-
   const [ui, setUi] = useState<UIState>('idle');
   const [err, setErr] = useState<string>('');
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -183,94 +205,112 @@ function PanelMRInner({
     }
   };
 
-  const readSnapshot = (): {
-    processingId?: string | null;
-    processedAt?: string | null;
-    reportAvailable?: boolean;
-    reportPath?: string | null;
-    rows?: Row[];
-  } => {
-    try {
-      const raw = sessionStorage.getItem(storageKey);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
+  const mapPipelineToRows = (pipeline?: BackendPipelineResult): Row[] => {
+    if (!pipeline) return [];
+
+    if (pipeline.disk_results) {
+      const asZO = (v: number | null | undefined): ZeroOne | null =>
+        v === 0 ? 0 : v === 1 ? 1 : null;
+
+      return Object.entries(pipeline.disk_results).map(([diskKey, disk]) => {
+        const predictions = disk.predictions || {};
+        const level_name =
+          (disk.level_name && String(disk.level_name)) ||
+          toHumanDiskLabel(diskKey, diskMap);
+
+        const pfRaw = predictions.Pfirrmann_grade;
+        let Pfirrmann: number | string | null = pfRaw ?? null;
+        if (Pfirrmann !== null && Pfirrmann !== undefined) {
+          const n = Number(Pfirrmann);
+          if (!Number.isNaN(n)) Pfirrmann = n === 0 ? 1 : n;
+        } else {
+          Pfirrmann = null;
+        }
+
+        const nModic =
+          predictions.Modic !== undefined && predictions.Modic !== null
+            ? Number(predictions.Modic)
+            : NaN;
+        const Modic: 0 | 1 | 2 | 3 | null =
+          Number.isNaN(nModic) || nModic < 0 || nModic > 3 ? null : (nModic as 0 | 1 | 2 | 3);
+
+        return {
+          level_name,
+          Pfirrmann,
+          Modic,
+          bulging: asZO(predictions.Disc_bulging),
+          narrowing: asZO(predictions.Disc_narrowing),
+          herniation: asZO(predictions.Disc_herniation),
+          spondylolisthesis: asZO(predictions.Spondylolisthesis),
+        };
+      });
     }
-  };
 
-  const persist = (
-    patch: Partial<{
-      processingId: string | null;
-      processedAt: string | null;
-      reportAvailable: boolean;
-      reportPath: string | null;
-      rows: Row[];
-    }> = {},
-    opts: { preserveRows?: boolean } = {}
-  ): void => {
-    const prev = readSnapshot();
+    // Фоллбек на старый формат через results (строка JSON-массива)
+    if (pipeline.results) {
+      try {
+        const arr = JSON.parse(pipeline.results) as BackendDiskItem[];
+        return arr.map((item): Row => {
+          const level_name =
+            (item.level_name && String(item.level_name)) ||
+            toHumanDiskLabel(
+              typeof item.disk_label === 'number' || typeof item.disk_label === 'string'
+                ? item.disk_label
+                : null,
+              diskMap
+            );
 
-    const nextRows =
-      'rows' in patch
-        ? patch.rows
-        : opts.preserveRows
-          ? (prev.rows ?? rows)
-          : (rows.length ? rows : (prev.rows ?? []));
+          const pfRaw = flattenFirst<number | string>(item['Pfirrmann'], null);
+          let Pfirrmann: number | string | null = pfRaw;
+          if (pfRaw !== null) {
+            const n = Number(pfRaw);
+            if (!Number.isNaN(n)) Pfirrmann = n === 0 ? 1 : n;
+          }
 
-    const snapshot = {
-      processingId: patch.processingId ?? processingId ?? prev.processingId ?? null,
-      processedAt: patch.processedAt ?? processedAt ?? prev.processedAt ?? null,
-      reportAvailable: patch.reportAvailable ?? reportAvailable ?? prev.reportAvailable ?? false,
-      reportPath: patch.reportPath ?? reportPath ?? prev.reportPath ?? null,
-      rows: nextRows,
-    };
+          const modicRaw = flattenFirst<number>(item.Modic ?? null, null);
+          const nModic = modicRaw != null ? Number(modicRaw) : NaN;
+          const Modic: 0 | 1 | 2 | 3 | null =
+            Number.isNaN(nModic) || nModic < 0 || nModic > 3 ? null : (nModic as 0 | 1 | 2 | 3);
 
-    try {
-      sessionStorage.setItem(storageKey, JSON.stringify(snapshot));
-    } catch {
-      /* ignore */
+          const bulging = flattenFirst<number>(item['Disc bulging'], null);
+          const narrowing = flattenFirst<number>(item['Disc narrowing'], null);
+          const herniation = flattenFirst<number>(item['Disc herniation'], null);
+          const spondy = flattenFirst<number>(item['Spondylolisthesis'], null);
+
+          const asZO = (v: number | null): ZeroOne | null => (v === 0 ? 0 : v === 1 ? 1 : null);
+
+          return {
+            level_name,
+            Pfirrmann,
+            Modic,
+            bulging: asZO(typeof bulging === 'number' ? bulging : null),
+            narrowing: asZO(typeof narrowing === 'number' ? narrowing : null),
+            herniation: asZO(typeof herniation === 'number' ? herniation : null),
+            spondylolisthesis: asZO(typeof spondy === 'number' ? spondy : null),
+          };
+        });
+      } catch {
+        return [];
+      }
     }
+
+    return [];
   };
 
   useEffect(() => {
     clearPollTimer();
     setErr('');
-
-    let restoredRows: Row[] = [];
-    try {
-      const raw = sessionStorage.getItem(storageKey);
-      if (raw) {
-        const s = JSON.parse(raw) as {
-          processingId?: string | null;
-          processedAt?: string | null;
-          reportAvailable?: boolean;
-          reportPath?: string | null;
-          rows?: Row[];
-        };
-        const safeRows = Array.isArray(s.rows) ? s.rows : [];
-        restoredRows = safeRows;
-
-        setProcessingId(s.processingId ?? null);
-        setProcessedAt(s.processedAt ?? null);
-        setReportAvailable(Boolean(s.reportAvailable));
-        setReportPath(s.reportPath ?? null);
-        setRows(safeRows);
-
-        setUi(safeRows.length ? 'done' : 'idle');
-      } else {
-        setRows([]);
-        setUi('idle');
-      }
-    } catch {
-      setRows([]);
-      setUi('idle');
-    }
+    setProcessingId(null);
+    setProcessedAt(null);
+    setReportAvailable(false);
+    setReportPath(null);
+    setRows([]);
+    setUi('loading');
 
     const controller = new AbortController();
+
     (async () => {
       try {
-        if (!restoredRows.length) setUi('loading');
-
         const resp = await axios.get<BackendStatusResponse>(
           `${BASE}status/${encodeURIComponent(studyId)}`,
           {
@@ -281,25 +321,18 @@ function PanelMRInner({
         );
 
         if (resp.status === 404) {
-          setUi(prev => (prev === 'done' ? 'done' : 'idle'));
+          setUi('idle');
           return;
         }
 
         const data = resp.data;
-        persist(
-          {
-            processingId: data.processing_id ?? null,
-            processedAt: data.processed_at ?? null,
-            reportAvailable: Boolean(data.report_available),
-            reportPath: data.report_download_url ?? null,
-          },
-          { preserveRows: true }
-        );
-
         setProcessingId(data.processing_id ?? null);
         setReportAvailable(Boolean(data.report_available));
         setReportPath(data.report_download_url ?? null);
         if (data.processed_at) setProcessedAt(data.processed_at);
+
+        const nextRows = mapPipelineToRows(data.pipeline_result);
+        setRows(nextRows);
         setUi('done');
       } catch {
         setUi(prev => (prev === 'done' ? 'done' : 'idle'));
@@ -313,54 +346,6 @@ function PanelMRInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studyId]);
 
-  const mapResultsToRows = (resultsStr?: string): Row[] => {
-    if (!resultsStr) return [];
-    try {
-      const arr = JSON.parse(resultsStr) as BackendDiskItem[];
-      return arr.map((item): Row => {
-        const level_name =
-          (item.level_name && String(item.level_name)) ||
-          toHumanDiskLabel(
-            typeof item.disk_label === 'number' || typeof item.disk_label === 'string'
-              ? item.disk_label
-              : null,
-            diskMap
-          );
-
-        const pfRaw = flattenFirst<number | string>(item['Pfirrmann'], null);
-        let Pfirrmann: number | string | null = pfRaw;
-        if (pfRaw !== null) {
-          const n = Number(pfRaw);
-          if (!Number.isNaN(n)) Pfirrmann = n === 0 ? 1 : n;
-        }
-
-        const modicRaw = flattenFirst<number>(item.Modic ?? null, null);
-        const nModic = modicRaw != null ? Number(modicRaw) : NaN;
-        const Modic: 0 | 1 | 2 | 3 | null =
-          Number.isNaN(nModic) || nModic < 0 || nModic > 3 ? null : (nModic as 0 | 1 | 2 | 3);
-
-        const bulging = flattenFirst<number>(item['Disc bulging'], null);
-        const narrowing = flattenFirst<number>(item['Disc narrowing'], null);
-        const herniation = flattenFirst<number>(item['Disc herniation'], null);
-        const spondy = flattenFirst<number>(item['Spondylolisthesis'], null);
-
-        const asZO = (v: number | null): ZeroOne | null => (v === 0 ? 0 : v === 1 ? 1 : null);
-
-        return {
-          level_name,
-          Pfirrmann,
-          Modic,
-          bulging: asZO(typeof bulging === 'number' ? bulging : null),
-          narrowing: asZO(typeof narrowing === 'number' ? narrowing : null),
-          herniation: asZO(typeof herniation === 'number' ? herniation : null),
-          spondylolisthesis: asZO(typeof spondy === 'number' ? spondy : null),
-        };
-      });
-    } catch {
-      return [];
-    }
-  };
-
   const handleProcess = async (): Promise<void> => {
     setUi('loading');
     setErr('');
@@ -368,82 +353,89 @@ function PanelMRInner({
 
     const controller = new AbortController();
     try {
-      const body = new URLSearchParams();
-      body.set('study_id', studyId);
-
-      const { data } = await axios.post<BackendProcessResponse>(`${BASE}process-study/`, body, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          accept: 'application/json',
-        },
-        signal: controller.signal,
-      });
-
-      setProcessingId(data.processing_id ?? null);
-      setReportAvailable(Boolean(data.report_available));
-      setReportPath(data.report_download_url ?? null);
-
-      const next = mapResultsToRows(data.pipeline_result?.results);
-      setRows(next);
-      persist({
-        processingId: data.processing_id ?? null,
-        reportAvailable: Boolean(data.report_available),
-        reportPath: data.report_download_url ?? null,
-        rows: next,
-      });
-
-      if (data.report_available) {
-        setUi('done');
-        forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId });
-        return;
-      }
-
-      setUi('polling');
-      const maxTries = 30;
-      const delay = 2000;
-
-      let tries = 0;
-      const tick = async () => {
-        try {
-          const resp = await axios.get<BackendStatusResponse>(
-            `${BASE}status/${encodeURIComponent(studyId)}`,
-            {
-              headers: { accept: 'application/json' },
-              signal: controller.signal,
-              validateStatus: s => (s >= 200 && s < 300) || s === 404,
-            }
-          );
-
-          if (resp.status !== 404) {
-            const s = resp.data;
-            setReportAvailable(Boolean(s.report_available));
-            setReportPath(s.report_download_url ?? null);
-            if (s.processed_at) setProcessedAt(s.processed_at);
-            persist({
-              processedAt: s.processed_at ?? null,
-              reportAvailable: Boolean(s.report_available),
-              reportPath: s.report_download_url ?? null,
-            });
-
-            if (s.report_available) {
-              setUi('done');
-              clearPollTimer();
-              return;
-            }
-          }
-        } catch {
-          /* silent */
-        }
-        tries += 1;
-        if (tries >= maxTries) {
-          setUi('done');
-          clearPollTimer();
-          return;
-        }
-        pollTimerRef.current = window.setTimeout(tick, delay);
+      const payload = {
+        dcm_study_uid: studyId,
       };
 
-      pollTimerRef.current = window.setTimeout(tick, delay);
+      const { data } = await axios.post<string>(
+        `${PERSONAL.replace(/\/$/, '')}/api/tasks/post_mri/`,
+        payload,
+        {
+          headers: {
+            accept: 'application/json',
+          },
+          signal: controller.signal,
+        }
+      );
+
+      const taskId = String(data).trim();
+
+      setProcessingId(taskId);
+      setReportAvailable(false);
+      setReportPath(null);
+
+      setUi('polling');
+
+      const delay = 1000;
+
+      const checkStatus = async () => {
+        try {
+          const resp = await axios.get<BackendProcessingStatus>(
+            `${BASE.replace(/\/$/, '')}/processing-status/${encodeURIComponent(taskId)}`,
+            {
+              headers: { accept: 'application/json' },
+            }
+          );
+          const { current_step, total_steps } = resp.data || {};
+          if (
+            typeof current_step === 'number' &&
+            typeof total_steps === 'number' &&
+            total_steps > 0 &&
+            current_step >= total_steps
+          ) {
+            clearPollTimer();
+
+            // после завершения – ещё раз дергаем /status/{study_id}, чтобы обновить предпросмотр
+            setUi('loading');
+            try {
+              const statusResp = await axios.get<BackendStatusResponse>(
+                `${BASE}status/${encodeURIComponent(studyId)}`,
+                {
+                  headers: { accept: 'application/json' },
+                  validateStatus: s => (s >= 200 && s < 300) || s === 404,
+                }
+              );
+
+              if (statusResp.status !== 404) {
+                const data = statusResp.data;
+                setProcessingId(data.processing_id ?? taskId);
+                setReportAvailable(Boolean(data.report_available));
+                setReportPath(data.report_download_url ?? `/report/${taskId}`);
+                if (data.processed_at) setProcessedAt(data.processed_at);
+                const nextRows = mapPipelineToRows(data.pipeline_result);
+                setRows(nextRows);
+              } else {
+                // на всякий случай даём скачать по taskId
+                setReportAvailable(true);
+                setReportPath(`/report/${taskId}`);
+              }
+            } catch {
+              // если статус не удалось получить – хотя бы включаем скачивание по taskId
+              setReportAvailable(true);
+              setReportPath(`/report/${taskId}`);
+            }
+
+            setUi('done');
+            forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId });
+            return;
+          }
+        } catch {
+          // игнорируем, попробуем ещё раз
+        }
+        pollTimerRef.current = window.setTimeout(checkStatus, delay);
+      };
+
+      pollTimerRef.current = window.setTimeout(checkStatus, delay);
     } catch {
       setErr(t('Processing error'));
       setUi('error');
@@ -608,7 +600,7 @@ function PanelMRInner({
             </div>
           )}
 
-          {!isBusy && rows.length > 0 && (
+          {rows.length > 0 && (
             <ul className="flex flex-col gap-3">
               {rows.map((r, i) => (
                 <Card key={`${r.level_name}-${i}`} row={r} />
