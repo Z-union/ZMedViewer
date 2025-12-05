@@ -35,6 +35,7 @@ type ZeroOne = 0 | 1;
 interface BackendDiskItem {
   disk_label?: number | string | null;
   level_name?: string | null;
+
   Modic?: number | number[] | null;
   ['UP endplate']?: number[][] | null;
   ['LOW endplate']?: number[][] | null;
@@ -43,9 +44,11 @@ interface BackendDiskItem {
   ['Disc narrowing']?: number[][] | null;
   ['Disc bulging']?: number[][] | null;
   ['Pfirrmann']?: Array<number | string> | null;
+
   hernia_detected?: boolean | null;
   hernia_volume_mm3?: number | string | null;
   hernia_max_protrusion_mm?: number | string | null;
+
   spondy_detected?: boolean | null;
   spondy_displacement_mm?: number | string | null;
   spondy_displacement_percentage?: number | string | null;
@@ -119,6 +122,7 @@ function formatRuDate(value?: string | number | Date | null): string {
       const d = value.slice(6, 8);
       return `${d}.${m}.${y}`;
     }
+
     const dt = new Date(value);
     if (Number.isNaN(+dt)) return '—';
     return dt.toLocaleDateString('ru-RU');
@@ -134,10 +138,73 @@ function toHumanDiskLabel(raw: number | string | null, map?: Record<string, stri
   return `#${key}`;
 }
 
+interface ProcessingInfo {
+  taskId: string;
+  progress?: BackendProcessingStatus | null;
+}
+
+// Глобальный реестр текущих задач обработки по studyId
+const processingRegistry: Record<string, ProcessingInfo> = {};
+const PROCESSING_STORAGE_KEY = 'mrProcessingTasks';
+
+// Кэш предпросмотра по studyId (в памяти)
+const previewCache: Record<
+  string,
+  {
+    rows: Row[];
+    processedAt: string | null;
+    reportAvailable: boolean;
+    reportPath: string | null;
+  }
+> = {};
+
+function hydrateProcessingRegistryFromStorage(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = window.sessionStorage.getItem(PROCESSING_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as Record<string, ProcessingInfo>;
+    Object.entries(parsed).forEach(([sid, info]) => {
+      if (info && typeof info.taskId === 'string') {
+        processingRegistry[sid] = {
+          taskId: info.taskId,
+          progress: info.progress ?? null,
+        };
+      }
+    });
+  } catch {
+    // ignore
+  }
+}
+
+function persistProcessingRegistryToStorage(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const plain: Record<string, ProcessingInfo> = {};
+    Object.entries(processingRegistry).forEach(([sid, value]) => {
+      if (value?.taskId) {
+        plain[sid] = {
+          taskId: value.taskId,
+          progress: value.progress ?? null,
+        };
+      }
+    });
+    if (Object.keys(plain).length === 0) {
+      window.sessionStorage.removeItem(PROCESSING_STORAGE_KEY);
+    } else {
+      window.sessionStorage.setItem(PROCESSING_STORAGE_KEY, JSON.stringify(plain));
+    }
+  } catch {
+    // ignore
+  }
+}
+
 export default function PanelMR({ servicesManager, extensionManager }: PanelMRProps) {
   const [appConfig] = useAppConfig();
+
   const BASE: string = String(appConfig.zmedtools.mrURL ?? '');
   const PERSONAL: string = String(appConfig.zmedtools.personalURL ?? '');
+
   const diskMap: Record<string, string> | undefined = appConfig?.zmedtools?.diskLabelMap as
     | Record<string, string>
     | undefined;
@@ -178,7 +245,7 @@ function PanelMRInner({
   BASE,
   PERSONAL,
   diskMap,
-  extensionManager
+  extensionManager,
 }: {
   studyId: string;
   t: (k: string) => string;
@@ -194,6 +261,7 @@ function PanelMRInner({
   const [reportAvailable, setReportAvailable] = useState<boolean>(false);
   const [reportPath, setReportPath] = useState<string | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
+  const [progress, setProgress] = useState<BackendProcessingStatus | null>(null);
 
   const previewRef = useRef<HTMLDivElement | null>(null);
   const pollTimerRef = useRef<number | null>(null);
@@ -214,9 +282,9 @@ function PanelMRInner({
 
       return Object.entries(pipeline.disk_results).map(([diskKey, disk]) => {
         const predictions = disk.predictions || {};
+
         const level_name =
-          (disk.level_name && String(disk.level_name)) ||
-          toHumanDiskLabel(diskKey, diskMap);
+          (disk.level_name && String(disk.level_name)) || toHumanDiskLabel(diskKey, diskMap);
 
         const pfRaw = predictions.Pfirrmann_grade;
         let Pfirrmann: number | string | null = pfRaw ?? null;
@@ -277,7 +345,8 @@ function PanelMRInner({
           const herniation = flattenFirst<number>(item['Disc herniation'], null);
           const spondy = flattenFirst<number>(item['Spondylolisthesis'], null);
 
-          const asZO = (v: number | null): ZeroOne | null => (v === 0 ? 0 : v === 1 ? 1 : null);
+          const asZO = (v: number | null): ZeroOne | null =>
+            v === 0 ? 0 : v === 1 ? 1 : null;
 
           return {
             level_name,
@@ -297,42 +366,243 @@ function PanelMRInner({
     return [];
   };
 
+  // Унифицированный опрос /processing-status/{taskId}
+  function startPolling(taskId: string): void {
+    const delay = 1000;
+
+    const checkStatus = async () => {
+      try {
+        const resp = await axios.get<BackendProcessingStatus>(
+          `${BASE.replace(/\/$/, '')}/processing-status/${encodeURIComponent(taskId)}`,
+          {
+            headers: {
+              accept: 'application/json',
+            },
+          }
+        );
+
+        const { current_step, step_label, total_steps } = resp.data || {};
+        const newProgress: BackendProcessingStatus = {
+          current_step,
+          step_label,
+          total_steps,
+        };
+
+        setProgress(prev => ({
+          ...prev,
+          ...newProgress,
+        }));
+
+        if (processingRegistry[studyId]) {
+          processingRegistry[studyId] = {
+            taskId,
+            progress: {
+              ...(processingRegistry[studyId].progress || {}),
+              ...newProgress,
+            },
+          };
+          persistProcessingRegistryToStorage();
+        }
+
+        if (
+          typeof current_step === 'number' &&
+          typeof total_steps === 'number' &&
+          total_steps > 0 &&
+          current_step >= total_steps
+        ) {
+          // Завершили обработку
+          clearPollTimer();
+          setUi('loading');
+
+          try {
+            const statusResp = await axios.get<BackendStatusResponse>(
+              `${BASE}status/${encodeURIComponent(studyId)}`,
+              {
+                headers: {
+                  accept: 'application/json',
+                },
+                validateStatus: s => (s >= 200 && s < 300) || s === 404,
+              }
+            );
+
+            if (statusResp.status !== 404) {
+              const data = statusResp.data;
+
+              setProcessingId(data.processing_id ?? taskId);
+
+              const processedAtValue = data.processed_at ?? null;
+              setProcessedAt(processedAtValue);
+
+              const reportAvailableValue = Boolean(data.report_available);
+              setReportAvailable(reportAvailableValue);
+
+              const reportPathValue = data.report_download_url ?? `/report/${taskId}`;
+              setReportPath(reportPathValue);
+
+              const nextRows = mapPipelineToRows(data.pipeline_result);
+              setRows(nextRows);
+
+              previewCache[studyId] = {
+                rows: nextRows,
+                processedAt: processedAtValue,
+                reportAvailable: reportAvailableValue,
+                reportPath: reportPathValue,
+              };
+            } else {
+              // на всякий случай даём скачать по taskId
+              setReportAvailable(true);
+              setReportPath(`/report/${taskId}`);
+            }
+          } catch {
+            // если статус не удалось получить – хотя бы включаем скачивание по taskId
+            setReportAvailable(true);
+            setReportPath(`/report/${taskId}`);
+          }
+
+          delete processingRegistry[studyId];
+          persistProcessingRegistryToStorage();
+
+          setUi('done');
+          setProgress(null);
+
+          forceUpdateSeriesData({
+            extensionManager,
+            StudyInstanceUID: studyId,
+          });
+
+          return;
+        }
+      } catch {
+        // игнорируем, попробуем ещё раз
+      }
+
+      pollTimerRef.current = window.setTimeout(checkStatus, delay);
+    };
+
+    pollTimerRef.current = window.setTimeout(checkStatus, delay);
+  }
+
   useEffect(() => {
     clearPollTimer();
+
     setErr('');
     setProcessingId(null);
     setProcessedAt(null);
     setReportAvailable(false);
     setReportPath(null);
     setRows([]);
-    setUi('loading');
+    setProgress(null);
+
+    // Поднимаем активные задачи из sessionStorage (после обновления страницы)
+    hydrateProcessingRegistryFromStorage();
+
+    const existing = processingRegistry[studyId];
+
+    // Если для этого исследования уже идёт обработка — сразу восстанавливаем лоадер и опрос
+    if (existing?.taskId) {
+      setProcessingId(existing.taskId);
+      setUi('polling');
+      if (existing.progress) {
+        setProgress(existing.progress);
+      } else {
+        // дефолтный текст, пока не прилетит первый статус
+        setProgress({
+          step_label: t('Processing in progress'),
+        });
+      }
+      startPolling(existing.taskId);
+
+      return () => {
+        clearPollTimer();
+      };
+    }
+
+    // Пытаемся взять предпросмотр из кэша (без дополнительного ожидания)
+    const cached = previewCache[studyId];
+    if (cached) {
+      setRows(cached.rows);
+      setProcessedAt(cached.processedAt);
+      setReportAvailable(cached.reportAvailable);
+      setReportPath(cached.reportPath);
+      setUi('done');
+    }
 
     const controller = new AbortController();
+
+    if (!cached) {
+      setUi('loading');
+    }
 
     (async () => {
       try {
         const resp = await axios.get<BackendStatusResponse>(
           `${BASE}status/${encodeURIComponent(studyId)}`,
           {
-            headers: { accept: 'application/json' },
+            headers: {
+              accept: 'application/json',
+            },
             signal: controller.signal,
             validateStatus: s => (s >= 200 && s < 300) || s === 404,
           }
         );
 
         if (resp.status === 404) {
+          setRows([]);
+          delete previewCache[studyId];
           setUi('idle');
           return;
         }
 
         const data = resp.data;
+
         setProcessingId(data.processing_id ?? null);
-        setReportAvailable(Boolean(data.report_available));
-        setReportPath(data.report_download_url ?? null);
-        if (data.processed_at) setProcessedAt(data.processed_at);
+
+        const processedAtValue = data.processed_at ?? null;
+        setProcessedAt(processedAtValue);
+
+        const reportAvailableValue = Boolean(data.report_available);
+        setReportAvailable(reportAvailableValue);
+
+        const reportPathValue = data.report_download_url ?? null;
+        setReportPath(reportPathValue);
+
+        // Если бэк по /status уже отдаёт прогресс незавершённой задачи — показываем лоадер и продолжаем опрос
+        if (
+          typeof data.current_step === 'number' &&
+          typeof data.total_steps === 'number' &&
+          data.total_steps > 0 &&
+          data.current_step < data.total_steps &&
+          data.processing_id
+        ) {
+          const initialProgress: BackendProcessingStatus = {
+            current_step: data.current_step,
+            step_label: data.step_label,
+            total_steps: data.total_steps,
+          };
+
+          setProgress(initialProgress);
+
+          processingRegistry[studyId] = {
+            taskId: data.processing_id,
+            progress: initialProgress,
+          };
+          persistProcessingRegistryToStorage();
+
+          setUi('polling');
+          startPolling(data.processing_id);
+          return;
+        }
 
         const nextRows = mapPipelineToRows(data.pipeline_result);
         setRows(nextRows);
+
+        previewCache[studyId] = {
+          rows: nextRows,
+          processedAt: processedAtValue,
+          reportAvailable: reportAvailableValue,
+          reportPath: reportPathValue,
+        };
+
         setUi('done');
       } catch {
         setUi(prev => (prev === 'done' ? 'done' : 'idle'));
@@ -351,7 +621,14 @@ function PanelMRInner({
     setErr('');
     clearPollTimer();
 
+    // сразу показываем человекопонятный статус через i18n
+    const initialProgress: BackendProcessingStatus = {
+      step_label: t('Preparing for analysis'),
+    };
+    setProgress(initialProgress);
+
     const controller = new AbortController();
+
     try {
       const payload = {
         dcm_study_uid: studyId,
@@ -374,71 +651,18 @@ function PanelMRInner({
       setReportAvailable(false);
       setReportPath(null);
 
-      setUi('polling');
-
-      const delay = 1000;
-
-      const checkStatus = async () => {
-        try {
-          const resp = await axios.get<BackendProcessingStatus>(
-            `${BASE.replace(/\/$/, '')}/processing-status/${encodeURIComponent(taskId)}`,
-            {
-              headers: { accept: 'application/json' },
-            }
-          );
-          const { current_step, total_steps } = resp.data || {};
-          if (
-            typeof current_step === 'number' &&
-            typeof total_steps === 'number' &&
-            total_steps > 0 &&
-            current_step >= total_steps
-          ) {
-            clearPollTimer();
-
-            // после завершения – ещё раз дергаем /status/{study_id}, чтобы обновить предпросмотр
-            setUi('loading');
-            try {
-              const statusResp = await axios.get<BackendStatusResponse>(
-                `${BASE}status/${encodeURIComponent(studyId)}`,
-                {
-                  headers: { accept: 'application/json' },
-                  validateStatus: s => (s >= 200 && s < 300) || s === 404,
-                }
-              );
-
-              if (statusResp.status !== 404) {
-                const data = statusResp.data;
-                setProcessingId(data.processing_id ?? taskId);
-                setReportAvailable(Boolean(data.report_available));
-                setReportPath(data.report_download_url ?? `/report/${taskId}`);
-                if (data.processed_at) setProcessedAt(data.processed_at);
-                const nextRows = mapPipelineToRows(data.pipeline_result);
-                setRows(nextRows);
-              } else {
-                // на всякий случай даём скачать по taskId
-                setReportAvailable(true);
-                setReportPath(`/report/${taskId}`);
-              }
-            } catch {
-              // если статус не удалось получить – хотя бы включаем скачивание по taskId
-              setReportAvailable(true);
-              setReportPath(`/report/${taskId}`);
-            }
-
-            setUi('done');
-            forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId });
-            return;
-          }
-        } catch {
-          // игнорируем, попробуем ещё раз
-        }
-        pollTimerRef.current = window.setTimeout(checkStatus, delay);
+      processingRegistry[studyId] = {
+        taskId,
+        progress: initialProgress,
       };
+      persistProcessingRegistryToStorage();
 
-      pollTimerRef.current = window.setTimeout(checkStatus, delay);
+      setUi('polling');
+      startPolling(taskId);
     } catch {
       setErr(t('Processing error'));
       setUi('error');
+      setProgress(null);
     }
   };
 
@@ -447,23 +671,30 @@ function PanelMRInner({
     const path = reportPath?.startsWith('/report/')
       ? reportPath
       : pid
-        ? `/report/${pid}`
-        : null;
+      ? `/report/${pid}`
+      : null;
+
     if (!path) return;
 
     setUi('loading');
     setErr('');
 
     const controller = new AbortController();
+
     try {
       const resp = await axios.get(`${BASE.replace(/\/$/, '')}${path}`, {
         responseType: 'blob',
-        headers: { accept: 'application/json' },
+        headers: {
+          accept: 'application/json',
+        },
         signal: controller.signal,
       });
 
       let filename = String(processingId || 'report');
-      const disp = (resp.headers as Record<string, string | undefined>)['content-disposition'];
+
+      const disp = (resp.headers as Record<string, string | undefined>)[
+        'content-disposition'
+      ];
       if (disp) {
         const m = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(disp);
         if (m && m[1]) filename = decodeURIComponent(m[1]);
@@ -495,15 +726,20 @@ function PanelMRInner({
   const Chip = ({ label, value }: { label: string; value: ZeroOne | number | string | null }) => {
     const on = value === 1 || value === t('1');
     const off = value === 0 || value === t('0');
-    const base = 'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1';
+
+    const base =
+      'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1';
+
     const cls = on
       ? `${base} bg-emerald-500/10 text-emerald-300 ring-emerald-400/30`
       : off
-        ? `${base} bg-primary-main text-primary-light ring-white/5`
-        : `${base} bg-yellow-500/10 text-yellow-200 ring-yellow-400/30`;
+      ? `${base} bg-primary-main text-primary-light ring-white/5`
+      : `${base} bg-yellow-500/10 text-yellow-200 ring-yellow-400/30`;
+
     const dotCls =
       'mr-1 block h-1.5 w-1.5 rounded-full ' +
       (on ? 'bg-emerald-400' : off ? 'bg-white/40' : 'bg-yellow-300');
+
     return (
       <span className={cls} title={`${label}: ${String(value ?? '-')}`}>
         <span className={dotCls} />
@@ -530,9 +766,18 @@ function PanelMRInner({
       </div>
 
       <div className="mt-3 flex flex-col gap-2">
-        <Chip label={t('Disc herniation')} value={row.herniation == 1 ? t('1') : t('0')} />
-        <Chip label={t('Disc bulging')} value={row.bulging == 1 ? t('1') : t('0')} />
-        <Chip label={t('Disc narrowing')} value={row.narrowing == 1 ? t('1') : t('0')} />
+        <Chip
+          label={t('Disc herniation')}
+          value={row.herniation == 1 ? t('1') : t('0')}
+        />
+        <Chip
+          label={t('Disc bulging')}
+          value={row.bulging == 1 ? t('1') : t('0')}
+        />
+        <Chip
+          label={t('Disc narrowing')}
+          value={row.narrowing == 1 ? t('1') : t('0')}
+        />
         <Chip
           label={t('Spondylolisthesis')}
           value={row.spondylolisthesis == 1 ? t('1') : t('0')}
@@ -541,13 +786,51 @@ function PanelMRInner({
     </li>
   );
 
+const renderProgressStatus = () => {
+  const hasSteps =
+    typeof progress?.current_step === 'number' &&
+    typeof progress?.total_steps === 'number' &&
+    (progress.total_steps ?? 0) > 0;
+
+  const label =
+    progress?.step_label ||
+    (hasSteps ? '' : t('Processing in progress'));
+
+  if (!hasSteps && !label) return null;
+
+  return (
+    <div className="mt-1 w-full px-1">
+      {label && (
+        <div className="text-lg leading-snug text-white break-words text-center">
+          {label}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const hasSteps =
+  typeof progress?.current_step === 'number' &&
+  typeof progress?.total_steps === 'number' &&
+  (progress.total_steps ?? 0) > 0;
+
+const totalVisible =
+  typeof progress?.total_steps === 'number'
+    ? progress.total_steps - 1
+    : undefined;
+
   return (
     <div className="flex h-full min-h-0 flex-col px-3 pt-3 pb-1 text-white">
       <div className="mb-3 rounded-lg border border-primary-light/30 bg-black/40 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-black/30">
         <div className="sticky top-0 z-10 -mx-3 -mt-3 px-3 pt-3 pb-2 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/30">
           <div className="flex flex-col gap-2">
             <Button
-              startIcon={<Icon className="!h-[12px] !w-[12px] text-black" name="sparkles" />}
+              startIcon={
+                <Icon
+                  className="!h-[12px] !w-[12px] text-black"
+                  name="sparkles"
+                />
+              }
               size="initial"
               className="px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
               color="primaryActive"
@@ -584,8 +867,20 @@ function PanelMRInner({
 
           {isBusy && (
             <div className="flex-1 flex items-center justify-center">
-              <div className="loading">
-                <div className="infinite-loading-bar bg-primary-light" />
+              <div className="flex flex-col items-stretch gap-3 w-full">
+                {hasSteps && totalVisible !== undefined && (
+                  <div className="text-lg font-mono text-primary-light text-center">
+                    {progress?.current_step} / {totalVisible}
+                  </div>
+                )}
+
+                <div className="flex justify-center">
+                  <div className="loading">
+                    <div className="infinite-loading-bar bg-primary-light" />
+                  </div>
+                </div>
+
+                {renderProgressStatus()}
               </div>
             </div>
           )}
@@ -600,7 +895,7 @@ function PanelMRInner({
             </div>
           )}
 
-          {rows.length > 0 && (
+          {!isBusy && rows.length > 0 && (
             <ul className="flex flex-col gap-3">
               {rows.map((r, i) => (
                 <Card key={`${r.level_name}-${i}`} row={r} />

@@ -23,5 +23,8 @@
   "Download error": "Download error",
   "Modic": "Modic",
   "1": "yes",
-  "0": "no"
+  "0": "no",
+  "Processing in progress": "Processing in progress...",
+  "Preparing for analysis": "Preparing for analysis...",
+  "Task status": "Status"
 }

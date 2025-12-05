@@ -23,5 +23,8 @@
   "Download error": "Ошибка скачивания",
   "Modic": "Модик",
   "1": "есть",
-  "0": "нет"
+  "0": "нет",
+  "Processing in progress": "Выполняется анализ...",
+  "Preparing for analysis": "Подготовка к запуску анализа...",
+  "Task status": "Статус"
 }
