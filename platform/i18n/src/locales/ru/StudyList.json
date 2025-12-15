@@ -47,5 +47,11 @@
   "Are you sure you wish to delete all Zview reports?": "Вы действительно хотите удалить Zview отчеты для выбранного исследования?",
   "Study have been deleted successfully": "Исследование успешно удалено",
   "Error while deleting study": "Ошибка при удалении исследования",
-  "Deleting study": "Удаление исследования"
+  "Deleting study": "Удаление исследования",
+  "Deleting current series": "Удаление текущей серии",
+  "Error occurred while deleting current series": "Ошибка при удалении текущей серии",
+  "Current series have been deleted successfully": "Текущая серия успешно удалена",
+  "Unknown error occurred while deleting current series": "Неизвестная ошибка при удалении текущей серии",
+  "Are you sure you wish to delete the current series?": "Вы действительно хотите удалить текущую серию?",
+  "Delete current series": "Удалить текущую серию"
 }

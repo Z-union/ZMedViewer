@@ -33,7 +33,7 @@ const ViewerHeader: React.FC<withAppTypes> = ({
   const versionNumber = process.env.VERSION_NUMBER;
   const commitHash = process.env.COMMIT_HASH;
 
-  const { uiModalService, uiNotificationService, DisplaySetService } = servicesManager.services;
+  const { uiModalService, uiNotificationService, DisplaySetService, HangingProtocolService } = servicesManager.services;
 
   const dataSourceName = extensionManager.defaultDataSourceName;
   const dataSource = extensionManager.getDataSources(dataSourceName)?.[0];
@@ -186,6 +186,55 @@ const ViewerHeader: React.FC<withAppTypes> = ({
     uiModalService.hide();
   };
 
+  const handleDeleteCurrentSeries = async () => {
+    if (!dataSource || !dataSource.query?.series?.delete) {
+      uiNotificationService.show({
+        title: t('StudyList:Deleting current series'),
+        message: t(
+          'StudyList:Error occurred while deleting current series'
+        ),
+        type: 'error',
+      });
+      uiModalService.hide();
+      return;
+    }
+
+    try {
+      const { ViewportGridService, DisplaySetService } =
+      servicesManager.services;
+
+    const state = ViewportGridService.getState();
+    const displaySetInstanceUID =
+      state.viewports.entries().next().value[1].displaySetInstanceUIDs[0];
+
+    if (displaySetInstanceUID) {
+      const displaySet =
+        DisplaySetService.getDisplaySetByUID(displaySetInstanceUID);
+
+      console.log('SeriesInstanceUID:', displaySet?.SeriesInstanceUID);
+
+      await dataSource.query.series.delete(displaySet?.SeriesInstanceUID);
+
+      uiNotificationService.show({
+        title: t('StudyList:Deleting current series'),
+        message: t(
+          'StudyList:Current series have been deleted successfully'
+        ),
+        type: 'success',
+      });
+    }
+    uiModalService.hide();
+    return;
+    }
+    catch {
+      uiNotificationService.show({
+        title: t('StudyList:Deleting current series'),
+        message: t('StudyList:Unknown error occurred while deleting current series'),
+        type: 'error',
+      });
+    }
+  }
+
   const onClickDelete = (
     event: React.MouseEvent<HTMLButtonElement>
   ): void => {
@@ -202,9 +251,13 @@ const ViewerHeader: React.FC<withAppTypes> = ({
           deleteStudyLabel={t(
             'StudyList:Are you sure you wish to delete this study?'
           )}
+          deleteCurrentSeriesLabel={t(
+            'StudyList:Are you sure you wish to delete the current series?'
+          )}
           onConfirmDeleteAllSeries={handleConfirmDeleteAllSeries}
           onConfirmDeleteStudy={handleConfirmDeleteStudy}
           onCancel={handleCancelDelete}
+          handleDeleteCurrentSeries={handleDeleteCurrentSeries}
         />
       ),
     });
