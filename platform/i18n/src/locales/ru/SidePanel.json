@@ -25,6 +25,11 @@
   "1": "есть",
   "0": "нет",
   "Processing in progress": "Выполняется анализ...",
-  "Preparing for analysis": "Подготовка к запуску анализа...",
-  "Task status": "Статус"
+  "Preparing for analysis": "-",
+  "Task status": "Статус",
+  "MG study not selected": "Исследование MG не выбрано",
+  "Mammography": "Маммография",
+  "Report is ready": "Отчет готов",
+  "Report is ready. Click download.": "Отчет готов. Нажмите «Скачать отчет»",
+  "Report will be available after analysis": "Отчет будет доступен после анализа"
 }

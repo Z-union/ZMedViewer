@@ -25,6 +25,11 @@
   "1": "yes",
   "0": "no",
   "Processing in progress": "Processing in progress...",
-  "Preparing for analysis": "Preparing for analysis...",
-  "Task status": "Status"
+  "Preparing for analysis": "-",
+  "Task status": "Status",
+  "MG study not selected": "MG study not selected",
+  "Mammography": "Mammography",
+  "Report is ready": "Report is ready",
+  "Report is ready. Click download.": "Report is ready. Click download.",
+  "Report will be available after analysis": "Report will be available after analysis"
 }
