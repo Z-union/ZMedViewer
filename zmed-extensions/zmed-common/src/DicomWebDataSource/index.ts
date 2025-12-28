@@ -147,6 +147,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           let results = [];
           let response: AxiosResponse<Types.StudyListWithPaginationQuery>;
           const date = new Map();
+          const isProcessedByUid = new Map<string, boolean>();
 
           if (origParams.me) {
             const head = { ...headers };
@@ -167,6 +168,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             if (response.status == 200) {
               studies = response.data.studies.map((el) => {
                 date.set(el.study_instance_uid, el.created_at);
+                isProcessedByUid.set(el.study_instance_uid, el.is_processed);
                 return el.study_instance_uid;
               });
               if (studies.length > 0) {
@@ -205,7 +207,9 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
           const finalStudies: Types.StudiesMetadata[] = processResults(results);
 
           finalStudies.forEach((el) => {
-            el['uploadedAt'] = date.get(el['studyInstanceUid']);
+            const uid = el['studyInstanceUid'] as string;
+            el['uploadedAt'] = date.get(uid);
+            el['isProcessed'] = isProcessedByUid.get(uid);
           });
           return {
             studies: sortStudies(finalStudies),

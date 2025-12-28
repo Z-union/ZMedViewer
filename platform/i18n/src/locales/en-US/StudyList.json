@@ -47,5 +47,8 @@
   "Current series have been deleted successfully": "Current series have been deleted successfully",
   "Unknown error occurred while deleting current series": "Unknown error occurred while deleting current series",
   "Are you sure you wish to delete the current series?": "Are you sure you wish to delete the current series?",
-  "Delete current series": "Delete current series"
+  "Delete current series": "Delete current series",
+  "Status": "Status",
+  "Processed": "Processed",
+  "Not processed": "Not processed"
 }

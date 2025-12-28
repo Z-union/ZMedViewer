@@ -110,9 +110,9 @@ const filtersMeta = [
   },
   {
     name: 'accession',
-    displayName: 'AccessionNumber',
-    inputType: 'Text',
-    isSortable: true,
+    displayName: 'Status',
+    inputType: 'None',
+    isSortable: false,
     gridCol: 3,
   },
   {

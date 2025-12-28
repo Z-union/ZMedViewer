@@ -53,5 +53,8 @@
   "Current series have been deleted successfully": "Текущая серия успешно удалена",
   "Unknown error occurred while deleting current series": "Неизвестная ошибка при удалении текущей серии",
   "Are you sure you wish to delete the current series?": "Вы действительно хотите удалить текущую серию?",
-  "Delete current series": "Удалить текущую серию"
+  "Delete current series": "Удалить текущую серию",
+  "Status": "Статус",
+  "Processed": "Обработано",
+  "Not processed": "Не обработано"
 }

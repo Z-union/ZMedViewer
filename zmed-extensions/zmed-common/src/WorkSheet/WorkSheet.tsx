@@ -267,6 +267,7 @@ function WorkSheet({
       date,
       time,
       uploadedAt,
+      isProcessed,
     } = study;
 
     const [studyDate, studyTime] = i18n.formatFullDateWithTimezone(date, time);
@@ -416,7 +417,7 @@ function WorkSheet({
         },
         {
           key: 'accession',
-          content: <TooltipClipboard>{accession}</TooltipClipboard>,
+          content: <p>{isProcessed ? t('StudyList:Processed') : t('StudyList:Not processed')}</p>,
           gridCol: 3,
         },
         {
