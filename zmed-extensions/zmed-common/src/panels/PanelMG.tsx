@@ -14,7 +14,7 @@ type MgTask = {
   download_filename: string;
   report_path: string;
   created_at?: number;
-  state?: MgTaskState; // <-- важно: храним ready/pending
+  state?: MgTaskState; // ready/pending
   ready_at?: number;
 };
 
@@ -49,9 +49,12 @@ function getStudyUID(DisplaySetService: any): string | null {
   }
 }
 
-// ----- persistence (LOCALSTORAGE) -----
-const STORAGE_KEY = 'mgToolsTasks_v2'; // новый ключ
-const LEGACY_SESSION_KEY = 'mgProcessingTasks'; // старый sessionStorage ключ (если был)
+// persistence (LOCALSTORAGE)
+const STORAGE_KEY = 'mgToolsTasks_v2';
+const LEGACY_SESSION_KEY = 'mgProcessingTasks';
+
+// ТАЙМАУТ ОЖИДАНИЯ ГОТОВНОСТИ ТАСКИ
+const TASK_TIMEOUT_MS = 600_000;
 
 const mgRegistry: Record<string, MgTask> = {};
 
@@ -61,43 +64,6 @@ function safeParseJSON<T>(raw: string | null): T | null {
     return JSON.parse(raw) as T;
   } catch {
     return null;
-  }
-}
-
-function hydrateRegistry(): void {
-  if (typeof window === 'undefined') return;
-
-  // 1) Основной источник: localStorage
-  const fromLocal = safeParseJSON<Record<string, MgTask>>(window.localStorage.getItem(STORAGE_KEY));
-  if (fromLocal) {
-    Object.entries(fromLocal).forEach(([sid, task]) => {
-      if (task?.download_filename && task?.report_path) {
-        mgRegistry[sid] = {
-          ...task,
-          state: task.state ?? 'pending',
-        };
-      }
-    });
-    return;
-  }
-
-  // 2) Миграция: если раньше было в sessionStorage — перенесём в localStorage
-  const fromSessionLegacy = safeParseJSON<Record<string, MgTask>>(
-    window.sessionStorage.getItem(LEGACY_SESSION_KEY)
-  );
-  if (fromSessionLegacy) {
-    Object.entries(fromSessionLegacy).forEach(([sid, task]) => {
-      if (task?.download_filename && task?.report_path) {
-        mgRegistry[sid] = {
-          download_filename: task.download_filename,
-          report_path: task.report_path,
-          created_at: task.created_at ?? Date.now(),
-          state: 'pending',
-        };
-      }
-    });
-    persistRegistry();
-    window.sessionStorage.removeItem(LEGACY_SESSION_KEY);
   }
 }
 
@@ -125,6 +91,59 @@ function persistRegistry(): void {
     }
   } catch {
     // ignore
+  }
+}
+
+function hydrateRegistry(): void {
+  if (typeof window === 'undefined') return;
+
+  // 1) Основной источник: localStorage
+  const fromLocal = safeParseJSON<Record<string, MgTask>>(window.localStorage.getItem(STORAGE_KEY));
+  if (fromLocal) {
+    let changed = false;
+
+    Object.entries(fromLocal).forEach(([sid, task]) => {
+      if (task?.download_filename && task?.report_path) {
+        const createdAt = task.created_at ?? 0;
+        const state = task.state ?? 'pending';
+
+        // если pending и протух — не восстанавливаем
+        if (state === 'pending' && createdAt && Date.now() - createdAt > TASK_TIMEOUT_MS) {
+          changed = true;
+          return;
+        }
+
+        mgRegistry[sid] = {
+          ...task,
+          created_at: createdAt || Date.now(),
+          state,
+        };
+      }
+    });
+
+    // если что-то выкинули как протухшее — перезапишем localStorage
+    if (changed) persistRegistry();
+
+    return;
+  }
+
+  // 2) Миграция: если раньше было в sessionStorage — перенесём в localStorage
+  const fromSessionLegacy = safeParseJSON<Record<string, MgTask>>(
+    window.sessionStorage.getItem(LEGACY_SESSION_KEY)
+  );
+  if (fromSessionLegacy) {
+    Object.entries(fromSessionLegacy).forEach(([sid, task]) => {
+      if (task?.download_filename && task?.report_path) {
+        mgRegistry[sid] = {
+          download_filename: task.download_filename,
+          report_path: task.report_path,
+          created_at: task.created_at ?? Date.now(),
+          state: 'pending',
+        };
+      }
+    });
+    persistRegistry();
+    window.sessionStorage.removeItem(LEGACY_SESSION_KEY);
   }
 }
 
@@ -225,12 +244,10 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
     if (existing?.download_filename && existing?.report_path) {
       setTask(existing);
 
-      // ФИЧА: если ранее уже определили готовность — сразу активируем Download (без повторного анализа)
+      // ФИЧА: если ранее уже определили готовность — сразу активируем Download
       if (existing.state === 'ready') {
         setReportReady(true);
         setUi('done');
-
-        // можно тихо перепроверять в фоне, но пользователь просил без повторного анализа — не мешаем
         return;
       }
 
@@ -282,6 +299,25 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
       attempt += 1;
       const delay = attempt <= 30 ? 2000 : 5000;
 
+      // ======= ТАЙМАУТ ПО ВРЕМЕНИ ЖИЗНИ ТАСКИ (из localStorage/registry) =======
+      const createdAt = currentTask.created_at ?? mgRegistry[sid]?.created_at ?? 0;
+      if (createdAt && Date.now() - createdAt > TASK_TIMEOUT_MS) {
+        clearPoll();
+
+        // чистим pending-таску из registry + localStorage
+        delete mgRegistry[sid];
+        persistRegistry();
+
+        if (!mountedRef.current) return;
+        setTask(null);
+        setReportReady(false);
+        setErr(`Таймаут (${TASK_TIMEOUT_MS} мс)`);
+        setUi('error');
+        showNotif('Processing error', `Таймаут (${Math.round(TASK_TIMEOUT_MS / 1000)} с)`);
+        return;
+      }
+      // =======================================================================
+
       try {
         const url = buildGetFileUrl(BASE, currentTask);
 
@@ -295,7 +331,7 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
 
           if (headResp.status === 200) {
             if (!mountedRef.current) return;
-            markReady(sid); // <-- записываем ready в localStorage
+            markReady(sid);
             setReportReady(true);
             setUi('done');
             return;
@@ -317,14 +353,14 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
           if (getResp.status === 200) {
             cachedBlobRef.current = getResp.data as Blob;
             if (!mountedRef.current) return;
-            markReady(sid); // <-- записываем ready в localStorage
+            markReady(sid);
             setReportReady(true);
             setUi('done');
             return;
           }
         }
       } catch {
-        // transient network errors -> keep polling
+        // transient network errors -> keep polling (таймаут по времени таски всё равно сработает)
       }
 
       pollTimerRef.current = window.setTimeout(tick, delay);
@@ -372,7 +408,7 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
       const nextTask: MgTask = {
         download_filename: resp.data.download_filename,
         report_path: resp.data.report_path,
-        created_at: Date.now(),
+        created_at: Date.now(), // <-- база для таймаута в localStorage
         state: 'pending',
       };
 
