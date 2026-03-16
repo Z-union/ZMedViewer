@@ -253,15 +253,11 @@ export default class ZMedSliceSyncController {
 
     const evScroll = (Enums as any).Events?.STACK_VIEWPORT_SCROLL ?? 'STACK_VIEWPORT_SCROLL';
     const evScrollAlt = 'CORNERSTONE_STACK_VIEWPORT_SCROLL';
-    const evNew = (Enums as any).Events?.STACK_NEW_IMAGE ?? 'STACK_NEW_IMAGE';
-    const evNewAlt = 'CORNERSTONE_STACK_NEW_IMAGE';
 
-    const h = () => this.scheduleFrom(viewportId, 'EVENT');
+    const h = () => this.scheduleFrom(viewportId, 'EVENT_SCROLL');
 
     el.addEventListener(evScroll, h);
     el.addEventListener(evScrollAlt, h);
-    el.addEventListener(evNew, h);
-    el.addEventListener(evNewAlt, h);
 
     const stackApi = getStackApi(vp);
     const unpatch = this.patchHooks(viewportId, stackApi);
@@ -269,8 +265,6 @@ export default class ZMedSliceSyncController {
     const unsub = () => {
       try { el.removeEventListener(evScroll, h); } catch {}
       try { el.removeEventListener(evScrollAlt, h); } catch {}
-      try { el.removeEventListener(evNew, h); } catch {}
-      try { el.removeEventListener(evNewAlt, h); } catch {}
       try { unpatch(); } catch {}
     };
 
@@ -296,9 +290,7 @@ export default class ZMedSliceSyncController {
     if (typeof vp?.setImageIdIndex === 'function') {
       state.setImageIdIndex = vp.setImageIdIndex;
       vp.setImageIdIndex = function (...args: any[]) {
-        const r = state.setImageIdIndex.apply(this, args);
-        self.scheduleFrom(viewportId, 'HOOK_setImageIdIndex');
-        return r;
+        return state.setImageIdIndex.apply(this, args);
       };
     }
 
@@ -314,6 +306,13 @@ export default class ZMedSliceSyncController {
 
   private scheduleFrom(viewportId: string, reason: string) {
     if (!this.runtimeEnabled || this.applying || this.suppressed(viewportId)) return;
+
+    const activeViewportId =
+      this.services.viewportGridService?.getState?.()?.activeViewportId ?? null;
+
+    // Источником синка может быть только активный viewport.
+    // Это отсекает ложные события от других окон, которые просто перерисовались.
+    if (activeViewportId && viewportId !== activeViewportId) return;
 
     this.pending = { viewportId, reason };
     if (this.raf) return;
@@ -402,7 +401,7 @@ export default class ZMedSliceSyncController {
     e.alignedToGroup = ok >= 2;
   }
 
-  private syncFrom(sourceViewportId: string) {
+    private syncFrom(sourceViewportId: string) {
     if (!this.runtimeEnabled) return;
 
     const { cornerstoneViewportService } = this.services;
@@ -415,14 +414,17 @@ export default class ZMedSliceSyncController {
     const srcIds = getImageIds(srcVp);
     if (!srcIds.length) return;
 
+    const srcEntry = this.cache.get(sourceViewportId);
     const srcIdx = Math.max(0, Math.min(srcIds.length - 1, getIndex(srcVp)));
+
     let srcScalar: number | null = null;
 
-    if (this.groupNormal) {
-      const entry = this.cache.get(sourceViewportId);
-      const fromCache = entry?.scalars?.[srcIdx];
-      if (Number.isFinite(fromCache)) srcScalar = fromCache;
-      if (srcScalar == null) {
+    // Синхронизация только если source реально выровнен по groupNormal
+    if (this.groupNormal && srcEntry?.alignedToGroup) {
+      const fromCache = srcEntry.scalars?.[srcIdx];
+      if (Number.isFinite(fromCache)) {
+        srcScalar = fromCache;
+      } else {
         const s = scalarByNormal(srcIds[srcIdx], this.groupNormal);
         if (s != null) srcScalar = s;
       }
@@ -432,14 +434,20 @@ export default class ZMedSliceSyncController {
     try {
       for (const targetId of this.listeners.keys()) {
         if (targetId === sourceViewportId) continue;
-        this.propagate(targetId, srcIdx, srcIds.length, srcScalar);
+        this.propagate(targetId, srcIdx, srcIds.length, srcScalar, !!srcEntry?.alignedToGroup);
       }
     } finally {
       this.applying = false;
     }
   }
 
-  private propagate(targetId: string, srcIdx: number, srcLen: number, srcScalar: number | null) {
+    private propagate(
+    targetId: string,
+    srcIdx: number,
+    srcLen: number,
+    srcScalar: number | null,
+    sourceAligned: boolean
+  ) {
     const { cornerstoneViewportService } = this.services;
     const tgtCs = cornerstoneViewportService.getCornerstoneViewport?.(targetId);
     const tgtVp = tgtCs?.getViewport?.() ?? tgtCs;
@@ -450,12 +458,26 @@ export default class ZMedSliceSyncController {
 
     this.ensureCache(targetId);
     const entry = this.cache.get(targetId);
+    if (!entry) return;
 
-    let tgtIdx: number;
-    if (srcScalar != null && entry?.alignedToGroup && entry.scalars.length) {
+    let tgtIdx: number | null = null;
+
+    // Нормальная геометрическая синхронизация
+    if (
+      sourceAligned &&
+      srcScalar != null &&
+      entry.alignedToGroup &&
+      entry.scalars.length
+    ) {
       tgtIdx = nearestIndex(entry.scalars, srcScalar);
-    } else {
+    }
+    // Мягкий fallback только внутри совместимых серий
+    else if (sourceAligned && entry.alignedToGroup) {
       tgtIdx = percentFallback(srcIdx, srcLen, tgtIds.length);
+    }
+    // разные плоскости или несовместимая геометрия — не трогаем target вообще
+    else {
+      return;
     }
 
     tgtIdx = Math.max(0, Math.min(tgtIds.length - 1, tgtIdx));
