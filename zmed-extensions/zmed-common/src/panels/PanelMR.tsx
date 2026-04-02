@@ -11,26 +11,51 @@ const MR = ['MR'] as const;
 
 type UIState = 'idle' | 'loading' | 'polling' | 'done' | 'unsupported' | 'error';
 
+type I18nValueKey =
+  | 'Yes'
+  | 'No'
+  | 'No data'
+  | 'No changes'
+  | 'Contour change'
+  | 'Modic I'
+  | 'Modic II'
+  | 'Modic I/II'
+  | 'Pfirrmann I–II'
+  | 'Pfirrmann III'
+  | 'Pfirrmann IV'
+  | 'Pfirrmann V'
+  | 'Diffuse bulging'
+  | 'Protrusion'
+  | 'Extrusion'
+  | 'Central'
+  | 'Subarticular'
+  | 'Foraminal'
+  | 'High'
+  | 'Medium'
+  | 'Low';
+
 interface DisplaySet {
   Modality?: string;
   StudyInstanceUID?: string;
 }
+
 interface DisplaySetServiceLike {
   getActiveDisplaySets?: () => DisplaySet[];
   activeDisplaySets?: DisplaySet[];
 }
+
 interface Services {
   DisplaySetService?: DisplaySetServiceLike;
 }
+
 interface ServicesManager {
   services: Services;
 }
+
 interface PanelMRProps {
   servicesManager: ServicesManager;
   extensionManager: unknown;
 }
-
-type ZeroOne = 0 | 1;
 
 interface BackendDiskItem {
   disk_label?: number | string | null;
@@ -44,19 +69,35 @@ interface BackendDiskItem {
   ['Disc narrowing']?: number[][] | null;
   ['Disc bulging']?: number[][] | null;
   ['Pfirrmann']?: Array<number | string> | null;
+}
 
-  hernia_detected?: boolean | null;
-  hernia_volume_mm3?: number | string | null;
-  hernia_max_protrusion_mm?: number | string | null;
+interface NewBackendDiscResult {
+  pfirrmann?: number | null;
+  narrowing?: number | null;
+  bulge_type?: number | null;
+  bulge_location?: number | null;
+  canal_stenosis?: number | null;
+  migration?: number | null;
+  resorption?: number | null;
+  spondylolisthesis?: number | null;
+}
 
-  spondy_detected?: boolean | null;
-  spondy_displacement_mm?: number | string | null;
-  spondy_displacement_percentage?: number | string | null;
-  spondy_grade?: number | string | null;
+interface NewBackendVertebraResult {
+  upper_modic?: number | null;
+  lower_modic?: number | null;
+  upper_contour?: number | null;
+  lower_contour?: number | null;
+}
+
+interface NewBackendResultsPayload {
+  discs?: Record<string, NewBackendDiscResult>;
+  vertebrae?: Record<string, NewBackendVertebraResult>;
+  bulge_seg_available?: boolean;
 }
 
 interface BackendPipelineResult {
   results?: string;
+  result_json?: string;
   disk_results?: {
     [diskKey: string]: {
       predictions?: {
@@ -96,13 +137,104 @@ interface BackendProcessingStatus {
 
 interface Row {
   level_name: string;
-  Pfirrmann: number | string | null;
-  Modic: 0 | 1 | 2 | 3 | null;
-  bulging: ZeroOne | null;
-  narrowing: ZeroOne | null;
-  herniation: ZeroOne | null;
-  spondylolisthesis: ZeroOne | null;
+  Pfirrmann: I18nValueKey | null;
+  Modic: I18nValueKey | null;
+  contour: I18nValueKey | null;
+
+  narrowing: I18nValueKey | null;
+  bulgeType: I18nValueKey | null;
+  bulgeLocation: I18nValueKey | null;
+  canalStenosis: I18nValueKey | null;
+  migration: I18nValueKey | null;
+  resorption: I18nValueKey | null;
+  spondylolisthesis: I18nValueKey | null;
 }
+
+interface ProcessingInfo {
+  taskId: string;
+  progress?: BackendProcessingStatus | null;
+}
+
+const PFIRRMANN_MAP: Record<number, I18nValueKey> = {
+  0: 'Pfirrmann I–II',
+  1: 'Pfirrmann III',
+  2: 'Pfirrmann IV',
+  3: 'Pfirrmann V',
+};
+
+const BULGE_TYPE_MAP: Record<number, I18nValueKey> = {
+  0: 'No',
+  1: 'Diffuse bulging',
+  2: 'Protrusion',
+  3: 'Extrusion',
+};
+
+const BULGE_LOC_MAP: Record<number, I18nValueKey> = {
+  0: 'No',
+  1: 'Central',
+  2: 'Subarticular',
+  3: 'Foraminal',
+};
+
+const MODIC_MAP: Record<number, I18nValueKey> = {
+  0: 'No',
+  1: 'Modic I',
+  2: 'Modic II',
+};
+
+const MODIC_MAP_BINARY: Record<number, I18nValueKey> = {
+  0: 'No',
+  1: 'Modic I/II',
+};
+
+const CONTOUR_MAP: Record<number, I18nValueKey> = {
+  0: 'No changes',
+  1: 'Contour change',
+};
+
+const RESORPTION_MAP: Record<number, I18nValueKey> = {
+  [-1]: 'No data',
+  0: 'High',
+  1: 'Medium',
+  2: 'Low',
+};
+
+const YES_NO: Record<number, I18nValueKey> = {
+  0: 'No',
+  1: 'Yes',
+};
+
+const POSITIVE_KEYS = new Set<I18nValueKey>([
+  'Yes',
+  'Modic I',
+  'Modic II',
+  'Modic I/II',
+  'Pfirrmann III',
+  'Pfirrmann IV',
+  'Pfirrmann V',
+  'Diffuse bulging',
+  'Protrusion',
+  'Extrusion',
+  'Central',
+  'Subarticular',
+  'Foraminal',
+  'Contour change',
+]);
+
+const NEGATIVE_KEYS = new Set<I18nValueKey>(['No', 'No changes', 'Pfirrmann I–II']);
+
+const processingRegistry: Record<string, ProcessingInfo> = {};
+const PROCESSING_STORAGE_KEY = 'mrProcessingTasks';
+
+const previewCache: Record<
+  string,
+  {
+    rows: Row[];
+    processedAt: string | null;
+    reportAvailable: boolean;
+    reportPath: string | null;
+  }
+> = {};
 
 function flattenFirst<T>(v: unknown, def: T | null = null): T | null {
   if (Array.isArray(v)) {
@@ -138,26 +270,6 @@ function toHumanDiskLabel(raw: number | string | null, map?: Record<string, stri
   return `#${key}`;
 }
 
-interface ProcessingInfo {
-  taskId: string;
-  progress?: BackendProcessingStatus | null;
-}
-
-// Глобальный реестр текущих задач обработки по studyId
-const processingRegistry: Record<string, ProcessingInfo> = {};
-const PROCESSING_STORAGE_KEY = 'mrProcessingTasks';
-
-// Кэш предпросмотра по studyId (в памяти)
-const previewCache: Record<
-  string,
-  {
-    rows: Row[];
-    processedAt: string | null;
-    reportAvailable: boolean;
-    reportPath: string | null;
-  }
-> = {};
-
 function hydrateProcessingRegistryFromStorage(): void {
   if (typeof window === 'undefined') return;
   try {
@@ -189,6 +301,7 @@ function persistProcessingRegistryToStorage(): void {
         };
       }
     });
+
     if (Object.keys(plain).length === 0) {
       window.sessionStorage.removeItem(PROCESSING_STORAGE_KEY);
     } else {
@@ -273,91 +386,253 @@ function PanelMRInner({
     }
   };
 
+  const parseJsonString = <T,>(value?: string | null): T | null => {
+    if (!value || typeof value !== 'string') return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  };
+
+  const mapByDict = (
+    value: unknown,
+    dict: Record<number, I18nValueKey>,
+    fallback: I18nValueKey | null = null
+  ): I18nValueKey | null => {
+    if (value === null || value === undefined) return fallback;
+    const n = Number(value);
+    if (Number.isNaN(n)) return fallback;
+    return dict[n] ?? fallback;
+  };
+
+  const mapYesNo = (value: unknown): I18nValueKey | null => mapByDict(value, YES_NO, null);
+
+  const normalizePfirrmannLabel = (value: unknown): I18nValueKey | null => {
+    if (value === null || value === undefined) return null;
+    const n = Number(value);
+    if (Number.isNaN(n)) return null;
+    return PFIRRMANN_MAP[n] ?? null;
+  };
+
+  const getDiscOrderWeight = (level: string): number => {
+    const order = ['Th12L1', 'L1L2', 'L2L3', 'L3L4', 'L4L5', 'L5S1'];
+    const idx = order.indexOf(level);
+    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+  };
+
+  const getDiscVertebraNames = (
+    levelName: string
+  ): { upperName: string | null; lowerName: string | null } => {
+    const match = /^([A-Za-z0-9]+)(L\d|S\d)$/.exec(levelName);
+    if (!match) {
+      return { upperName: null, lowerName: null };
+    }
+
+    return {
+      upperName: match[1] || null,
+      lowerName: match[2] || null,
+    };
+  };
+
+  const getMaxMappedLabelForDisc = (
+    levelName: string,
+    vertebrae: Record<string, NewBackendVertebraResult> | undefined,
+    extractor: (v: NewBackendVertebraResult | undefined, side: 'upper' | 'lower') => number | null | undefined,
+    dict: Record<number, I18nValueKey>,
+    fallbackDict?: Record<number, I18nValueKey>
+  ): I18nValueKey | null => {
+    if (!vertebrae) return null;
+
+    const { upperName, lowerName } = getDiscVertebraNames(levelName);
+    if (!upperName || !lowerName) return null;
+
+    const upper = vertebrae[upperName];
+    const lower = vertebrae[lowerName];
+
+    const raw = [extractor(upper, 'lower'), extractor(lower, 'upper')]
+      .map(v => (v == null ? NaN : Number(v)))
+      .filter(v => !Number.isNaN(v));
+
+    if (raw.length === 0) return null;
+
+    const maxValue = Math.max(...raw);
+
+    if (Object.prototype.hasOwnProperty.call(dict, maxValue)) {
+      return dict[maxValue];
+    }
+
+    if (fallbackDict && Object.prototype.hasOwnProperty.call(fallbackDict, maxValue)) {
+      return fallbackDict[maxValue];
+    }
+
+    return null;
+  };
+
+  const getModicLabelForDisc = (
+    levelName: string,
+    vertebrae?: Record<string, NewBackendVertebraResult>
+  ): I18nValueKey | null => {
+    return getMaxMappedLabelForDisc(
+      levelName,
+      vertebrae,
+      (v, side) => (side === 'upper' ? v?.upper_modic : v?.lower_modic),
+      MODIC_MAP,
+      MODIC_MAP_BINARY
+    );
+  };
+
+  const getContourLabelForDisc = (
+    levelName: string,
+    vertebrae?: Record<string, NewBackendVertebraResult>
+  ): I18nValueKey | null => {
+    return getMaxMappedLabelForDisc(
+      levelName,
+      vertebrae,
+      (v, side) => (side === 'upper' ? v?.upper_contour : v?.lower_contour),
+      CONTOUR_MAP
+    );
+  };
+
+  const mapNewResultsToRows = (payload: NewBackendResultsPayload): Row[] => {
+    const discs = payload.discs || {};
+    const vertebrae = payload.vertebrae || {};
+
+    return Object.entries(discs)
+      .sort(([a], [b]) => getDiscOrderWeight(a) - getDiscOrderWeight(b))
+      .map(([level_name, disc]): Row => ({
+        level_name,
+        Pfirrmann: normalizePfirrmannLabel(disc.pfirrmann),
+        Modic: getModicLabelForDisc(level_name, vertebrae),
+        contour: getContourLabelForDisc(level_name, vertebrae),
+
+        narrowing: mapYesNo(disc.narrowing),
+        bulgeType: mapByDict(disc.bulge_type, BULGE_TYPE_MAP, null),
+        bulgeLocation: mapByDict(disc.bulge_location, BULGE_LOC_MAP, null),
+        canalStenosis: mapYesNo(disc.canal_stenosis),
+        migration: mapYesNo(disc.migration),
+        resorption: mapByDict(
+          disc.resorption === null || disc.resorption === undefined ? -1 : disc.resorption,
+          RESORPTION_MAP,
+          null
+        ),
+        spondylolisthesis: mapYesNo(disc.spondylolisthesis),
+      }));
+  };
+
   const mapPipelineToRows = (pipeline?: BackendPipelineResult): Row[] => {
     if (!pipeline) return [];
 
-    if (pipeline.disk_results) {
-      const asZO = (v: number | null | undefined): ZeroOne | null =>
-        v === 0 ? 0 : v === 1 ? 1 : null;
+    const newFormat =
+      parseJsonString<NewBackendResultsPayload>(pipeline.results) ??
+      parseJsonString<NewBackendResultsPayload>(pipeline.result_json);
 
+    if (newFormat?.discs) {
+      return mapNewResultsToRows(newFormat);
+    }
+
+    if (pipeline.disk_results && Object.keys(pipeline.disk_results).length > 0) {
       return Object.entries(pipeline.disk_results).map(([diskKey, disk]) => {
         const predictions = disk.predictions || {};
 
         const level_name =
           (disk.level_name && String(disk.level_name)) || toHumanDiskLabel(diskKey, diskMap);
 
-        const pfRaw = predictions.Pfirrmann_grade;
-        let Pfirrmann: number | string | null = pfRaw ?? null;
-        if (Pfirrmann !== null && Pfirrmann !== undefined) {
-          const n = Number(Pfirrmann);
-          if (!Number.isNaN(n)) Pfirrmann = n === 0 ? 1 : n;
-        } else {
-          Pfirrmann = null;
-        }
-
-        const nModic =
+        const modicValue =
           predictions.Modic !== undefined && predictions.Modic !== null
             ? Number(predictions.Modic)
             : NaN;
-        const Modic: 0 | 1 | 2 | 3 | null =
-          Number.isNaN(nModic) || nModic < 0 || nModic > 3 ? null : (nModic as 0 | 1 | 2 | 3);
+
+        const contourValue =
+          predictions.UP_endplate !== undefined && predictions.UP_endplate !== null
+            ? Number(predictions.UP_endplate)
+            : predictions.LOW_endplate !== undefined && predictions.LOW_endplate !== null
+              ? Number(predictions.LOW_endplate)
+              : NaN;
 
         return {
           level_name,
-          Pfirrmann,
-          Modic,
-          bulging: asZO(predictions.Disc_bulging),
-          narrowing: asZO(predictions.Disc_narrowing),
-          herniation: asZO(predictions.Disc_herniation),
-          spondylolisthesis: asZO(predictions.Spondylolisthesis),
+          Pfirrmann: normalizePfirrmannLabel(predictions.Pfirrmann_grade),
+          Modic:
+            Number.isNaN(modicValue) || modicValue < 0
+              ? null
+              : MODIC_MAP[modicValue] ?? MODIC_MAP_BINARY[modicValue] ?? null,
+          contour:
+            Number.isNaN(contourValue) || contourValue < 0
+              ? null
+              : CONTOUR_MAP[contourValue] ?? null,
+
+          narrowing: mapYesNo(predictions.Disc_narrowing),
+          bulgeType:
+            predictions.Disc_herniation === 1
+              ? 'Yes'
+              : predictions.Disc_bulging === 1
+                ? 'Yes'
+                : predictions.Disc_herniation === 0 && predictions.Disc_bulging === 0
+                  ? 'No'
+                  : null,
+          bulgeLocation: null,
+          canalStenosis: null,
+          migration: null,
+          resorption: null,
+          spondylolisthesis: mapYesNo(predictions.Spondylolisthesis),
         };
       });
     }
 
-    // Фоллбек на старый формат через results (строка JSON-массива)
     if (pipeline.results) {
       try {
-        const arr = JSON.parse(pipeline.results) as BackendDiskItem[];
-        return arr.map((item): Row => {
-          const level_name =
-            (item.level_name && String(item.level_name)) ||
-            toHumanDiskLabel(
-              typeof item.disk_label === 'number' || typeof item.disk_label === 'string'
-                ? item.disk_label
-                : null,
-              diskMap
-            );
+        const parsed = JSON.parse(pipeline.results) as unknown;
 
-          const pfRaw = flattenFirst<number | string>(item['Pfirrmann'], null);
-          let Pfirrmann: number | string | null = pfRaw;
-          if (pfRaw !== null) {
-            const n = Number(pfRaw);
-            if (!Number.isNaN(n)) Pfirrmann = n === 0 ? 1 : n;
-          }
+        if (Array.isArray(parsed)) {
+          return (parsed as BackendDiskItem[]).map((item): Row => {
+            const level_name =
+              (item.level_name && String(item.level_name)) ||
+              toHumanDiskLabel(
+                typeof item.disk_label === 'number' || typeof item.disk_label === 'string'
+                  ? item.disk_label
+                  : null,
+                diskMap
+              );
 
-          const modicRaw = flattenFirst<number>(item.Modic ?? null, null);
-          const nModic = modicRaw != null ? Number(modicRaw) : NaN;
-          const Modic: 0 | 1 | 2 | 3 | null =
-            Number.isNaN(nModic) || nModic < 0 || nModic > 3 ? null : (nModic as 0 | 1 | 2 | 3);
+            const pfRaw = flattenFirst<number | string>(item['Pfirrmann'], null);
 
-          const bulging = flattenFirst<number>(item['Disc bulging'], null);
-          const narrowing = flattenFirst<number>(item['Disc narrowing'], null);
-          const herniation = flattenFirst<number>(item['Disc herniation'], null);
-          const spondy = flattenFirst<number>(item['Spondylolisthesis'], null);
+            const modicRaw = flattenFirst<number>(item.Modic ?? null, null);
+            const nModic = modicRaw != null ? Number(modicRaw) : NaN;
 
-          const asZO = (v: number | null): ZeroOne | null =>
-            v === 0 ? 0 : v === 1 ? 1 : null;
+            const upContour = flattenFirst<number>(item['UP endplate'], null);
+            const lowContour = flattenFirst<number>(item['LOW endplate'], null);
+            const contourRaw = [upContour, lowContour]
+              .map(v => (v == null ? NaN : Number(v)))
+              .filter(v => !Number.isNaN(v));
+            const maxContour = contourRaw.length ? Math.max(...contourRaw) : NaN;
 
-          return {
-            level_name,
-            Pfirrmann,
-            Modic,
-            bulging: asZO(typeof bulging === 'number' ? bulging : null),
-            narrowing: asZO(typeof narrowing === 'number' ? narrowing : null),
-            herniation: asZO(typeof herniation === 'number' ? herniation : null),
-            spondylolisthesis: asZO(typeof spondy === 'number' ? spondy : null),
-          };
-        });
+            const bulging = flattenFirst<number>(item['Disc bulging'], null);
+            const narrowing = flattenFirst<number>(item['Disc narrowing'], null);
+            const herniation = flattenFirst<number>(item['Disc herniation'], null);
+            const spondy = flattenFirst<number>(item['Spondylolisthesis'], null);
+
+            return {
+              level_name,
+              Pfirrmann: normalizePfirrmannLabel(pfRaw),
+              Modic:
+                Number.isNaN(nModic) || nModic < 0
+                  ? null
+                  : MODIC_MAP[nModic] ?? MODIC_MAP_BINARY[nModic] ?? null,
+              contour:
+                Number.isNaN(maxContour) || maxContour < 0 ? null : CONTOUR_MAP[maxContour] ?? null,
+
+              narrowing: mapYesNo(narrowing),
+              bulgeType:
+                herniation === 1 ? 'Yes' : bulging === 1 ? 'Yes' : herniation === 0 && bulging === 0 ? 'No' : null,
+              bulgeLocation: null,
+              canalStenosis: null,
+              migration: null,
+              resorption: null,
+              spondylolisthesis: mapYesNo(spondy),
+            };
+          });
+        }
       } catch {
         return [];
       }
@@ -366,7 +641,6 @@ function PanelMRInner({
     return [];
   };
 
-  // Унифицированный опрос /processing-status/{taskId}
   function startPolling(taskId: string): void {
     const delay = 1000;
 
@@ -410,7 +684,6 @@ function PanelMRInner({
           total_steps > 0 &&
           current_step >= total_steps
         ) {
-          // Завершили обработку
           clearPollTimer();
           setUi('loading');
 
@@ -449,12 +722,10 @@ function PanelMRInner({
                 reportPath: reportPathValue,
               };
             } else {
-              // на всякий случай даём скачать по taskId
               setReportAvailable(true);
               setReportPath(`/report/${taskId}`);
             }
           } catch {
-            // если статус не удалось получить – хотя бы включаем скачивание по taskId
             setReportAvailable(true);
             setReportPath(`/report/${taskId}`);
           }
@@ -473,7 +744,7 @@ function PanelMRInner({
           return;
         }
       } catch {
-        // игнорируем, попробуем ещё раз
+        // ignore
       }
 
       pollTimerRef.current = window.setTimeout(checkStatus, delay);
@@ -493,23 +764,22 @@ function PanelMRInner({
     setRows([]);
     setProgress(null);
 
-    // Поднимаем активные задачи из sessionStorage (после обновления страницы)
     hydrateProcessingRegistryFromStorage();
 
     const existing = processingRegistry[studyId];
 
-    // Если для этого исследования уже идёт обработка — сразу восстанавливаем лоадер и опрос
     if (existing?.taskId) {
       setProcessingId(existing.taskId);
       setUi('polling');
+
       if (existing.progress) {
         setProgress(existing.progress);
       } else {
-        // дефолтный текст, пока не прилетит первый статус
         setProgress({
           step_label: t('Processing in progress'),
         });
       }
+
       startPolling(existing.taskId);
 
       return () => {
@@ -517,7 +787,6 @@ function PanelMRInner({
       };
     }
 
-    // Пытаемся взять предпросмотр из кэша (без дополнительного ожидания)
     const cached = previewCache[studyId];
     if (cached) {
       setRows(cached.rows);
@@ -566,7 +835,6 @@ function PanelMRInner({
         const reportPathValue = data.report_download_url ?? null;
         setReportPath(reportPathValue);
 
-        // Если бэк по /status уже отдаёт прогресс незавершённой задачи — показываем лоадер и продолжаем опрос
         if (
           typeof data.current_step === 'number' &&
           typeof data.total_steps === 'number' &&
@@ -621,7 +889,6 @@ function PanelMRInner({
     setErr('');
     clearPollTimer();
 
-    // сразу показываем человекопонятный статус через i18n
     const initialProgress: BackendProcessingStatus = {
       step_label: t('Preparing for analysis'),
     };
@@ -671,8 +938,8 @@ function PanelMRInner({
     const path = reportPath?.startsWith('/report/')
       ? reportPath
       : pid
-      ? `/report/${pid}`
-      : null;
+        ? `/report/${pid}`
+        : null;
 
     if (!path) return;
 
@@ -692,9 +959,7 @@ function PanelMRInner({
 
       let filename = String(processingId || 'report');
 
-      const disp = (resp.headers as Record<string, string | undefined>)[
-        'content-disposition'
-      ];
+      const disp = (resp.headers as Record<string, string | undefined>)['content-disposition'];
       if (disp) {
         const m = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(disp);
         if (m && m[1]) filename = decodeURIComponent(m[1]);
@@ -723,33 +988,36 @@ function PanelMRInner({
     <span className="rounded-md bg-white/10 px-2 py-0.5 text-xs text-white">{children}</span>
   );
 
-  const Chip = ({ label, value }: { label: string; value: ZeroOne | number | string | null }) => {
-    const on = value === 1 || value === t('1');
-    const off = value === 0 || value === t('0');
+  const Chip = ({ label, value }: { label: string; value: I18nValueKey | string | number | null }) => {
+    const valueKey = typeof value === 'string' ? value : value == null ? null : String(value);
+    const translated = valueKey == null ? '-' : t(valueKey);
+
+    const isPositive = valueKey != null && POSITIVE_KEYS.has(valueKey as I18nValueKey);
+    const isNegative = valueKey != null && NEGATIVE_KEYS.has(valueKey as I18nValueKey);
 
     const base =
       'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1';
 
-    const cls = on
+    const cls = isPositive
       ? `${base} bg-emerald-500/10 text-emerald-300 ring-emerald-400/30`
-      : off
-      ? `${base} bg-primary-main text-primary-light ring-white/5`
-      : `${base} bg-yellow-500/10 text-yellow-200 ring-yellow-400/30`;
+      : isNegative
+        ? `${base} bg-primary-main text-primary-light ring-white/5`
+        : `${base} bg-yellow-500/10 text-yellow-200 ring-yellow-400/30`;
 
     const dotCls =
       'mr-1 block h-1.5 w-1.5 rounded-full ' +
-      (on ? 'bg-emerald-400' : off ? 'bg-white/40' : 'bg-yellow-300');
+      (isPositive ? 'bg-emerald-400' : isNegative ? 'bg-white/40' : 'bg-yellow-300');
 
     return (
-      <span className={cls} title={`${label}: ${String(value ?? '-')}`}>
+      <span className={cls} title={`${label}: ${translated}`}>
         <span className={dotCls} />
-        {label}: {String(value ?? '-')}
+        {label}: {translated}
       </span>
     );
   };
 
   const Card = ({ row }: { row: Row }) => (
-    <li className="rounded-lg border border-white/10 bg-white/[0.07] p-3 hover:bg-white/[0.05] transition-colors">
+    <li className="rounded-lg border border-white/10 bg-white/[0.07] p-3 transition-colors hover:bg-white/[0.05]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm font-medium text-white">
           {t('Disk')}: {row.level_name}
@@ -757,80 +1025,61 @@ function PanelMRInner({
 
         <div className="flex items-center gap-2">
           <Badge>
-            {t('Pfirrmann grade')} {row.Pfirrmann ?? '-'}
+            {t('Pfirrmann grade')} {row.Pfirrmann ? t(row.Pfirrmann) : '-'}
           </Badge>
           <Badge>
-            {t('Modic')} {row.Modic ?? '-'}
+            {t('Modic')} {row.Modic ? t(row.Modic) : '-'}
           </Badge>
         </div>
       </div>
 
       <div className="mt-3 flex flex-col gap-2">
-        <Chip
-          label={t('Disc herniation')}
-          value={row.herniation == 1 ? t('1') : t('0')}
-        />
-        <Chip
-          label={t('Disc bulging')}
-          value={row.bulging == 1 ? t('1') : t('0')}
-        />
-        <Chip
-          label={t('Disc narrowing')}
-          value={row.narrowing == 1 ? t('1') : t('0')}
-        />
-        <Chip
-          label={t('Spondylolisthesis')}
-          value={row.spondylolisthesis == 1 ? t('1') : t('0')}
-        />
+        <Chip label={t('Disc narrowing')} value={row.narrowing} />
+        <Chip label={t('Bulge type')} value={row.bulgeType} />
+        <Chip label={t('Bulge location')} value={row.bulgeLocation} />
+        <Chip label={t('Canal stenosis')} value={row.canalStenosis} />
+        <Chip label={t('Migration')} value={row.migration} />
+        <Chip label={t('Resorption')} value={row.resorption} />
+        <Chip label={t('Spondylolisthesis')} value={row.spondylolisthesis} />
+        <Chip label={t('Contour')} value={row.contour} />
       </div>
     </li>
   );
 
-const renderProgressStatus = () => {
+  const renderProgressStatus = () => {
+    const hasSteps =
+      typeof progress?.current_step === 'number' &&
+      typeof progress?.total_steps === 'number' &&
+      (progress.total_steps ?? 0) > 0;
+
+    const label = t(progress?.step_label) || (hasSteps ? '' : t('Processing in progress'));
+
+    if (!hasSteps && !label) return null;
+
+    return (
+      <div className="mt-1 w-full px-1">
+        {label && (
+          <div className="break-words text-center text-lg leading-snug text-white">{label}</div>
+        )}
+      </div>
+    );
+  };
+
   const hasSteps =
     typeof progress?.current_step === 'number' &&
     typeof progress?.total_steps === 'number' &&
     (progress.total_steps ?? 0) > 0;
 
-  const label =
-    progress?.step_label ||
-    (hasSteps ? '' : t('Processing in progress'));
-
-  if (!hasSteps && !label) return null;
+  const totalVisible =
+    typeof progress?.total_steps === 'number' ? progress.total_steps : undefined;
 
   return (
-    <div className="mt-1 w-full px-1">
-      {label && (
-        <div className="text-lg leading-snug text-white break-words text-center">
-          {label}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const hasSteps =
-  typeof progress?.current_step === 'number' &&
-  typeof progress?.total_steps === 'number' &&
-  (progress.total_steps ?? 0) > 0;
-
-const totalVisible =
-  typeof progress?.total_steps === 'number'
-    ? progress.total_steps - 1
-    : undefined;
-
-  return (
-    <div className="flex h-full min-h-0 flex-col px-3 pt-3 pb-1 text-white">
+    <div className="flex h-full min-h-0 flex-col px-3 pb-1 pt-3 text-white">
       <div className="mb-3 rounded-lg border border-primary-light/30 bg-black/40 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-black/30">
-        <div className="sticky top-0 z-10 -mx-3 -mt-3 px-3 pt-3 pb-2 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/30">
+        <div className="sticky top-0 z-10 -mx-3 -mt-3 bg-black/60 px-3 pb-2 pt-3 backdrop-blur supports-[backdrop-filter]:bg-black/30">
           <div className="flex flex-col gap-2">
             <Button
-              startIcon={
-                <Icon
-                  className="!h-[12px] !w-[12px] text-black"
-                  name="sparkles"
-                />
-              }
+              startIcon={<Icon className="!h-[12px] !w-[12px] text-black" name="sparkles" />}
               size="initial"
               className="px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
               color="primaryActive"
@@ -852,24 +1101,24 @@ const totalVisible =
             </Button>
           </div>
 
-          <div className="sm:justify-self-end text-sm text-primary-light mt-2">
+          <div className="mt-2 text-sm text-primary-light sm:justify-self-end">
             {t('Last processed')}: <span className="text-white">{lastProcessed}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="min-h-0 flex-1">
         <div
           ref={previewRef}
-          className="relative h-full border border-primary-light/30 rounded p-3 overflow-y-auto overflow-x-hidden custom-scroll flex flex-col gap-3"
+          className="custom-scroll relative flex h-full flex-col gap-3 overflow-y-auto overflow-x-hidden rounded border border-primary-light/30 p-3"
         >
           <div className="text-lg text-primary-light">{t('Preview results')}</div>
 
           {isBusy && (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="flex flex-col items-stretch gap-3 w-full">
+            <div className="flex flex-1 items-center justify-center">
+              <div className="flex w-full flex-col items-stretch gap-3">
                 {hasSteps && totalVisible !== undefined && (
-                  <div className="text-lg font-mono text-primary-light text-center">
+                  <div className="text-center font-mono text-lg text-primary-light">
                     {progress?.current_step} / {totalVisible}
                   </div>
                 )}
