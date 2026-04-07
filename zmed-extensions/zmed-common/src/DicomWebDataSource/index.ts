@@ -155,6 +155,7 @@ function createDicomWebApi(dicomWebConfig, servicesManager) {
             const params = {
               page: origParams.pageNumber,
               size: origParams.resultsPerPage,
+              asc: 0
             };
             const config: AxiosRequestConfig = {
               method: 'get',
