@@ -108,7 +108,7 @@ function WorkSheet({
     };
   }, []);
 
-  const debouncedFilterValues = useDebounce(filterValues, 20);
+  const debouncedFilterValues = useDebounce(filterValues, 200);
   const { resultsPerPage, pageNumber, sortBy, sortDirection } = filterValues;
 
   const canSort = false;
@@ -188,18 +188,29 @@ function WorkSheet({
 
     const queryString: Record<string, string> = {};
     Object.keys(defaultFilterValues).forEach(key => {
-      const defaultValue = (defaultFilterValues as any)[key];
-      const currValue = (debouncedFilterValues as any)[key];
+      const defaultValue = defaultFilterValues[key];
+      const currValue = debouncedFilterValues[key];
 
-      if (key === 'studyDate') {
-        if (
-          currValue.startDate &&
-          defaultValue.startDate !== currValue.startDate
-        ) {
-          queryString.startDate = currValue.startDate;
+      if (key === 'studyUploadedAt') {
+        if (currValue.startDate && defaultValue.startDate !== currValue.startDate) {
+          queryString.uploadedStartDate = currValue.startDate;
         }
         if (currValue.endDate && defaultValue.endDate !== currValue.endDate) {
-          queryString.endDate = currValue.endDate;
+          queryString.uploadedEndDate = currValue.endDate;
+        }
+      } else if (key === 'studyDate') {
+        if (currValue.startDate && defaultValue.startDate !== currValue.startDate) {
+          queryString.studyDateStart = currValue.startDate;
+        }
+        if (currValue.endDate && defaultValue.endDate !== currValue.endDate) {
+          queryString.studyDateEnd = currValue.endDate;
+        }
+      } else if (key === 'studyTime') {
+        if (currValue.startTime && defaultValue.startTime !== currValue.startTime) {
+          queryString.studyTimeStart = currValue.startTime;
+        }
+        if (currValue.endTime && defaultValue.endTime !== currValue.endTime) {
+          queryString.studyTimeEnd = currValue.endTime;
         }
       } else if (key === 'modalities' && currValue.length) {
         queryString.modalities = currValue.join(',');
@@ -763,9 +774,17 @@ WorkSheet.propTypes = {
 const defaultFilterValues = {
   patientName: '',
   mrn: '',
+  studyUploadedAt: {
+    startDate: null,
+    endDate: null,
+  },
   studyDate: {
     startDate: null,
     endDate: null,
+  },
+  studyTime: {
+    startTime: '',
+    endTime: '',
   },
   description: '',
   modalities: [],
@@ -789,29 +808,43 @@ function _tryParseInt(str, defaultValue) {
 }
 
 function _getQueryFilterValues(params) {
-  const queryFilterValues: any = {
-    patientName: params.get('patientname'),
+  const queryFilterValues = {
+    patientName: params.get('patientName'),
     mrn: params.get('mrn'),
-    studyDate: {
-      startDate: params.get('startdate') || null,
-      endDate: params.get('enddate') || null,
+
+    studyUploadedAt: {
+      startDate: params.get('uploadedStartDate') || null,
+      endDate: params.get('uploadedEndDate') || null,
     },
+
+    studyDate: {
+      startDate: params.get('studyDateStart') || null,
+      endDate: params.get('studyDateEnd') || null,
+    },
+
+    studyTime: {
+      startTime: params.get('studyTimeStart') || '',
+      endTime: params.get('studyTimeEnd') || '',
+    },
+
     description: params.get('description'),
     modalities: params.get('modalities')
       ? params.get('modalities').split(',')
       : [],
     accession: params.get('accession'),
-    sortBy: params.get('sortby'),
-    sortDirection: params.get('sortdirection'),
+    sortBy: params.get('sortBy'),
+    sortDirection: params.get('sortDirection'),
     pageNumber: _tryParseInt(params.get('pageNumber'), undefined),
-    resultsPerPage: _tryParseInt(params.get('resultsperpage'), undefined),
+    resultsPerPage: _tryParseInt(params.get('resultsPerPage'), undefined),
     datasources: params.get('datasources'),
-    configUrl: params.get('configurl'),
+    configUrl: params.get('configUrl'),
   };
 
-  Object.keys(queryFilterValues).forEach(
-    key => queryFilterValues[key] == null && delete queryFilterValues[key]
-  );
+  Object.keys(queryFilterValues).forEach(key => {
+    if (queryFilterValues[key] == null) {
+      delete queryFilterValues[key];
+    }
+  });
 
   return queryFilterValues;
 }

@@ -308,53 +308,92 @@ export default DataSourceWrapper;
  * Need generic that can be shared? Isn't this what qs is for?
  * @param {*} query
  */
-function _getQueryFilterValues(query, queryLimit) {
-  query = new URLSearchParams(query);
+function _getQueryFilterValues(query) {
+  const params = new URLSearchParams(query);
 
-  const pageNumber = _tryParseInt(query.get('pageNumber'), 1);
-  const resultsPerPage = _tryParseInt(query.get('resultsPerPage'), 25);
+  const pageNumber = _tryParseInt(params.get('pageNumber'), 1);
+  const resultsPerPage = _tryParseInt(params.get('resultsPerPage'), 25);
 
-  const queryFilterValues = {
-    // DCM
-    patientId: query.get('mrn'),
-    patientName: query.get('patientName'),
-    studyDescription: query.get('description'),
-    modalitiesInStudy:
-      query.get('modalities') && query.get('modalities').split(','),
-    accessionNumber: query.get('accession'),
-    //
-    startDate: query.get('startDate'),
-    endDate: query.get('endDate'),
-    page: _tryParseInt(query.get('page'), undefined),
-    pageNumber,
-    resultsPerPage,
-    // Rarely supported server-side
-    sortBy: query.get('sortBy'),
-    sortDirection: query.get('sortDirection'),
-    config: query.get('configUrl'),
-    me: true
+  const buildDicomDateRange = (start, end) => {
+    const normalize = value => (value ? value.replaceAll('-', '') : null);
+
+    const s = normalize(start);
+    const e = normalize(end);
+
+    if (s && e) {
+      return `${s}-${e}`;
+    }
+
+    return s || e || undefined;
   };
 
-  // patientName: good
-  // studyDescription: good
-  // accessionNumber: good
+  const buildDicomTimeRange = (start, end) => {
+    const normalize = value => {
+      if (!value) {
+        return null;
+      }
 
-  // Delete null/undefined keys
-  Object.keys(queryFilterValues).forEach(
-    key => queryFilterValues[key] == null && delete queryFilterValues[key]
-  );
+      const cleaned = value.replaceAll(':', '');
+      return cleaned.padEnd(6, '0').slice(0, 6);
+    };
+
+    const s = normalize(start);
+    const e = normalize(end);
+
+    if (s && e) {
+      return `${s}-${e}`;
+    }
+
+    return s || e || undefined;
+  };
+
+  const queryFilterValues = {
+    patientId: params.get('mrn'),
+    patientName: params.get('patientName'),
+    studyDescription: params.get('description'),
+    modalitiesInStudy: params.get('modalities')
+      ? params.get('modalities').split(',')
+      : undefined,
+    accessionNumber: params.get('accession'),
+
+    // upload date -> backend /api/studies/search start_date/end_date
+    startDate: params.get('uploadedStartDate') || null,
+    endDate: params.get('uploadedEndDate') || null,
+
+    // study date/time -> backend /api/studies/search study_date/study_time
+    studyDate: buildDicomDateRange(
+      params.get('studyDateStart'),
+      params.get('studyDateEnd')
+    ),
+    studyTime: buildDicomTimeRange(
+      params.get('studyTimeStart'),
+      params.get('studyTimeEnd')
+    ),
+
+    pageNumber,
+    resultsPerPage,
+
+    sortBy: params.get('sortBy'),
+    sortDirection: params.get('sortDirection'),
+    config: params.get('configUrl'),
+    me: true,
+  };
+
+  Object.keys(queryFilterValues).forEach(key => {
+    if (queryFilterValues[key] == null) {
+      delete queryFilterValues[key];
+    }
+  });
 
   return queryFilterValues;
+}
 
-  function _tryParseInt(str, defaultValue) {
-    let retValue = defaultValue;
-    if (str !== null) {
-      if (str.length > 0) {
-        if (!isNaN(str)) {
-          retValue = parseInt(str);
-        }
-      }
-    }
-    return retValue;
+function _tryParseInt(str, defaultValue) {
+  let retValue = defaultValue;
+
+  if (str !== null && str.length > 0 && !isNaN(str)) {
+    retValue = parseInt(str, 10);
   }
+
+  return retValue;
 }
