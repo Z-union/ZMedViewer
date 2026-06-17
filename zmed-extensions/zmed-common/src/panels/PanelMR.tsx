@@ -10,6 +10,7 @@ import { forceUpdateSeriesData } from './utils';
 const MR = ['MR'] as const;
 
 type UIState = 'idle' | 'loading' | 'polling' | 'done' | 'unsupported' | 'error';
+type ReportFormat = 'docx' | 'html';
 
 type I18nValueKey =
   | 'Yes'
@@ -225,6 +226,17 @@ const NEGATIVE_KEYS = new Set<I18nValueKey>(['No', 'No changes', 'Pfirrmann I–
 
 const processingRegistry: Record<string, ProcessingInfo> = {};
 const PROCESSING_STORAGE_KEY = 'mrProcessingTasks';
+
+const REPORT_FORMAT_CONFIG: Record<ReportFormat, { accept: string; extension: string }> = {
+  docx: {
+    accept: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    extension: 'docx',
+  },
+  html: {
+    accept: 'text/html',
+    extension: 'html',
+  },
+};
 
 const previewCache: Record<
   string,
@@ -933,33 +945,72 @@ function PanelMRInner({
     }
   };
 
-  const handleDownload = async (): Promise<void> => {
+  const getReportUrl = (format: ReportFormat, includeFormat = true): string | null => {
     const pid = processingId;
-    const path = reportPath?.startsWith('/report/')
-      ? reportPath
-      : pid
-        ? `/report/${pid}`
-        : null;
+    const source = reportPath?.trim() || (pid ? `/report/${pid}` : null);
 
-    if (!path) return;
+    if (!source) return null;
+
+    const normalizedPath = source.startsWith('/') || /^https?:\/\//i.test(source)
+      ? source
+      : `/${source}`;
+    const pathWithoutFormat = normalizedPath.replace(/\.(docx|html)(?=([?#]|$))/i, '');
+    const path = includeFormat
+      ? pathWithoutFormat.replace(/([?#].*)?$/, `.${format}$1`)
+      : pathWithoutFormat;
+
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+
+    return `${BASE.replace(/\/$/, '')}${path}`;
+  };
+
+  const handleDownload = async (format: ReportFormat): Promise<void> => {
+    const requestUrl = getReportUrl(format);
+
+    if (!requestUrl) return;
 
     setUi('loading');
     setErr('');
 
     const controller = new AbortController();
+    const config = REPORT_FORMAT_CONFIG[format];
 
     try {
-      const resp = await axios.get(`${BASE.replace(/\/$/, '')}${path}`, {
-        responseType: 'blob',
-        headers: {
-          accept: 'application/json',
-        },
-        signal: controller.signal,
-      });
+      let resp: { data: Blob; headers: Record<string, string | undefined> } | null = null;
 
-      let filename = String(processingId || 'report');
+      try {
+        resp = await axios.get(requestUrl, {
+          responseType: 'blob',
+          headers: {
+            accept: config.accept,
+          },
+          signal: controller.signal,
+        });
+      } catch (error) {
+        const fallbackUrl = format === 'docx' ? getReportUrl(format, false) : null;
 
-      const disp = (resp.headers as Record<string, string | undefined>)['content-disposition'];
+        if (!fallbackUrl || fallbackUrl === requestUrl) {
+          throw error;
+        }
+
+        resp = await axios.get(fallbackUrl, {
+          responseType: 'blob',
+          headers: {
+            accept: config.accept,
+          },
+          signal: controller.signal,
+        });
+      }
+
+      if (!resp) {
+        throw new Error('Download error');
+      }
+
+      let filename = `${String(processingId || 'report')}.${config.extension}`;
+
+      const disp = resp.headers['content-disposition'];
       if (disp) {
         const m = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(disp);
         if (m && m[1]) filename = decodeURIComponent(m[1]);
@@ -1095,9 +1146,19 @@ function PanelMRInner({
               className="px-2 py-2 text-base"
               variant="outlined"
               disabled={!reportAvailable || isBusy}
-              onClick={handleDownload}
+              onClick={() => handleDownload('docx')}
             >
-              {t('Download report')}
+              {t('Download DOCX')}
+            </Button>
+
+            <Button
+              size="initial"
+              className="px-2 py-2 text-base"
+              variant="outlined"
+              disabled={!reportAvailable || isBusy}
+              onClick={() => handleDownload('html')}
+            >
+              {t('Download HTML')}
             </Button>
           </div>
 
