@@ -5,6 +5,7 @@ services:
     build:
       context: ./../
       dockerfile: ./deploy/dockerfile
+      network: host
       args:
         - ZVIEWER_HOST=${ZVIEWER_HOST}
         - ZVIEWER_APP_CONFIG=${ZVIEWER_APP_CONFIG}
