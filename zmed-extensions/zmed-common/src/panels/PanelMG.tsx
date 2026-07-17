@@ -16,12 +16,23 @@ type MgTask = {
   created_at?: number;
   state?: MgTaskState; // ready/pending
   ready_at?: number;
+  // report_path, который /status возвращал до запуска новой обработки
+  baseline_report_path?: string | null;
+  // новый путь, который вернул /predict_async
+  expected_report_path?: string | null;
 };
 
 type PredictAsyncResponse = {
   download_filename: string;
   report_path: string;
 };
+
+type StatusResponse = {
+  report_path: string | null;
+  step: string;
+};
+
+type ReportFormat = 'docx' | 'html';
 
 type PanelMGProps = {
   servicesManager: { services: any };
@@ -55,6 +66,7 @@ const LEGACY_SESSION_KEY = 'mgProcessingTasks';
 
 // ТАЙМАУТ ОЖИДАНИЯ ГОТОВНОСТИ ТАСКИ
 const TASK_TIMEOUT_MS = 600_000;
+const STATUS_POLL_INTERVAL_MS = 5_000;
 
 const mgRegistry: Record<string, MgTask> = {};
 
@@ -71,26 +83,27 @@ function persistRegistry(): void {
   if (typeof window === 'undefined') return;
 
   try {
-    const plain: Record<string, MgTask> = {};
+    const pendingTasks: Record<string, MgTask> = {};
+
     Object.entries(mgRegistry).forEach(([sid, task]) => {
-      if (task?.download_filename && task?.report_path) {
-        plain[sid] = {
-          download_filename: task.download_filename,
-          report_path: task.report_path,
-          created_at: task.created_at,
-          state: task.state ?? 'pending',
-          ready_at: task.ready_at,
-        };
+      // localStorage нужен только для незавершённой обработки.
+      if (
+        task?.state === 'pending' &&
+        task.download_filename &&
+        task.report_path
+      ) {
+        pendingTasks[sid] = task;
       }
     });
 
-    if (Object.keys(plain).length === 0) {
+    if (Object.keys(pendingTasks).length === 0) {
       window.localStorage.removeItem(STORAGE_KEY);
-    } else {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(plain));
+      return;
     }
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingTasks));
   } catch {
-    // ignore
+    // Потеря persistence не должна ломать саму панель.
   }
 }
 
@@ -103,22 +116,32 @@ function hydrateRegistry(): void {
     let changed = false;
 
     Object.entries(fromLocal).forEach(([sid, task]) => {
-      if (task?.download_filename && task?.report_path) {
-        const createdAt = task.created_at ?? 0;
-        const state = task.state ?? 'pending';
-
-        // если pending и протух — не восстанавливаем
-        if (state === 'pending' && createdAt && Date.now() - createdAt > TASK_TIMEOUT_MS) {
-          changed = true;
-          return;
-        }
-
-        mgRegistry[sid] = {
-          ...task,
-          created_at: createdAt || Date.now(),
-          state,
-        };
+      if (!task?.download_filename || !task?.report_path) {
+        changed = true;
+        return;
       }
+
+      // Старые ready-записи больше не восстанавливаем: актуальный путь
+      // всегда загружается с бэкенда через /status.
+      if (task.state === 'ready') {
+        changed = true;
+        return;
+      }
+
+      const createdAt = task.created_at ?? 0;
+
+      if (createdAt && Date.now() - createdAt > TASK_TIMEOUT_MS) {
+        changed = true;
+        return;
+      }
+
+      mgRegistry[sid] = {
+        ...task,
+        created_at: createdAt || Date.now(),
+        state: 'pending',
+        expected_report_path: task.expected_report_path ?? task.report_path,
+        baseline_report_path: task.baseline_report_path ?? null,
+      };
     });
 
     // если что-то выкинули как протухшее — перезапишем localStorage
@@ -139,6 +162,8 @@ function hydrateRegistry(): void {
           report_path: task.report_path,
           created_at: task.created_at ?? Date.now(),
           state: 'pending',
+          baseline_report_path: null,
+          expected_report_path: task.report_path,
         };
       }
     });
@@ -153,6 +178,45 @@ function buildGetFileUrl(base: string, task: MgTask): string {
   params.set('download_filename', task.download_filename);
   params.set('report_path', task.report_path);
   return `${b}/get_file?${params.toString()}`;
+}
+
+function replaceFileExtension(value: string, extension: ReportFormat): string {
+  return /\.[^./\\]+$/.test(value)
+    ? value.replace(/\.[^./\\]+$/, `.${extension}`)
+    : `${value}.${extension}`;
+}
+
+function buildTaskFromStatus(studyId: string, reportPath: string, existing?: MgTask): MgTask {
+  return {
+    download_filename:
+      existing?.download_filename || `mammography_report_${studyId}.docx`,
+    report_path: replaceFileExtension(reportPath, 'docx'),
+    created_at: existing?.created_at ?? Date.now(),
+    state: 'ready',
+    ready_at: Date.now(),
+    baseline_report_path: null,
+    expected_report_path: null,
+  };
+}
+
+function isPendingTaskReady(task: MgTask, statusReportPath: string | null): boolean {
+  if (!statusReportPath) return false;
+
+  // Основной сценарий: /predict_async сразу сообщил точный будущий путь.
+  if (task.expected_report_path) {
+    return statusReportPath === task.expected_report_path;
+  }
+
+  // Fallback для старых записей localStorage без expected_report_path.
+  return statusReportPath !== (task.baseline_report_path ?? null);
+}
+
+function buildTaskForFormat(task: MgTask, format: ReportFormat): MgTask {
+  return {
+    ...task,
+    download_filename: replaceFileExtension(task.download_filename, format),
+    report_path: replaceFileExtension(task.report_path, format),
+  };
 }
 
 function parseFilenameFromHeaders(headers: any, fallback: string): string {
@@ -186,8 +250,6 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
 
   const mountedRef = useRef(true);
   const pollTimerRef = useRef<number | null>(null);
-  const headUnsupportedRef = useRef<boolean>(false);
-  const cachedBlobRef = useRef<Blob | null>(null);
 
   const clearPoll = () => {
     if (pollTimerRef.current != null) {
@@ -227,88 +289,137 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
     };
   }, [DisplaySetService]);
 
-  // 3) React to studyId changes
+  // 3) При открытии исследования проверяем статус на бэкенде.
+  // report_path из /status — единственный источник готовности отчёта.
   useEffect(() => {
+    let cancelled = false;
+
     setErr('');
-    cachedBlobRef.current = null;
     clearPoll();
 
-    if (!studyId) {
+    if (!studyId || !BASE) {
       setUi('idle');
       setReportReady(false);
       setTask(null);
       return;
     }
 
-    const existing = mgRegistry[studyId];
-    if (existing?.download_filename && existing?.report_path) {
-      setTask(existing);
-
-      // ФИЧА: если ранее уже определили готовность — сразу активируем Download
-      if (existing.state === 'ready') {
-        setReportReady(true);
-        setUi('done');
-        return;
-      }
-
+    const loadStatus = async () => {
+      setUi('loading');
       setReportReady(false);
-      setUi('polling');
-      pollUntilReady(studyId, existing);
-      return;
-    }
 
-    setUi('idle');
-    setReportReady(false);
-    setTask(null);
+      const existing = mgRegistry[studyId];
+
+      try {
+        const url = `${BASE.replace(/\/$/, '')}/status/${encodeURIComponent(studyId)}`;
+        const resp = await axios.get<StatusResponse>(url, {
+          validateStatus: status => [200, 400, 404, 500].includes(status),
+        });
+
+        if (cancelled || !mountedRef.current) return;
+
+        const statusReportPath =
+          resp.status === 200 ? resp.data?.report_path ?? null : null;
+
+        // Pending из localStorage имеет приоритет над старым report_path из /status.
+        // Лоадер снимаем только когда статус переключился на новый ожидаемый путь.
+        if (existing?.state === 'pending') {
+          setTask(existing);
+          setReportReady(false);
+
+          if (isPendingTaskReady(existing, statusReportPath)) {
+            const readyTask = buildTaskFromStatus(
+              studyId,
+              statusReportPath as string,
+              existing
+            );
+
+            delete mgRegistry[studyId];
+            persistRegistry();
+
+            setTask(readyTask);
+            setReportReady(true);
+            setUi('done');
+            return;
+          }
+
+          setUi('polling');
+          pollUntilReady(studyId, existing);
+          return;
+        }
+
+        // Активной фронтовой задачи нет: сохраняем последний готовый путь из /status.
+        if (statusReportPath) {
+          const readyTask = buildTaskFromStatus(studyId, statusReportPath, existing);
+
+          // Готовый путь держим только в React state. При следующем открытии
+          // исследования он снова будет получен через /status.
+          delete mgRegistry[studyId];
+          persistRegistry();
+
+          setTask(readyTask);
+          setReportReady(true);
+          setUi('done');
+          return;
+        }
+
+        // Готового отчёта нет: доступен только запуск анализа.
+        delete mgRegistry[studyId];
+        persistRegistry();
+
+        setTask(null);
+        setReportReady(false);
+        setUi('idle');
+      } catch {
+        if (cancelled || !mountedRef.current) return;
+
+        // При временной ошибке сети не теряем pending-задачу из localStorage.
+        if (existing?.state === 'pending') {
+          setTask(existing);
+          setReportReady(false);
+          setUi('polling');
+          pollUntilReady(studyId, existing);
+          return;
+        }
+
+        // Если активной задачи нет, не блокируем новый анализ.
+        setTask(null);
+        setReportReady(false);
+        setUi('idle');
+      }
+    };
+
+    void loadStatus();
 
     return () => {
+      cancelled = true;
       clearPoll();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studyId]);
+  }, [studyId, BASE]);
 
   const statusText = useMemo(() => {
     if (ui === 'polling') return t('Processing in progress') || 'Processing in progress...';
+    if (ui === 'loading') return t('Checking status') || 'Checking status...';
     if (reportReady) return t('Report is ready') || 'Report is ready';
     if (ui === 'idle') return t('Preparing for analysis') || 'Preparing for analysis...';
     if (ui === 'error') return t('Error') || 'Error';
     return '';
   }, [ui, reportReady, t]);
 
-  const markReady = (sid: string) => {
-    const cur = mgRegistry[sid];
-    if (!cur) return;
-    mgRegistry[sid] = { ...cur, state: 'ready', ready_at: Date.now() };
-    persistRegistry();
-  };
-
-  const markPending = (sid: string) => {
-    const cur = mgRegistry[sid];
-    if (!cur) return;
-    mgRegistry[sid] = { ...cur, state: 'pending' };
-    persistRegistry();
-  };
-
   const pollUntilReady = (sid: string, currentTask: MgTask) => {
     clearPoll();
-    cachedBlobRef.current = null;
-
-    let attempt = 0;
 
     const tick = async () => {
-      attempt += 1;
-      const delay = attempt <= 30 ? 2000 : 5000;
-
-      // ======= ТАЙМАУТ ПО ВРЕМЕНИ ЖИЗНИ ТАСКИ (из localStorage/registry) =======
       const createdAt = currentTask.created_at ?? mgRegistry[sid]?.created_at ?? 0;
       if (createdAt && Date.now() - createdAt > TASK_TIMEOUT_MS) {
         clearPoll();
 
-        // чистим pending-таску из registry + localStorage
         delete mgRegistry[sid];
         persistRegistry();
 
         if (!mountedRef.current) return;
+
         setTask(null);
         setReportReady(false);
         setErr(`Таймаут (${TASK_TIMEOUT_MS} мс)`);
@@ -316,73 +427,74 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
         showNotif('Processing error', `Таймаут (${Math.round(TASK_TIMEOUT_MS / 1000)} с)`);
         return;
       }
-      // =======================================================================
 
       try {
-        const url = buildGetFileUrl(BASE, currentTask);
+        const url = `${BASE.replace(/\/$/, '')}/status/${encodeURIComponent(sid)}`;
+        const resp = await axios.get<StatusResponse>(url, {
+          validateStatus: status => [200, 400, 404, 500].includes(status),
+        });
 
-        // Prefer HEAD (cheap)
-        if (!headUnsupportedRef.current) {
-          const headResp = await axios.request({
-            method: 'HEAD',
-            url,
-            validateStatus: s => s === 200 || s === 404 || s === 405,
-          });
+        const statusReportPath =
+          resp.status === 200 ? resp.data?.report_path ?? null : null;
 
-          if (headResp.status === 200) {
-            if (!mountedRef.current) return;
-            markReady(sid);
-            setReportReady(true);
-            setUi('done');
-            return;
-          }
+        if (isPendingTaskReady(currentTask, statusReportPath)) {
+          const readyTask = buildTaskFromStatus(
+            sid,
+            statusReportPath as string,
+            currentTask
+          );
 
-          if (headResp.status === 405) {
-            headUnsupportedRef.current = true;
-          }
-          // 404 => not ready yet
+          // Новая обработка завершена — pending-запись больше не нужна.
+          delete mgRegistry[sid];
+          persistRegistry();
+
+          if (!mountedRef.current) return;
+
+          setTask(readyTask);
+          setReportReady(true);
+          setUi('done');
+          return;
         }
 
-        // Fallback: GET (if HEAD unsupported)
-        if (headUnsupportedRef.current) {
-          const getResp = await axios.get(url, {
-            responseType: 'blob',
-            validateStatus: s => s === 200 || s === 404,
-          });
+        if (resp.status === 400) {
+          clearPoll();
 
-          if (getResp.status === 200) {
-            cachedBlobRef.current = getResp.data as Blob;
-            if (!mountedRef.current) return;
-            markReady(sid);
-            setReportReady(true);
-            setUi('done');
-            return;
-          }
+          delete mgRegistry[sid];
+          persistRegistry();
+
+          if (!mountedRef.current) return;
+
+          setTask(null);
+          setReportReady(false);
+          setErr('Ошибка обработки исследования');
+          setUi('error');
+          showNotif('Processing error', 'Ошибка обработки исследования');
+          return;
         }
       } catch {
-        // transient network errors -> keep polling (таймаут по времени таски всё равно сработает)
+        // Временная сетевая ошибка: продолжаем polling до общего таймаута.
       }
 
-      pollTimerRef.current = window.setTimeout(tick, delay);
+      pollTimerRef.current = window.setTimeout(tick, STATUS_POLL_INTERVAL_MS);
     };
 
-    pollTimerRef.current = window.setTimeout(tick, 1000);
+    pollTimerRef.current = window.setTimeout(tick, STATUS_POLL_INTERVAL_MS);
   };
 
   const handleAnalyze = async () => {
     if (!studyId) return;
 
-    // Если уже есть задача: если ready — просто активируем download; если pending — продолжаем polling
     const existing = mgRegistry[studyId];
-    if (existing?.download_filename && existing?.report_path) {
+    const previousReadyTask = reportReady ? task : null;
+
+    // Уже запущенную обработку повторно не создаём — продолжаем polling.
+    // Готовый отчёт не блокирует повторный запуск анализа.
+    if (
+      existing?.download_filename &&
+      existing?.report_path &&
+      existing.state !== 'ready'
+    ) {
       setTask(existing);
-
-      if (existing.state === 'ready') {
-        setReportReady(true);
-        setUi('done');
-        return;
-      }
-
       setUi('polling');
       setReportReady(false);
       pollUntilReady(studyId, existing);
@@ -392,7 +504,6 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
     setUi('loading');
     setErr('');
     setReportReady(false);
-    cachedBlobRef.current = null;
 
     const controller = new AbortController();
 
@@ -405,32 +516,44 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
         { headers: { 'Content-Type': 'application/json' }, signal: controller.signal }
       );
 
+      const baselineReportPath = previousReadyTask?.report_path ?? null;
+
       const nextTask: MgTask = {
         download_filename: resp.data.download_filename,
         report_path: resp.data.report_path,
-        created_at: Date.now(), // <-- база для таймаута в localStorage
+        created_at: Date.now(), // база для таймаута в localStorage
         state: 'pending',
+        baseline_report_path: baselineReportPath,
+        expected_report_path: resp.data.report_path,
       };
 
       mgRegistry[studyId] = nextTask;
       persistRegistry();
 
-      setTask(nextTask);
+        setTask(nextTask);
       setUi('polling');
       pollUntilReady(studyId, nextTask);
     } catch (e: any) {
       const msg = String(e?.message || 'Request failed');
       setErr(msg);
-      setUi('error');
       showNotif('Processing error', msg);
 
+      // Если повторный анализ не стартовал, сохраняем доступ к старому готовому отчёту.
+      if (previousReadyTask) {
+        setTask(previousReadyTask);
+        setReportReady(true);
+        setUi('done');
+        return;
+      }
+
+      setUi('error');
       delete mgRegistry[studyId];
       persistRegistry();
     }
   };
 
-  const handleDownload = async () => {
-    if (!studyId || !task) return;
+  const handleDownload = async (format: ReportFormat) => {
+    if (!studyId || !task || !reportReady) return;
 
     setUi('loading');
     setErr('');
@@ -438,33 +561,33 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
     const controller = new AbortController();
 
     try {
-      let blob: Blob | null = cachedBlobRef.current;
+      // Актуальный report_path уже хранится в React state:
+      // - загружается через /status при открытии исследования;
+      // - обновляется polling после завершения нового анализа.
+      const formatTask = buildTaskForFormat(task, format);
+      const url = buildGetFileUrl(BASE, formatTask);
 
-      const filenameFallback = task.download_filename || `mammography_report_${studyId}.docx`;
-      let filename = filenameFallback;
+      const resp = await axios.get(url, {
+        responseType: 'blob',
+        signal: controller.signal,
+        validateStatus: status => status === 200 || status === 404,
+      });
 
-      if (!blob) {
-        const url = buildGetFileUrl(BASE, task);
+      if (resp.status === 404) {
+        const message =
+          format === 'html' ? 'HTML-отчёт не найден' : 'DOCX-отчёт не найден';
 
-        const resp = await axios.get(url, {
-          responseType: 'blob',
-          signal: controller.signal,
-          validateStatus: s => s === 200 || s === 404,
-        });
-
-        // Даже если было ready в localStorage, файл могли почистить на бэке.
-        // В таком случае не принуждаем к повторному анализу: просто возвращаемся в polling.
-        if (resp.status === 404) {
-          markPending(studyId);
-          setUi('polling');
-          setReportReady(false);
-          pollUntilReady(studyId, task);
-          return;
-        }
-
-        blob = resp.data as Blob;
-        filename = parseFilenameFromHeaders(resp.headers, filenameFallback);
+        setErr(message);
+        setUi('error');
+        showNotif('Download error', message);
+        return;
       }
+
+      const blob = resp.data as Blob;
+      const filename = parseFilenameFromHeaders(
+        resp.headers,
+        formatTask.download_filename
+      );
 
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -475,15 +598,12 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
       a.remove();
       URL.revokeObjectURL(blobUrl);
 
-      // после успешной загрузки очищаем
-      delete mgRegistry[studyId];
-      persistRegistry();
-
-      setTask(null);
-      setReportReady(false);
+      // task/reportReady не сбрасываем — обе кнопки остаются активными.
       setUi('done');
 
-      forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId });
+      if (format === 'docx') {
+        forceUpdateSeriesData({ extensionManager, StudyInstanceUID: studyId });
+      }
     } catch (e: any) {
       const msg = String(e?.message || 'Download failed');
       setErr(msg);
@@ -493,7 +613,7 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
   };
 
   const isBusy = ui === 'loading' || ui === 'polling';
-  const canAnalyze = !!studyId && !!BASE;
+  const canAnalyze = !!studyId && !!BASE && !isBusy;
   const canDownload = !!task && reportReady && !isBusy;
 
   return (
@@ -507,10 +627,10 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
               className="px-2 py-2 text-base !bg-orange-600 hover:!bg-orange-500"
               color="primaryActive"
               variant="outlined"
-              disabled={!canAnalyze || isBusy}
+              disabled={!canAnalyze}
               onClick={handleAnalyze}
             >
-              {isBusy ? <Spinner /> : <span>{t('Analyze') || 'Analyze'}</span>}
+              {isBusy && !reportReady ? <Spinner /> : <span>{t('Analyze') || 'Analyze'}</span>}
             </Button>
 
             <Button
@@ -518,9 +638,19 @@ export default function PanelMG({ servicesManager, extensionManager }: PanelMGPr
               className="px-2 py-2 text-base"
               variant="outlined"
               disabled={!canDownload}
-              onClick={handleDownload}
+              onClick={() => handleDownload('docx')}
             >
-              {t('Download report') || 'Download report'}
+              {t('Download DOCX') || 'Download DOCX'}
+            </Button>
+
+            <Button
+              size="initial"
+              className="px-2 py-2 text-base"
+              variant="outlined"
+              disabled={!canDownload}
+              onClick={() => handleDownload('html')}
+            >
+              {t('Download HTML') || 'Download HTML'}
             </Button>
           </div>
 
