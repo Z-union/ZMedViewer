@@ -428,15 +428,16 @@ function PanelMRInner({
   };
 
   const getDiscOrderWeight = (level: string): number => {
-    const order = ['Th12L1', 'L1L2', 'L2L3', 'L3L4', 'L4L5', 'L5S1'];
-    const idx = order.indexOf(level);
-    return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+    const match = /^(C|Th|T|L|S)(\d+)/i.exec(level);
+    if (!match) return Number.MAX_SAFE_INTEGER;
+    const regionOffset: Record<string, number> = { C: 0, T: 100, TH: 100, L: 200, S: 300 };
+    return regionOffset[match[1].toUpperCase()] + Number(match[2]);
   };
 
   const getDiscVertebraNames = (
     levelName: string
   ): { upperName: string | null; lowerName: string | null } => {
-    const match = /^([A-Za-z0-9]+)(L\d|S\d)$/.exec(levelName);
+    const match = /^((?:C|Th|T|L|S)\d+)((?:C|Th|T|L|S)\d+)$/i.exec(levelName);
     if (!match) {
       return { upperName: null, lowerName: null };
     }
@@ -459,8 +460,13 @@ function PanelMRInner({
     const { upperName, lowerName } = getDiscVertebraNames(levelName);
     if (!upperName || !lowerName) return null;
 
-    const upper = vertebrae[upperName];
-    const lower = vertebrae[lowerName];
+    // The API uses both T and Th for thoracic vertebrae.
+    const findVertebra = (name: string) =>
+      vertebrae[name] ??
+      vertebrae[name.replace(/^Th/i, 'T')] ??
+      vertebrae[name.replace(/^T(\d)/i, 'Th$1')];
+    const upper = findVertebra(upperName);
+    const lower = findVertebra(lowerName);
 
     const raw = [extractor(upper, 'lower'), extractor(lower, 'upper')]
       .map(v => (v == null ? NaN : Number(v)))
@@ -535,12 +541,13 @@ function PanelMRInner({
   const mapPipelineToRows = (pipeline?: BackendPipelineResult): Row[] => {
     if (!pipeline) return [];
 
-    const newFormat =
-      parseJsonString<NewBackendResultsPayload>(pipeline.results) ??
-      parseJsonString<NewBackendResultsPayload>(pipeline.result_json);
-
-    if (newFormat?.discs) {
-      return mapNewResultsToRows(newFormat);
+    // result_json contains the final analysis; results may contain only partial branch output.
+    // Fall back for older responses or when the final payload has no disc data.
+    for (const source of [pipeline.result_json, pipeline.results]) {
+      const payload = parseJsonString<NewBackendResultsPayload>(source);
+      if (payload?.discs && Object.keys(payload.discs).length > 0) {
+        return mapNewResultsToRows(payload);
+      }
     }
 
     if (pipeline.disk_results && Object.keys(pipeline.disk_results).length > 0) {
