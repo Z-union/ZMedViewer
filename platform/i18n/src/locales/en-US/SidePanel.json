@@ -1,4 +1,7 @@
 {
+  "MRI processing wait timed out": "MRI processing wait timed out (15 minutes). Processing may continue on the server.",
+  "MRI start request timed out": "The server did not confirm processing within 30 seconds. Processing may have started. Refresh the page to check its status before starting again.",
+  "MRI status request failed": "Could not retrieve the MRI processing status. Refresh the page to check again.",
   "Segmentation": "Segmentation",
   "Measurements": "Measurements",
   "Studies": "Studies",

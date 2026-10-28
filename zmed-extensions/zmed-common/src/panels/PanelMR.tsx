@@ -8,6 +8,8 @@ import { useAppConfig } from '@state';
 import { forceUpdateSeriesData } from './utils';
 
 const MR = ['MR'] as const;
+const TASK_TIMEOUT_MS = 15 * 60 * 1000;
+const REQUEST_TIMEOUT_MS = 30 * 1000;
 
 type UIState = 'idle' | 'loading' | 'polling' | 'done' | 'unsupported' | 'error';
 type ReportFormat = 'docx' | 'html';
@@ -153,6 +155,7 @@ interface Row {
 
 interface ProcessingInfo {
   taskId: string;
+  startedAt: number;
   progress?: BackendProcessingStatus | null;
 }
 
@@ -292,6 +295,7 @@ function hydrateProcessingRegistryFromStorage(): void {
       if (info && typeof info.taskId === 'string') {
         processingRegistry[sid] = {
           taskId: info.taskId,
+          startedAt: Number.isFinite(info.startedAt) ? info.startedAt : Date.now(),
           progress: info.progress ?? null,
         };
       }
@@ -309,6 +313,7 @@ function persistProcessingRegistryToStorage(): void {
       if (value?.taskId) {
         plain[sid] = {
           taskId: value.taskId,
+          startedAt: value.startedAt,
           progress: value.progress ?? null,
         };
       }
@@ -391,7 +396,16 @@ function PanelMRInner({
   const previewRef = useRef<HTMLDivElement | null>(null);
   const pollTimerRef = useRef<number | null>(null);
 
+  const deadlineTimerRef = useRef<number | null>(null);
+  const processingControllerRef = useRef<AbortController | null>(null);
+
   const clearPollTimer = (): void => {
+    processingControllerRef.current?.abort();
+    processingControllerRef.current = null;
+    if (deadlineTimerRef.current != null) {
+      clearTimeout(deadlineTimerRef.current);
+      deadlineTimerRef.current = null;
+    }
     if (pollTimerRef.current != null) {
       clearTimeout(pollTimerRef.current);
       pollTimerRef.current = null;
@@ -661,19 +675,45 @@ function PanelMRInner({
   };
 
   function startPolling(taskId: string): void {
+    clearPollTimer();
     const delay = 1000;
+    const controller = new AbortController();
+    processingControllerRef.current = controller;
+    const startedAt = processingRegistry[studyId]?.startedAt ?? Date.now();
+    const expire = () => {
+      clearPollTimer();
+      delete processingRegistry[studyId];
+      persistProcessingRegistryToStorage();
+      setProgress(null);
+      setErr(t('MRI processing wait timed out'));
+      setUi('error');
+    };
+    const remaining = startedAt + TASK_TIMEOUT_MS - Date.now();
+    if (remaining <= 0) {
+      expire();
+      return;
+    }
+    deadlineTimerRef.current = window.setTimeout(expire, remaining);
 
     const checkStatus = async () => {
+      if (controller.signal.aborted) return;
+      if (Date.now() - startedAt >= TASK_TIMEOUT_MS) {
+        expire();
+        return;
+      }
       try {
         const resp = await axios.get<BackendProcessingStatus>(
           `${BASE.replace(/\/$/, '')}/processing-status/${encodeURIComponent(taskId)}`,
           {
+            timeout: REQUEST_TIMEOUT_MS,
+            signal: controller.signal,
             headers: {
               accept: 'application/json',
             },
           }
         );
 
+        if (controller.signal.aborted) return;
         const { current_step, step_label, total_steps } = resp.data || {};
         const newProgress: BackendProcessingStatus = {
           current_step,
@@ -689,6 +729,7 @@ function PanelMRInner({
         if (processingRegistry[studyId]) {
           processingRegistry[studyId] = {
             taskId,
+            startedAt,
             progress: {
               ...(processingRegistry[studyId].progress || {}),
               ...newProgress,
@@ -703,7 +744,6 @@ function PanelMRInner({
           total_steps > 0 &&
           current_step >= total_steps
         ) {
-          clearPollTimer();
           setUi('loading');
 
           try {
@@ -713,10 +753,13 @@ function PanelMRInner({
                 headers: {
                   accept: 'application/json',
                 },
+                timeout: REQUEST_TIMEOUT_MS,
+                signal: controller.signal,
                 validateStatus: s => (s >= 200 && s < 300) || s === 404,
               }
             );
 
+            if (controller.signal.aborted) return;
             if (statusResp.status !== 404) {
               const data = statusResp.data;
 
@@ -745,10 +788,17 @@ function PanelMRInner({
               setReportPath(`/report/${taskId}`);
             }
           } catch {
-            setReportAvailable(true);
-            setReportPath(`/report/${taskId}`);
+            if (controller.signal.aborted) return;
+            clearPollTimer();
+            delete processingRegistry[studyId];
+            persistProcessingRegistryToStorage();
+            setProgress(null);
+            setErr(t('MRI status request failed'));
+            setUi('error');
+            return;
           }
 
+          clearPollTimer();
           delete processingRegistry[studyId];
           persistProcessingRegistryToStorage();
 
@@ -766,6 +816,7 @@ function PanelMRInner({
         // ignore
       }
 
+      if (controller.signal.aborted) return;
       pollTimerRef.current = window.setTimeout(checkStatus, delay);
     };
 
@@ -799,6 +850,7 @@ function PanelMRInner({
         });
       }
 
+      persistProcessingRegistryToStorage();
       startPolling(existing.taskId);
 
       return () => {
@@ -830,10 +882,12 @@ function PanelMRInner({
               accept: 'application/json',
             },
             signal: controller.signal,
+            timeout: REQUEST_TIMEOUT_MS,
             validateStatus: s => (s >= 200 && s < 300) || s === 404,
           }
         );
 
+        if (controller.signal.aborted) return;
         if (resp.status === 404) {
           setRows([]);
           delete previewCache[studyId];
@@ -871,6 +925,7 @@ function PanelMRInner({
 
           processingRegistry[studyId] = {
             taskId: data.processing_id,
+            startedAt: Date.now(),
             progress: initialProgress,
           };
           persistProcessingRegistryToStorage();
@@ -892,7 +947,9 @@ function PanelMRInner({
 
         setUi('done');
       } catch {
-        setUi(prev => (prev === 'done' ? 'done' : 'idle'));
+        if (controller.signal.aborted) return;
+        setErr(t('MRI status request failed'));
+        setUi(prev => (prev === 'done' ? 'done' : 'error'));
       }
     })();
 
@@ -914,6 +971,8 @@ function PanelMRInner({
     setProgress(initialProgress);
 
     const controller = new AbortController();
+    processingControllerRef.current = controller;
+    const startedAt = Date.now();
 
     try {
       const payload = {
@@ -928,9 +987,11 @@ function PanelMRInner({
             accept: 'application/json',
           },
           signal: controller.signal,
+          timeout: REQUEST_TIMEOUT_MS,
         }
       );
 
+      if (controller.signal.aborted) return;
       const taskId = String(data).trim();
 
       setProcessingId(taskId);
@@ -939,14 +1000,23 @@ function PanelMRInner({
 
       processingRegistry[studyId] = {
         taskId,
+        startedAt,
         progress: initialProgress,
       };
       persistProcessingRegistryToStorage();
 
       setUi('polling');
       startPolling(taskId);
-    } catch {
-      setErr(t('Processing error'));
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      clearPollTimer();
+      setErr(
+        t(
+          axios.isAxiosError(error) && error.code === 'ECONNABORTED'
+            ? 'MRI start request timed out'
+            : 'Processing error'
+        )
+      );
       setUi('error');
       setProgress(null);
     }
